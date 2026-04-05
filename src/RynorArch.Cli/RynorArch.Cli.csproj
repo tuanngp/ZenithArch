@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFrameworks>net6.0;net8.0;net9.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- Configure this as a Global Tool -->
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>rynor</ToolCommandName>
+    <PackageId>RynorArch.Cli</PackageId>
+    <Version>1.0.2</Version>
+  </PropertyGroup>
+</Project>

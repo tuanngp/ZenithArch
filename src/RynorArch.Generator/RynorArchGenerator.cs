@@ -55,11 +55,17 @@ public sealed class RynorArchGenerator : IIncrementalGenerator
             ArchitectureResolver.Resolve(spc, pair.Entity, pair.Config);
         });
 
-        // Step 5: Diagnostic — warn if no entities found.
-        IncrementalValueProvider<(ImmutableArray<EntityModel> Entities, ArchitectureConfig Config)> collectedForDiagnostics =
+        // Step 4.5: Global (Assembly-wide) code generation
+        IncrementalValueProvider<(ImmutableArray<EntityModel> Entities, ArchitectureConfig Config)> collectedForGlobal =
             validEntities.Collect().Combine(configProvider);
 
-        context.RegisterSourceOutput(collectedForDiagnostics, static (spc, pair) =>
+        context.RegisterSourceOutput(collectedForGlobal, static (spc, pair) =>
+        {
+            GlobalResolver.Resolve(spc, pair.Entities, pair.Config);
+        });
+
+        // Step 5: Diagnostic — warn if no entities found.
+        context.RegisterSourceOutput(collectedForGlobal, static (spc, pair) =>
         {
             if (pair.Entities.Length == 0)
             {

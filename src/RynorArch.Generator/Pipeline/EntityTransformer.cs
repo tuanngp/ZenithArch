@@ -106,6 +106,12 @@ internal static class EntityTransformer
             bool useSpecification = false;
             bool useUnitOfWork = false;
             bool enableValidation = false;
+            bool generateDependencyInjection = false;
+            bool generateEndpoints = false;
+            bool generateDtos = false;
+            bool generateEfConfigurations = false;
+            bool generateCachingDecorators = false;
+            bool generatePagination = false;
 
             var namedArgs = attr.NamedArguments;
             for (int j = 0; j < namedArgs.Length; j++)
@@ -125,10 +131,38 @@ internal static class EntityTransformer
                     case "EnableValidation":
                         enableValidation = (bool)arg.Value.Value!;
                         break;
+                    case "GenerateDependencyInjection":
+                        generateDependencyInjection = (bool)arg.Value.Value!;
+                        break;
+                    case "GenerateEndpoints":
+                        generateEndpoints = (bool)arg.Value.Value!;
+                        break;
+                    case "GenerateDtos":
+                        generateDtos = (bool)arg.Value.Value!;
+                        break;
+                    case "GenerateEfConfigurations":
+                        generateEfConfigurations = (bool)arg.Value.Value!;
+                        break;
+                    case "GenerateCachingDecorators":
+                        generateCachingDecorators = (bool)arg.Value.Value!;
+                        break;
+                    case "GeneratePagination":
+                        generatePagination = (bool)arg.Value.Value!;
+                        break;
                 }
             }
 
-            return new ArchitectureConfig(pattern, useSpecification, useUnitOfWork, enableValidation);
+            return new ArchitectureConfig(
+                pattern, 
+                useSpecification, 
+                useUnitOfWork, 
+                enableValidation,
+                generateDependencyInjection,
+                generateEndpoints,
+                generateDtos,
+                generateEfConfigurations,
+                generateCachingDecorators,
+                generatePagination);
         }
 
         return ArchitectureConfig.Default;

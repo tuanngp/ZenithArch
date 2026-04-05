@@ -56,7 +56,7 @@ internal static class CqrsEmitter
         // Update command
         w.AppendLine($"public sealed record Update{name}Command : IRequest<bool>");
         w.OpenBrace();
-        w.AppendLine("public required Guid Id { get; init; }");
+        w.AppendLine("public Guid Id { get; init; }");
         EmitRequiredProperties(w, entity);
         w.CloseBrace();
         w.AppendLine();
@@ -325,7 +325,7 @@ internal static class CqrsEmitter
             }
             else
             {
-                w.AppendLine($"public required {prop.TypeName} {prop.Name} {{ get; init; }}");
+                w.AppendLine($"public {prop.TypeName} {prop.Name} {{ get; init; }} = default!;");
             }
         }
     }

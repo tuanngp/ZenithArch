@@ -30,4 +30,34 @@ public sealed class ArchitectureAttribute : Attribute
     /// Only applicable when Pattern is Cqrs or FullStack.
     /// </summary>
     public bool EnableValidation { get; set; }
+
+    /// <summary>
+    /// When true, generates static IServiceCollection extension for DI registration.
+    /// </summary>
+    public bool GenerateDependencyInjection { get; set; }
+
+    /// <summary>
+    /// When true, generates Minimal API MapRynorEndpoints extension.
+    /// </summary>
+    public bool GenerateEndpoints { get; set; }
+
+    /// <summary>
+    /// When true, generates DTO records and mapping extensions for Entity.
+    /// </summary>
+    public bool GenerateDtos { get; set; }
+
+    /// <summary>
+    /// When true, generates EF Core IEntityTypeConfiguration for Entities.
+    /// </summary>
+    public bool GenerateEfConfigurations { get; set; }
+
+    /// <summary>
+    /// When true, generates caching decorator abstractions for Query handlers.
+    /// </summary>
+    public bool GenerateCachingDecorators { get; set; }
+
+    /// <summary>
+    /// When true, generates paging and sorting extensions for queries.
+    /// </summary>
+    public bool GeneratePagination { get; set; }
 }

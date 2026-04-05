@@ -63,6 +63,30 @@ internal static class ArchitectureResolver
             ValidationEmitter.Emit(context, entity);
         }
 
+        // DTOs
+        if (config.GenerateDtos)
+        {
+            DtoEmitter.Emit(context, entity);
+        }
+
+        // EF Core Config
+        if (config.GenerateEfConfigurations)
+        {
+            EfCoreEmitter.Emit(context, entity);
+        }
+
+        // Caching Decorators
+        if (config.GenerateCachingDecorators && config.IsCqrs)
+        {
+            CachingEmitter.Emit(context, entity);
+        }
+
+        // Pagination
+        if (config.GeneratePagination)
+        {
+            PaginationEmitter.Emit(context, entity);
+        }
+
         // DDD — for aggregate roots regardless of pattern
         if (entity.IsAggregateRoot)
         {

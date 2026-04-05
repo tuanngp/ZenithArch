@@ -13,13 +13,35 @@ public sealed class ArchitectureConfig : IEquatable<ArchitectureConfig>
     public bool UseSpecification { get; }
     public bool UseUnitOfWork { get; }
     public bool EnableValidation { get; }
+    public bool GenerateDependencyInjection { get; }
+    public bool GenerateEndpoints { get; }
+    public bool GenerateDtos { get; }
+    public bool GenerateEfConfigurations { get; }
+    public bool GenerateCachingDecorators { get; }
+    public bool GeneratePagination { get; }
 
-    public ArchitectureConfig(int pattern, bool useSpecification, bool useUnitOfWork, bool enableValidation)
+    public ArchitectureConfig(
+        int pattern, 
+        bool useSpecification, 
+        bool useUnitOfWork, 
+        bool enableValidation,
+        bool generateDependencyInjection = false,
+        bool generateEndpoints = false,
+        bool generateDtos = false,
+        bool generateEfConfigurations = false,
+        bool generateCachingDecorators = false,
+        bool generatePagination = false)
     {
         Pattern = pattern;
         UseSpecification = useSpecification;
         UseUnitOfWork = useUnitOfWork;
         EnableValidation = enableValidation;
+        GenerateDependencyInjection = generateDependencyInjection;
+        GenerateEndpoints = generateEndpoints;
+        GenerateDtos = generateDtos;
+        GenerateEfConfigurations = generateEfConfigurations;
+        GenerateCachingDecorators = generateCachingDecorators;
+        GeneratePagination = generatePagination;
     }
 
     /// <summary>
@@ -39,7 +61,13 @@ public sealed class ArchitectureConfig : IEquatable<ArchitectureConfig>
         return Pattern == other.Pattern
             && UseSpecification == other.UseSpecification
             && UseUnitOfWork == other.UseUnitOfWork
-            && EnableValidation == other.EnableValidation;
+            && EnableValidation == other.EnableValidation
+            && GenerateDependencyInjection == other.GenerateDependencyInjection
+            && GenerateEndpoints == other.GenerateEndpoints
+            && GenerateDtos == other.GenerateDtos
+            && GenerateEfConfigurations == other.GenerateEfConfigurations
+            && GenerateCachingDecorators == other.GenerateCachingDecorators
+            && GeneratePagination == other.GeneratePagination;
     }
 
     public override bool Equals(object? obj) => Equals(obj as ArchitectureConfig);
@@ -53,6 +81,12 @@ public sealed class ArchitectureConfig : IEquatable<ArchitectureConfig>
             hash = (hash ^ UseSpecification.GetHashCode()) * 16777619;
             hash = (hash ^ UseUnitOfWork.GetHashCode()) * 16777619;
             hash = (hash ^ EnableValidation.GetHashCode()) * 16777619;
+            hash = (hash ^ GenerateDependencyInjection.GetHashCode()) * 16777619;
+            hash = (hash ^ GenerateEndpoints.GetHashCode()) * 16777619;
+            hash = (hash ^ GenerateDtos.GetHashCode()) * 16777619;
+            hash = (hash ^ GenerateEfConfigurations.GetHashCode()) * 16777619;
+            hash = (hash ^ GenerateCachingDecorators.GetHashCode()) * 16777619;
+            hash = (hash ^ GeneratePagination.GetHashCode()) * 16777619;
             return hash;
         }
     }

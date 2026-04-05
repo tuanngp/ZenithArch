@@ -78,9 +78,9 @@ internal static class RepositoryEmitter
 
         w.AppendLine($"public sealed partial class {name}Repository : I{name}Repository");
         w.OpenBrace();
-        w.AppendLine("private readonly AppDbContext _db;");
+        w.AppendLine("private readonly DbContext _db;");
         w.AppendLine();
-        w.AppendLine($"public {name}Repository(AppDbContext db)");
+        w.AppendLine($"public {name}Repository(DbContext db)");
         w.OpenBrace();
         w.AppendLine("_db = db;");
         w.CloseBrace();
