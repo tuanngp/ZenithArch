@@ -42,17 +42,12 @@ internal static class ValidationEmitter
         w.AppendLine($"public Create{name}Validator()");
         w.OpenBrace();
 
-        // Generate basic rules for required string properties
+        // Generate rules based on PropertyModel.Validation
         var props = entity.Properties.AsArray();
         for (int i = 0; i < props.Length; i++)
         {
             var prop = props[i];
-            if (prop.IsCollection || prop.IsNullable) continue;
-
-            if (prop.TypeName.IndexOf("string", System.StringComparison.Ordinal) >= 0)
-            {
-                w.AppendLine($"RuleFor(x => x.{prop.Name}).NotEmpty();");
-            }
+            EmitPropertyRules(w, prop);
         }
 
         w.AppendLine("ConfigureRules();");
@@ -73,12 +68,7 @@ internal static class ValidationEmitter
         for (int i = 0; i < props.Length; i++)
         {
             var prop = props[i];
-            if (prop.IsCollection || prop.IsNullable) continue;
-
-            if (prop.TypeName.IndexOf("string", System.StringComparison.Ordinal) >= 0)
-            {
-                w.AppendLine($"RuleFor(x => x.{prop.Name}).NotEmpty();");
-            }
+            EmitPropertyRules(w, prop);
         }
 
         w.AppendLine("ConfigureRules();");
@@ -89,5 +79,32 @@ internal static class ValidationEmitter
         w.CloseBrace();
 
         return w.ToString();
+    }
+
+    private static void EmitPropertyRules(SourceWriter w, PropertyModel prop)
+    {
+        if (prop.IsCollection) return;
+
+        bool hasRules = false;
+        var sb = new System.Text.StringBuilder();
+        sb.Append($"RuleFor(x => x.{prop.Name})");
+
+        if (prop.Validation != null)
+        {
+            if (prop.Validation.IsRequired) { sb.Append(".NotEmpty()"); hasRules = true; }
+            if (prop.Validation.MinLength.HasValue) { sb.Append($".MinimumLength({prop.Validation.MinLength.Value})"); hasRules = true; }
+            if (prop.Validation.MaxLength.HasValue) { sb.Append($".MaximumLength({prop.Validation.MaxLength.Value})"); hasRules = true; }
+            if (prop.Validation.IsEmail) { sb.Append(".EmailAddress()"); hasRules = true; }
+        }
+        else if (!prop.IsNullable && prop.TypeName.Contains("string"))
+        {
+            sb.Append(".NotEmpty()");
+            hasRules = true;
+        }
+
+        if (hasRules)
+        {
+            w.AppendLine(sb.ToString() + ";");
+        }
     }
 }

@@ -15,6 +15,8 @@ public sealed class EntityModel : IEquatable<EntityModel>
     public bool IsAggregateRoot { get; }
     public string? MapToTypeName { get; }
     public string? MapToTypeNamespace { get; }
+    public bool IsSoftDelete { get; }
+    public bool IsAuditable { get; }
 
     public EntityModel(
         string name,
@@ -23,7 +25,9 @@ public sealed class EntityModel : IEquatable<EntityModel>
         EquatableArray<PropertyModel> filterProperties,
         bool isAggregateRoot,
         string? mapToTypeName,
-        string? mapToTypeNamespace)
+        string? mapToTypeNamespace,
+        bool isSoftDelete,
+        bool isAuditable)
     {
         Name = name;
         Namespace = @namespace;
@@ -32,6 +36,8 @@ public sealed class EntityModel : IEquatable<EntityModel>
         IsAggregateRoot = isAggregateRoot;
         MapToTypeName = mapToTypeName;
         MapToTypeNamespace = mapToTypeNamespace;
+        IsSoftDelete = isSoftDelete;
+        IsAuditable = isAuditable;
     }
 
     public bool Equals(EntityModel? other)
@@ -45,7 +51,9 @@ public sealed class EntityModel : IEquatable<EntityModel>
             && FilterProperties == other.FilterProperties
             && IsAggregateRoot == other.IsAggregateRoot
             && string.Equals(MapToTypeName, other.MapToTypeName, StringComparison.Ordinal)
-            && string.Equals(MapToTypeNamespace, other.MapToTypeNamespace, StringComparison.Ordinal);
+            && string.Equals(MapToTypeNamespace, other.MapToTypeNamespace, StringComparison.Ordinal)
+            && IsSoftDelete == other.IsSoftDelete
+            && IsAuditable == other.IsAuditable;
     }
 
     public override bool Equals(object? obj) => Equals(obj as EntityModel);
@@ -62,6 +70,8 @@ public sealed class EntityModel : IEquatable<EntityModel>
             hash = (hash ^ IsAggregateRoot.GetHashCode()) * 16777619;
             hash = (hash ^ (MapToTypeName?.GetHashCode() ?? 0)) * 16777619;
             hash = (hash ^ (MapToTypeNamespace?.GetHashCode() ?? 0)) * 16777619;
+            hash = (hash ^ IsSoftDelete.GetHashCode()) * 16777619;
+            hash = (hash ^ IsAuditable.GetHashCode()) * 16777619;
             return hash;
         }
     }

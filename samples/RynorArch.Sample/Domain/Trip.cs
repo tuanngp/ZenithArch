@@ -1,5 +1,6 @@
 using RynorArch.Abstractions.Attributes;
 using RynorArch.Abstractions.Base;
+using RynorArch.Abstractions.Interfaces;
 
 namespace RynorArch.Sample.Domain;
 
@@ -15,14 +16,25 @@ namespace RynorArch.Sample.Domain;
 /// </summary>
 [Entity]
 [AggregateRoot]
-public partial class Trip : EntityBase
+public partial class Trip : EntityBase, ISoftDelete, IAuditable
 {
+    public bool IsDeleted { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public string? CreatedBy { get; set; }
+    public DateTime? LastModifiedAt { get; set; }
+    public string? LastModifiedBy { get; set; }
     [QueryFilter]
+    [Required]
+    [MinLength(5)]
+    [MaxLength(100)]
     public required string Title { get; set; }
 
+    [Required]
+    [MaxLength(500)]
     public required string Description { get; set; }
 
     [QueryFilter]
+    [Required]
     public required string Destination { get; set; }
 
     public required DateTime StartDate { get; set; }

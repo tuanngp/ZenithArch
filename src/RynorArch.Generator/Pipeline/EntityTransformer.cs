@@ -17,6 +17,12 @@ internal static class EntityTransformer
     private const string QueryFilterAttributeFqn = "RynorArch.Abstractions.Attributes.QueryFilterAttribute";
     private const string MapToAttributeFqn = "RynorArch.Abstractions.Attributes.MapToAttribute";
     private const string ArchitectureAttributeFqn = "RynorArch.Abstractions.Attributes.ArchitectureAttribute";
+    private const string SoftDeleteInterfaceFqn = "RynorArch.Abstractions.Interfaces.ISoftDelete";
+    private const string AuditableInterfaceFqn = "RynorArch.Abstractions.Interfaces.IAuditable";
+    private const string MaxLengthAttributeFqn = "RynorArch.Abstractions.Attributes.MaxLengthAttribute";
+    private const string MinLengthAttributeFqn = "RynorArch.Abstractions.Attributes.MinLengthAttribute";
+    private const string EmailAttributeFqn = "RynorArch.Abstractions.Attributes.EmailAttribute";
+    private const string RequiredAttributeFqn = "RynorArch.Abstractions.Attributes.RequiredAttribute";
 
     /// <summary>
     /// Transforms a <see cref="GeneratorAttributeSyntaxContext"/> into an <see cref="EntityModel"/>.
@@ -43,6 +49,10 @@ internal static class EntityTransformer
         string? mapToTypeName = null;
         string? mapToTypeNamespace = null;
         ExtractMapToTarget(typeSymbol, ref mapToTypeName, ref mapToTypeNamespace);
+
+        // Check for Interfaces (SoftDelete, Auditable)
+        bool isSoftDelete = HasInterface(typeSymbol, SoftDeleteInterfaceFqn);
+        bool isAuditable = HasInterface(typeSymbol, AuditableInterfaceFqn);
 
         // Extract properties — no LINQ, explicit loop
         var members = typeSymbol.GetMembers();
@@ -80,7 +90,9 @@ internal static class EntityTransformer
             filterProperties: new EquatableArray<PropertyModel>(filterProperties),
             isAggregateRoot: isAggregateRoot,
             mapToTypeName: mapToTypeName,
-            mapToTypeNamespace: mapToTypeNamespace);
+            mapToTypeNamespace: mapToTypeNamespace,
+            isSoftDelete: isSoftDelete,
+            isAuditable: isAuditable);
     }
 
     /// <summary>
@@ -198,12 +210,41 @@ internal static class EntityTransformer
 
         string typeName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
+        ValidationRules? validation = ExtractValidation(propSymbol);
+
         return new PropertyModel(
             name: propSymbol.Name,
             typeName: typeName,
             isNullable: isNullable,
             isCollection: isCollection,
-            collectionElementType: collectionElementType);
+            collectionElementType: collectionElementType,
+            validation: validation);
+    }
+
+    private static ValidationRules? ExtractValidation(IPropertySymbol propSymbol)
+    {
+        ValidationRules? rules = null;
+        var attributes = propSymbol.GetAttributes();
+
+        for (int i = 0; i < attributes.Length; i++)
+        {
+            var attr = attributes[i];
+            if (attr.AttributeClass is null) continue;
+
+            string fqn = attr.AttributeClass.ToDisplayString();
+            
+            if (fqn == MaxLengthAttributeFqn || fqn == MinLengthAttributeFqn || fqn == EmailAttributeFqn || fqn == RequiredAttributeFqn)
+            {
+                rules ??= new ValidationRules();
+                
+                if (fqn == MaxLengthAttributeFqn) rules.MaxLength = (int)attr.ConstructorArguments[0].Value!;
+                if (fqn == MinLengthAttributeFqn) rules.MinLength = (int)attr.ConstructorArguments[0].Value!;
+                if (fqn == EmailAttributeFqn) rules.IsEmail = true;
+                if (fqn == RequiredAttributeFqn) rules.IsRequired = true;
+            }
+        }
+
+        return rules;
     }
 
     private static bool IsCollectionType(INamedTypeSymbol type)
@@ -254,5 +295,18 @@ internal static class EntityTransformer
                 return;
             }
         }
+    }
+
+    private static bool HasInterface(INamedTypeSymbol typeSymbol, string interfaceFqn)
+    {
+        var interfaces = typeSymbol.AllInterfaces;
+        for (int i = 0; i < interfaces.Length; i++)
+        {
+            if (string.Equals(interfaces[i].ToDisplayString(), interfaceFqn, System.StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }

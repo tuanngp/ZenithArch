@@ -13,19 +13,22 @@ public sealed class PropertyModel : IEquatable<PropertyModel>
     public bool IsNullable { get; }
     public bool IsCollection { get; }
     public string? CollectionElementType { get; }
+    public ValidationRules? Validation { get; }
 
     public PropertyModel(
         string name,
         string typeName,
         bool isNullable,
         bool isCollection,
-        string? collectionElementType)
+        string? collectionElementType,
+        ValidationRules? validation)
     {
         Name = name;
         TypeName = typeName;
         IsNullable = isNullable;
         IsCollection = isCollection;
         CollectionElementType = collectionElementType;
+        Validation = validation;
     }
 
     public bool Equals(PropertyModel? other)
@@ -37,7 +40,8 @@ public sealed class PropertyModel : IEquatable<PropertyModel>
             && string.Equals(TypeName, other.TypeName, StringComparison.Ordinal)
             && IsNullable == other.IsNullable
             && IsCollection == other.IsCollection
-            && string.Equals(CollectionElementType, other.CollectionElementType, StringComparison.Ordinal);
+            && string.Equals(CollectionElementType, other.CollectionElementType, StringComparison.Ordinal)
+            && Equals(Validation, other.Validation);
     }
 
     public override bool Equals(object? obj) => Equals(obj as PropertyModel);
@@ -52,6 +56,7 @@ public sealed class PropertyModel : IEquatable<PropertyModel>
             hash = (hash ^ IsNullable.GetHashCode()) * 16777619;
             hash = (hash ^ IsCollection.GetHashCode()) * 16777619;
             hash = (hash ^ (CollectionElementType?.GetHashCode() ?? 0)) * 16777619;
+            hash = (hash ^ (Validation?.GetHashCode() ?? 0)) * 16777619;
             return hash;
         }
     }
