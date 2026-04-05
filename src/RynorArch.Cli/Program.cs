@@ -7,27 +7,97 @@ class Program
 {
     static void Main(string[] args)
     {
-        if (args.Length < 2)
-        {
-            Console.WriteLine("RynorArch CLI Tool");
-            Console.WriteLine("------------------");
-            Console.WriteLine("Scaffolds partial classes for manual implementation.");
-            Console.WriteLine("\nUsage: rynor scaffold <EntityName> [Namespace]");
-            Console.WriteLine("Example: rynor scaffold Trip RynorArch.Sample.Cqrs");
-            return;
-        }
+        Console.WriteLine(@"
+██████╗ ██╗   ██╗███╗   ██╗ ██████╗ ██████╗      █████╗ ██████╗  ██████╗██╗  ██╗
+██╔══██╗╚██╗ ██╔╝████╗  ██║██╔═══██╗██╔══██╗    ██╔══██╗██╔══██╗██╔════╝██║  ██║
+██████╔╝ ╚████╔╝ ██╔██╗ ██║██║   ██║██████╔╝    ███████║██████╔╝██║     ███████║
+██╔══██╗  ╚██╔╝  ██║╚██╗██║██║   ██║██╔══██╗    ██╔══██║██╔══██╗██║     ██╔══██║
+██║  ██║   ██║   ██║ ╚████║╚██████╔╝██║  ██║    ██║  ██║██║  ██║╚██████╗██║  ██║
+╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝    ╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝
+");
+Console.WriteLine("Welcome to Rynor Arch CLI - Productivity Framework");
+        Console.WriteLine("-----------------------------------------------");
 
-        string command = args[0].ToLowerInvariant();
-        if (command != "scaffold")
-        {
-            Console.WriteLine("Invalid command. Please use the 'scaffold' command.");
-            return;
-        }
+        string command = args.Length > 0 ? args[0].ToLowerInvariant() : "";
 
-        string entityName = args[1];
-        string ns = args.Length > 2 ? args[2] : "MyProject.Cqrs";
+        if (command == "scaffold")
+        {
+            RunScaffold(args);
+        }
+        else
+        {
+            ShowHelp();
+        }
+    }
+
+    static void ShowHelp()
+    {
+        Console.WriteLine("\nUsage: rynor scaffold");
+        Console.WriteLine("Usage: rynor scaffold <EntityName> [Namespace]");
+    }
+
+    static void RunScaffold(string[] args)
+    {
+        string entityName = args.Length > 1 ? args[1] : Prompt("Entity Name (e.g. Product): ");
+        if (string.IsNullOrWhiteSpace(entityName)) return;
+
+        string ns = args.Length > 2 ? args[2] : Prompt("Namespace (e.g. MyStore.Domain): ", "MyProject.Domain");
         
-        // Pre-defined templates for necessary Hooks
+        bool useSoftDelete = PromptYesNo("Enable Soft Delete? (y/N): ");
+        bool useAuditable = PromptYesNo("Enable Audit Tracking? (y/N): ");
+
+        GenerateCqrsHandlers(entityName, ns);
+        GenerateDomainEntity(entityName, ns, useSoftDelete, useAuditable);
+        GenerateEfConfig(entityName, ns);
+
+        Console.WriteLine("\n🚀 [Success] Scaffolding complete!");
+        Console.WriteLine($"📍 Domain: Domain/{entityName}.cs");
+        Console.WriteLine($"📍 CQRS: Cqrs/{entityName}/ (5 handlers)");
+        Console.WriteLine($"📍 EF: Infrastructure/Data/Configurations/{entityName}Configuration.cs");
+    }
+
+    static void GenerateDomainEntity(string name, string ns, bool softDelete, bool auditable)
+    {
+        string interfaces = "";
+        string properties = "";
+
+        if (softDelete)
+        {
+            interfaces += ", ISoftDelete";
+            properties += "    public bool IsDeleted { get; set; }\n";
+        }
+        if (auditable)
+        {
+            interfaces += ", IAuditable";
+            properties += "    public DateTime CreatedAt { get; set; }\n";
+            properties += "    public string? CreatedBy { get; set; }\n";
+            properties += "    public DateTime? LastModifiedAt { get; set; }\n";
+            properties += "    public string? LastModifiedBy { get; set; }\n";
+        }
+
+        string content = $@"using RynorArch.Abstractions.Attributes;
+using RynorArch.Abstractions.Base;
+using RynorArch.Abstractions.Interfaces;
+
+namespace {ns};
+
+[Entity]
+[AggregateRoot]
+public partial class {name} : EntityBase{interfaces}
+{{
+{properties}
+    // TODO: Add your properties here
+    // [QueryFilter]
+    // public string Title {{ get; set; }}
+}}
+";
+        string dir = Path.Combine(Directory.GetCurrentDirectory(), "Domain");
+        Directory.CreateDirectory(dir);
+        WriteFile(Path.Combine(dir, $"{name}.cs"), content);
+    }
+
+    static void GenerateCqrsHandlers(string entityName, string ns)
+    {
         var templates = new (string ClassPattern, string MethodSignatures)[]
         {
             ("Create{0}Handler", "partial void OnValidate(Create{0}Command command);\n    partial void OnBeforeHandle(Create{0}Command command, {0} entity);"),
@@ -37,7 +107,6 @@ class Program
             ("Get{0}ListHandler", "partial void OnBeforeQuery(Get{0}ListQuery query, ref System.Linq.IQueryable<{0}> queryable);")
         };
 
-        // Write files into the Cqrs/{EntityName} directory
         string targetDir = Path.Combine(Directory.GetCurrentDirectory(), "Cqrs", entityName);
         Directory.CreateDirectory(targetDir);
 
@@ -46,7 +115,7 @@ class Program
             string className = string.Format(t.ClassPattern, entityName);
             string methods = string.Format(t.MethodSignatures, entityName);
             
-            string content = $@"namespace {ns};
+            string content = $@"namespace {ns}.Cqrs;
 
 public sealed partial class {className}
 {{
@@ -55,27 +124,18 @@ public sealed partial class {className}
     // {methods.Replace("\n", "\n    // ")}
 }}
 ";
-            string filePath = Path.Combine(targetDir, $"{className}.cs");
-            if (!File.Exists(filePath))
-            {
-                File.WriteAllText(filePath, content);
-                Console.WriteLine($"[Created] {filePath}");
-            }
-            else
-            {
-                Console.WriteLine($"[Skipped] {filePath} (File already exists)");
-            }
+            WriteFile(Path.Combine(targetDir, $"{className}.cs"), content);
         }
-        
-        // EF Core Configuration
-        string efConfigContent = $@"using Microsoft.EntityFrameworkCore.Metadata.Builders;
+    }
+
+    static void GenerateEfConfig(string entityName, string ns)
+    {
+        string content = $@"using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace {ns}.Infrastructure.Data.Configurations;
 
 public partial class {entityName}Configuration
 {{
-    // TODO: Uncomment the partial method below to configure Database Constraints
-    
     // partial void ConfigurePartial(EntityTypeBuilder<{entityName}> builder)
     // {{
     //     // builder.HasIndex(x => x.Name).IsUnique();
@@ -84,13 +144,34 @@ public partial class {entityName}Configuration
 ";
         string efConfigDir = Path.Combine(Directory.GetCurrentDirectory(), "Infrastructure", "Data", "Configurations");
         Directory.CreateDirectory(efConfigDir);
-        string efConfigPath = Path.Combine(efConfigDir, $"{entityName}Configuration.cs");
-        if (!File.Exists(efConfigPath))
-        {
-            File.WriteAllText(efConfigPath, efConfigContent);
-            Console.WriteLine($"[Created] {efConfigPath}");
-        }
+        WriteFile(Path.Combine(efConfigDir, $"{entityName}Configuration.cs"), content);
+    }
 
-        Console.WriteLine("\n[RYNOR] Physical layout scaffolded successfully! You can now open your IDE to code manually.");
+    static string Prompt(string message, string defaultValue = "")
+    {
+        Console.Write(message);
+        if (!string.IsNullOrEmpty(defaultValue)) Console.Write($"[{defaultValue}] ");
+        string? input = Console.ReadLine();
+        return string.IsNullOrWhiteSpace(input) ? defaultValue : input;
+    }
+
+    static bool PromptYesNo(string message)
+    {
+        Console.Write(message);
+        string? input = Console.ReadLine()?.ToLowerInvariant();
+        return input == "y" || input == "yes";
+    }
+
+    static void WriteFile(string path, string content)
+    {
+        if (!File.Exists(path))
+        {
+            File.WriteAllText(path, content);
+            Console.WriteLine($"[Created] {path}");
+        }
+        else
+        {
+            Console.WriteLine($"[Skipped] {path} (Exists)");
+        }
     }
 }
