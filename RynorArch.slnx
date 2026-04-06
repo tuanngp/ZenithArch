@@ -4,6 +4,10 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/RynorArch.Abstractions/RynorArch.Abstractions.csproj" />
+    <Project Path="src/RynorArch.Cli/RynorArch.Cli.csproj" />
     <Project Path="src/RynorArch.Generator/RynorArch.Generator.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/RynorArch.Generator.Tests/RynorArch.Generator.Tests.csproj" />
   </Folder>
 </Solution>

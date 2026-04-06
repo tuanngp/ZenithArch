@@ -35,12 +35,12 @@ param (
 
 $ErrorActionPreference = "Stop"
 
-# 1. Get current version
-$generatorProject = "src\RynorArch.Generator\RynorArch.Generator.csproj"
-[xml]$projXml = Get-Content $generatorProject
-$currentVersionStr = $projXml.Project.PropertyGroup.Version
+# 1. Get current version from central props
+$versionPropsFile = Join-Path $PSScriptRoot "Directory.Build.props"
+[xml]$propsXml = Get-Content $versionPropsFile
+$currentVersionStr = $propsXml.Project.PropertyGroup.VersionPrefix
 if (-not $currentVersionStr) {
-    Write-Host "Error: Cannot find <Version> in $generatorProject" -ForegroundColor Red
+    Write-Host "Error: Cannot find <VersionPrefix> in $versionPropsFile" -ForegroundColor Red
     exit 1
 }
 
@@ -59,19 +59,24 @@ if ($Increment -ne "None") {
 
     Write-Host "Bumping version to: $newVersionStr" -ForegroundColor Green
 
-    # 3. Update all csproj in src/
-    $projectFiles = Get-ChildItem -Path "src" -Filter "*.csproj" -Recurse
-    foreach ($file in $projectFiles) {
-        $content = Get-Content $file.FullName
-        $updatedContent = $content -replace "<Version>.*</Version>", "<Version>$newVersionStr</Version>"
-        Set-Content -Path $file.FullName -Value $updatedContent -Encoding UTF8
-        Write-Host "Updated $($file.Name)" -ForegroundColor Gray
-    }
+    # 3. Update the shared version source
+    $propsXml.Project.PropertyGroup.VersionPrefix = $newVersionStr
+    $propsXml.Save($versionPropsFile)
+    Write-Host "Updated Directory.Build.props" -ForegroundColor Gray
 } else {
     $newVersionStr = $currentVersionStr
 }
 
-# 4. Pack
+# 4. Build and test first
+Write-Host "`nBuilding solution..." -ForegroundColor Cyan
+dotnet build "RynorArch.slnx" -c Release
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+Write-Host "`nRunning tests..." -ForegroundColor Cyan
+dotnet test "RynorArch.slnx" -c Release --no-build
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+# 5. Pack
 Write-Host "`nPacking projects..." -ForegroundColor Cyan
 $artifactsDir = (Join-Path $PSScriptRoot "artifacts")
 if (Test-Path $artifactsDir) {
@@ -80,11 +85,14 @@ if (Test-Path $artifactsDir) {
 
 New-Item -ItemType Directory -Path $artifactsDir | Out-Null
 
-dotnet pack src\RynorArch.Abstractions\RynorArch.Abstractions.csproj -c Release -o $artifactsDir
-dotnet pack src\RynorArch.Generator\RynorArch.Generator.csproj -c Release -o $artifactsDir
-dotnet pack src\RynorArch.Cli\RynorArch.Cli.csproj -c Release -o $artifactsDir
+$projectFiles = Get-ChildItem -Path (Join-Path $PSScriptRoot "src") -Filter "*.csproj" -Recurse | Sort-Object FullName
+foreach ($projectFile in $projectFiles) {
+    Write-Host "Packing $($projectFile.Name)..." -ForegroundColor Gray
+    dotnet pack $projectFile.FullName -c Release -o $artifactsDir --no-build
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+}
 
-# 5. Push
+# 6. Push
 if ($Push) {
     if (-not $ApiKey) {
         $ApiKey = $env:NUGET_API_KEY
@@ -101,6 +109,7 @@ if ($Push) {
     foreach ($pkg in $packages) {
         Write-Host "Pushing $($pkg.Name)..." -ForegroundColor Yellow
         dotnet nuget push $pkg.FullName --api-key $ApiKey --source "https://api.nuget.org/v3/index.json" --skip-duplicate
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
     }
 
     Write-Host "`nSuccessfully published version $newVersionStr" -ForegroundColor Green

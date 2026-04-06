@@ -23,8 +23,14 @@ internal static class SpecificationEmitter
         var w = new SourceWriter(2048);
         w.AppendFileHeader();
 
+        w.AppendLine("using System;");
+        w.AppendLine("using System.Collections.Generic;");
         w.AppendLine("using System.Linq.Expressions;");
         w.AppendLine("using RynorArch.Abstractions.Interfaces;");
+        if (!string.IsNullOrEmpty(entity.Namespace))
+        {
+            w.AppendLine($"using {entity.Namespace};");
+        }
         w.AppendLine();
 
         if (!string.IsNullOrEmpty(entity.Namespace))

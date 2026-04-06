@@ -23,6 +23,7 @@ internal static class DddEmitter
         var w = new SourceWriter(1024);
         w.AppendFileHeader();
 
+        w.AppendLine("using System;");
         w.AppendLine("using RynorArch.Abstractions.Base;");
         w.AppendLine();
 

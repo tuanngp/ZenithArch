@@ -5,5 +5,19 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <VersionPrefix>1.0.6</VersionPrefix>
+    <PackageVersion>$(VersionPrefix)</PackageVersion>
+    <Authors>Nguyen Gia Phuong Tuan</Authors>
+    <PackageProjectUrl>https://github.com/tuanngp/RynorArch</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/tuanngp/RynorArch</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>See CHANGELOG.md for release details.</PackageReleaseNotes>
+    <PackageTags>source-generator;roslyn;clean-architecture;cqrs;ddd;ef-core;mediatr;dotnet;nuget</PackageTags>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <IsPackable Condition="'$(IsPackable)' == ''">false</IsPackable>
   </PropertyGroup>
 </Project>

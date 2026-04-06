@@ -27,8 +27,17 @@ internal static class RepositoryEmitter
         var w = new SourceWriter(2048);
         w.AppendFileHeader();
 
+        w.AppendLine("using System;");
+        w.AppendLine("using System.Collections.Generic;");
+        w.AppendLine("using System.Linq;");
         w.AppendLine("using System.Linq.Expressions;");
+        w.AppendLine("using System.Threading;");
+        w.AppendLine("using System.Threading.Tasks;");
         w.AppendLine("using Microsoft.EntityFrameworkCore;");
+        if (!string.IsNullOrEmpty(entity.Namespace))
+        {
+            w.AppendLine($"using {entity.Namespace};");
+        }
 
         if (config.UseSpecification)
         {

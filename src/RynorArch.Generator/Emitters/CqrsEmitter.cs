@@ -21,8 +21,17 @@ internal static class CqrsEmitter
         var w = new SourceWriter(4096);
         w.AppendFileHeader();
 
+        w.AppendLine("using System;");
+        w.AppendLine("using System.Collections.Generic;");
+        w.AppendLine("using System.Linq;");
         w.AppendLine("using MediatR;");
         w.AppendLine("using Microsoft.EntityFrameworkCore;");
+        w.AppendLine("using System.Threading;");
+        w.AppendLine("using System.Threading.Tasks;");
+        if (!string.IsNullOrEmpty(entity.Namespace))
+        {
+            w.AppendLine($"using {entity.Namespace};");
+        }
         w.AppendLine();
 
         if (!string.IsNullOrEmpty(entity.Namespace))

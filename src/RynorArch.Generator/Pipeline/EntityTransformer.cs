@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.CSharp;
 using RynorArch.Generator.Models;
 
 namespace RynorArch.Generator.Pipeline;
@@ -34,6 +35,12 @@ internal static class EntityTransformer
     {
         if (context.TargetSymbol is not INamedTypeSymbol typeSymbol)
             return null;
+
+        if (context.TargetNode is not ClassDeclarationSyntax classDeclaration
+            || !IsPartialDeclaration(classDeclaration))
+        {
+            return null;
+        }
 
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -77,7 +84,8 @@ internal static class EntityTransformer
             var propModel = ExtractProperty(propSymbol);
             properties.Add(propModel);
 
-            if (HasAttribute(propSymbol, QueryFilterAttributeFqn))
+            if (HasAttribute(propSymbol, QueryFilterAttributeFqn)
+                && IsSupportedQueryFilterType(propSymbol.Type))
             {
                 filterProperties.Add(propModel);
             }
@@ -180,6 +188,80 @@ internal static class EntityTransformer
         return ArchitectureConfig.Default;
     }
 
+    public static bool HasArchitectureConfiguration(Compilation compilation, System.Threading.CancellationToken cancellationToken)
+    {
+        var assemblyAttributes = compilation.Assembly.GetAttributes();
+
+        for (int i = 0; i < assemblyAttributes.Length; i++)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            var attr = assemblyAttributes[i];
+            if (attr.AttributeClass is null)
+                continue;
+
+            if (string.Equals(attr.AttributeClass.ToDisplayString(), ArchitectureAttributeFqn, System.StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static bool IsPartialDeclaration(ClassDeclarationSyntax classDeclaration)
+    {
+        var modifiers = classDeclaration.Modifiers;
+        for (int i = 0; i < modifiers.Count; i++)
+        {
+            if (modifiers[i].IsKind(SyntaxKind.PartialKeyword))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static bool IsSupportedQueryFilterType(ITypeSymbol type)
+    {
+        if (type.SpecialType == SpecialType.System_String
+            || type.SpecialType == SpecialType.System_Boolean
+            || type.SpecialType == SpecialType.System_DateTime
+            || type.SpecialType == SpecialType.System_Byte
+            || type.SpecialType == SpecialType.System_SByte
+            || type.SpecialType == SpecialType.System_Int16
+            || type.SpecialType == SpecialType.System_UInt16
+            || type.SpecialType == SpecialType.System_Int32
+            || type.SpecialType == SpecialType.System_UInt32
+            || type.SpecialType == SpecialType.System_Int64
+            || type.SpecialType == SpecialType.System_UInt64
+            || type.SpecialType == SpecialType.System_Single
+            || type.SpecialType == SpecialType.System_Double
+            || type.SpecialType == SpecialType.System_Decimal)
+        {
+            return true;
+        }
+
+        if (type.TypeKind == TypeKind.Enum)
+        {
+            return true;
+        }
+
+        if (type is INamedTypeSymbol namedType)
+        {
+            if (namedType.OriginalDefinition.SpecialType == SpecialType.System_Nullable_T
+                && namedType.TypeArguments.Length == 1)
+            {
+                return IsSupportedQueryFilterType(namedType.TypeArguments[0]);
+            }
+
+            return string.Equals(namedType.ToDisplayString(), "System.Guid", System.StringComparison.Ordinal);
+        }
+
+        return false;
+    }
+
     private static PropertyModel ExtractProperty(IPropertySymbol propSymbol)
     {
         var type = propSymbol.Type;
@@ -272,6 +354,21 @@ internal static class EntityTransformer
             }
         }
         return false;
+    }
+
+    public static string? GetEntityNameForUnsupportedQueryFilter(
+        GeneratorAttributeSyntaxContext context,
+        System.Threading.CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        if (context.TargetSymbol is not IPropertySymbol propertySymbol)
+            return null;
+
+        return HasAttribute(propertySymbol, QueryFilterAttributeFqn)
+            && !IsSupportedQueryFilterType(propertySymbol.Type)
+            ? propertySymbol.ContainingType?.Name
+            : null;
     }
 
     private static void ExtractMapToTarget(INamedTypeSymbol typeSymbol, ref string? typeName, ref string? typeNamespace)

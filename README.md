@@ -1,6 +1,6 @@
 # RynorArch
 
-**RynorArch** is a compile-time .NET architecture automation framework using Roslyn Incremental Source Generators. It is designed to eliminate boilerplate code for .NET 9 applications while enforcing strict clean architecture patterns (CQRS, Repository, or FullStack) with zero runtime overhead and Native AOT compatibility.
+**RynorArch** is a compile-time .NET architecture automation framework using Roslyn Incremental Source Generators. It is designed to eliminate boilerplate code for modern .NET applications while enforcing strict clean architecture patterns (CQRS, Repository, or FullStack) with zero runtime overhead and Native AOT compatibility.
 
 ## Features
 
@@ -17,11 +17,23 @@ Add references to the core packages in your `.csproj`:
 
 ```xml
 <!-- The public API package (contains attributes, interfaces) -->
-<PackageReference Include="RynorArch.Abstractions" Version="1.0.0" />
+<PackageReference Include="RynorArch.Abstractions" Version="1.0.6" />
 
 <!-- The source generator package (development dependency only) -->
-<PackageReference Include="RynorArch.Generator" Version="1.0.0" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+<PackageReference Include="RynorArch.Generator" Version="1.0.6" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 ```
+
+> Replace `1.0.6` with the latest stable package version you intend to adopt, then pin it until you have validated generated output in your project.
+
+### Feature dependencies
+
+| Feature | Required package |
+| --- | --- |
+| CQRS / FullStack | `MediatR` |
+| Validation | `FluentValidation` |
+| Persistence | `Microsoft.EntityFrameworkCore` |
+| Endpoints | ASP.NET Core shared framework |
+| Caching decorators | `Microsoft.Extensions.Caching.*` |
 
 > **Note**: CQRS mode relies on MediatR and FluentValidation (if enabled). Ensure you include these dependencies in your project as well.
 ```xml
@@ -29,6 +41,27 @@ Add references to the core packages in your `.csproj`:
 <PackageReference Include="FluentValidation" Version="11.11.0" />
 <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
 ```
+
+## Quick Start
+
+1. Add `RynorArch.Abstractions` and `RynorArch.Generator` to your application project.
+2. Add an explicit `[assembly: Architecture(...)]` configuration.
+3. Mark your domain classes with `[Entity]` and make them `partial`.
+4. Build the project and inspect the generated `.g.cs` files.
+5. Extend generated handlers or validators with partial classes only where your business logic diverges.
+
+For a working end-to-end sample, see `samples/RynorArch.Sample`.
+
+## Compatibility Matrix
+
+| Area | Status |
+| --- | --- |
+| Validated SDK | `.NET SDK 10.0.x` |
+| Generator package target | `netstandard2.0` |
+| CLI runtime targets | `net8.0`, `net9.0`, `net10.0` |
+| Supported patterns | `Cqrs`, `Repository`, `FullStack` |
+
+See `docs/COMPATIBILITY.md` for the detailed support matrix and adoption guidance.
 
 ## Configuration
 
@@ -51,6 +84,8 @@ using RynorArch.Abstractions.Enums;
 - `ArchitecturePattern.Cqrs` - Generates MediatR Commands, Queries, and Handlers. Handlers dependency-inject the DbContext directly.
 - `ArchitecturePattern.Repository` - Generates `IRepository<T>` interfaces, concrete Repository implementations, and optionally a `UnitOfWork` interface.
 - `ArchitecturePattern.FullStack` - Generates both CQRS and Repository artifacts.
+
+Always declare the assembly-level configuration explicitly, even if the defaults happen to match your current needs. This keeps upgrades and generated output predictable.
 
 ## Usage
 
@@ -121,30 +156,23 @@ public partial class CreateTripValidator
 }
 ```
 
+## Samples and Generated Files
+
+- `samples/RynorArch.Sample` demonstrates a realistic consumer project with `FullStack` mode enabled.
+- Generated files should usually stay out of source control unless your team intentionally reviews generated diffs as part of the release process.
+
+## Troubleshooting and Upgrades
+
+- Troubleshooting: `docs/TROUBLESHOOTING.md`
+- Compatibility: `docs/COMPATIBILITY.md`
+- Upgrade guidance: `docs/UPGRADING.md`
+- Release process: `docs/RELEASING.md`
+- Changelog: `CHANGELOG.md`
+
 ## Built With
 
-- **.NET 9 SDK**
+- **.NET 10 SDK**
 - **Roslyn Incremental Source Generators** API (`IIncrementalGenerator`)
 - **MediatR**
 - **FluentValidation**
 - **Entity Framework Core**
-
----
-## Packing as NuGet
-
-Since building Source Generators generally targets `netstandard2.0` and comes packaged differently, `RynorArch` uses `.csproj` properties optimally out of the box to export analyzing DLLs inside `.nupkg`.
-
-To pack this solution into multiple redistributable NuGet packages, run the following:
-
-```bash
-dotnet pack --configuration Release
-```
-
-Two artifacts will be generated:
-1. `src/RynorArch.Abstractions/bin/Release/RynorArch.Abstractions.1.0.0.nupkg`
-2. `src/RynorArch.Generator/bin/Release/RynorArch.Generator.1.0.0.nupkg`
-
-You can manually distribute these or publish to Nuget via:
-```bash
-dotnet nuget push src/RynorArch.Generator/bin/Release/RynorArch.Generator.1.0.0.nupkg --api-key <YOUR_API_KEY> --source https://api.nuget.org/v3/index.json
-```

@@ -49,4 +49,12 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor MissingArchitectureConfiguration = new(
+        id: "RYNOR006",
+        title: "Missing architecture configuration",
+        messageFormat: "No [assembly: Architecture(...)] configuration was found. RynorArch will fall back to default CQRS settings. Add an explicit assembly configuration to keep generation predictable.",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
 }
