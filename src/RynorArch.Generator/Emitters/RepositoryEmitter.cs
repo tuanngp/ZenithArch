@@ -13,13 +13,6 @@ internal static class RepositoryEmitter
     {
         var source = Generate(entity, config);
         context.AddSource($"{entity.Name}.Repository.g.cs", source);
-
-        // Emit UnitOfWork once per compilation (tracked externally by caller)
-        if (config.UseUnitOfWork)
-        {
-            var uowSource = GenerateUnitOfWorkInterface();
-            context.AddSource("IUnitOfWork.g.cs", uowSource);
-        }
     }
 
     internal static string Generate(EntityModel entity, ArchitectureConfig config)

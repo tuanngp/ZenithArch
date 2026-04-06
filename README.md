@@ -9,6 +9,7 @@
 - **Deterministic Output**: Consistent, predictable output files (`.g.cs`).
 - **Clean Architecture Enforced**: Strict separation of concerns depending on the chosen pattern. Handlers are decoupled from repositories unless FullStack is explicitly used.
 - **Hybrid Generation Model**: Public contracts stay explicit per entity, while shared CRUD and EF interaction now flow through a generated generic infrastructure layer emitted once per compilation.
+- **Optimized Shared Runtime**: Generic CRUD helpers now cache entity traits, emit one-per-compilation support artifacts, and centralize specification/list semantics to reduce build and runtime overhead.
 - **Extensible via Partial Classes**: All generated handlers, repositories, and validators are `partial` and provide lifecycle hooks (`OnBeforeHandle`, `OnValidate`, etc.) for you to inject custom logic.
 - **DDD Integration**: First-class support for `[AggregateRoot]` and Domain Events.
 
@@ -60,6 +61,7 @@ RynorArch now uses a hybrid model to keep generated source smaller as your entit
 - Per-entity generated types remain explicit for commands, queries, handlers, DTOs, validators, specifications, and domain events.
 - Shared CRUD and EF Core interaction are emitted once into a generic infrastructure layer and reused by the per-entity wrappers.
 - Generated repositories now act as thin wrappers over a shared `CrudRepository<TEntity>` base instead of duplicating full CRUD implementations for every entity.
+- The shared runtime now caches soft-delete traits per `TEntity`, emits `IUnitOfWork` once per compilation, and keeps CQRS/specification filter rules aligned through shared generator helpers.
 
 ## Compatibility Matrix
 

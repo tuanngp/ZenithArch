@@ -14,6 +14,11 @@ internal static class GlobalResolver
             CrudInfrastructureEmitter.Emit(context);
         }
 
+        if (entities.Length > 0 && config.IsRepository && config.UseUnitOfWork)
+        {
+            context.AddSource("IUnitOfWork.g.cs", RepositoryEmitter.GenerateUnitOfWorkInterface());
+        }
+
         if (config.GenerateDependencyInjection)
         {
             DependencyInjectionEmitter.Emit(context, entities, config);

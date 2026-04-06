@@ -93,7 +93,7 @@ internal static class CqrsEmitter
         for (int i = 0; i < filters.Length; i++)
         {
             var prop = filters[i];
-            string nullableType = prop.IsNullable ? prop.TypeName : $"{prop.TypeName}?";
+            string nullableType = QueryFilterEmitter.GetNullableFilterType(prop);
             w.AppendLine($"public {nullableType} {prop.Name} {{ get; init; }}");
         }
 
@@ -290,21 +290,7 @@ internal static class CqrsEmitter
         var filters = entity.FilterProperties.AsArray();
         for (int i = 0; i < filters.Length; i++)
         {
-            var prop = filters[i];
-            w.AppendLine($"if (query.{prop.Name} is not null)");
-            w.IncreaseIndent();
-
-            if (prop.TypeName.IndexOf("string", System.StringComparison.Ordinal) >= 0)
-            {
-                w.AppendLine($"queryable = queryable.Where(x => x.{prop.Name}.Contains(query.{prop.Name}!));");
-            }
-            else
-            {
-                w.AppendLine($"queryable = queryable.Where(x => x.{prop.Name} == query.{prop.Name});");
-            }
-
-            w.DecreaseIndent();
-            w.AppendLine();
+            QueryFilterEmitter.EmitQueryableFilter(w, filters[i], $"query.{filters[i].Name}");
         }
 
         w.AppendLine("OnBeforeQuery(query, ref queryable);");

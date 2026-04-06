@@ -20,6 +20,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Updated the CLI support matrix to `net8.0`, `net9.0`, and `net10.0`.
 - Refactored repository generation to emit thin per-entity wrappers over a shared generated `CrudRepository<TEntity>` base.
 - Refactored CQRS handler persistence logic to delegate shared EF/Core CRUD work into generated generic runtime helpers emitted once per compilation.
+- Optimized the shared CRUD runtime to cache per-entity soft-delete traits and clarify specification application for list versus count operations.
+- Moved `IUnitOfWork` emission to a one-per-compilation path instead of repeating the source add per entity.
+- Centralized QueryFilter generation rules so CQRS list handlers and generated specifications stay aligned.
 
 ## [1.0.6]
 

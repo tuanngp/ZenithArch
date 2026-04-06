@@ -56,7 +56,7 @@ internal static class SpecificationEmitter
         for (int i = 0; i < filters.Length; i++)
         {
             var prop = filters[i];
-            string nullableType = prop.IsNullable ? prop.TypeName : $"{prop.TypeName}?";
+            string nullableType = QueryFilterEmitter.GetNullableFilterType(prop);
             w.AppendLine($"public {nullableType} {prop.Name} {{ get; init; }}");
         }
 
@@ -75,23 +75,7 @@ internal static class SpecificationEmitter
 
         for (int i = 0; i < filters.Length; i++)
         {
-            var prop = filters[i];
-
-            w.AppendLine($"if ({prop.Name} is not null)");
-            w.OpenBrace();
-
-            if (prop.TypeName.IndexOf("string", System.StringComparison.Ordinal) >= 0)
-            {
-                w.AppendLine($"Expression<Func<{name}, bool>> filter = x => x.{prop.Name}.Contains({prop.Name}!);");
-            }
-            else
-            {
-                w.AppendLine($"Expression<Func<{name}, bool>> filter = x => x.{prop.Name} == {prop.Name};");
-            }
-
-            w.AppendLine("expr = expr is null ? filter : CombineAnd(expr, filter);");
-            w.CloseBrace();
-            w.AppendLine();
+            QueryFilterEmitter.EmitSpecificationFilter(w, name, filters[i], filters[i].Name);
         }
 
         w.AppendLine("return expr;");

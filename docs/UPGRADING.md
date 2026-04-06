@@ -32,6 +32,19 @@ You may need code changes if you previously:
 2. Re-run the build and inspect the new generated infrastructure file plus the thinner repository output.
 3. Validate soft-delete, auditable, and specification behavior in one representative module before wider rollout.
 
+## Deep optimization notes
+
+The latest optimization pass is intended to be mostly internal and should preserve the public generated type shape from the hybrid refactor.
+
+Key changes:
+
+- shared CRUD runtime now caches per-entity traits for repeated query paths
+- specification application is split internally into list/count branches with the same public API as before
+- `IUnitOfWork` is emitted once per compilation instead of once per entity
+- CQRS list filtering and generated specification filtering now use shared generation rules to reduce drift
+
+Most consumers should not need migration changes beyond rebuilding and validating representative generated output.
+
 ## Versioning policy
 
 - Patch: diagnostics, metadata, docs, or generated output fixes that should not require consumer rewrites.

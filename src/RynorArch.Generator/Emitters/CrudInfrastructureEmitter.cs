@@ -90,17 +90,14 @@ internal static class CrudInfrastructureEmitter
         w.AppendLine("public async Task<IReadOnlyList<TEntity>> ListAsync(ISpecification<TEntity> specification, CancellationToken cancellationToken = default)");
         w.OpenBrace();
         w.AppendLine("IQueryable<TEntity> queryable = RynorArchCrudRuntime.CreateQuery<TEntity>(Db);");
-        w.AppendLine("queryable = RynorArchCrudRuntime.ApplySpecification(queryable, specification);");
+        w.AppendLine("queryable = RynorArchCrudRuntime.ApplySpecificationForList(queryable, specification);");
         w.AppendLine("return await queryable.ToListAsync(cancellationToken);");
         w.CloseBrace();
         w.AppendLine();
         w.AppendLine("public async Task<int> CountAsync(ISpecification<TEntity> specification, CancellationToken cancellationToken = default)");
         w.OpenBrace();
         w.AppendLine("IQueryable<TEntity> queryable = RynorArchCrudRuntime.CreateQuery<TEntity>(Db);");
-        w.AppendLine("if (specification.Criteria is not null)");
-        w.OpenBrace();
-        w.AppendLine("queryable = queryable.Where(specification.Criteria);");
-        w.CloseBrace();
+        w.AppendLine("queryable = RynorArchCrudRuntime.ApplySpecificationForCount(queryable, specification);");
         w.AppendLine("return await queryable.CountAsync(cancellationToken);");
         w.CloseBrace();
         w.CloseBrace();
@@ -110,6 +107,8 @@ internal static class CrudInfrastructureEmitter
     {
         w.AppendLine("public static class RynorArchCrudRuntime");
         w.OpenBrace();
+        EmitEntityTraits(w);
+        w.AppendLine();
         w.AppendLine("public static IQueryable<TEntity> CreateQuery<TEntity>(DbContext db, bool asNoTracking = true) where TEntity : class");
         w.OpenBrace();
         w.AppendLine("IQueryable<TEntity> query = db.Set<TEntity>();");
@@ -118,9 +117,9 @@ internal static class CrudInfrastructureEmitter
         w.AppendLine("query = query.AsNoTracking();");
         w.CloseBrace();
         w.AppendLine();
-        w.AppendLine("if (typeof(ISoftDelete).IsAssignableFrom(typeof(TEntity)))");
+        w.AppendLine("if (EntityTraits<TEntity>.SupportsSoftDelete)");
         w.OpenBrace();
-        w.AppendLine("query = query.Where(BuildSoftDeletePredicate<TEntity>());");
+        w.AppendLine("query = query.Where(EntityTraits<TEntity>.SoftDeletePredicate);");
         w.CloseBrace();
         w.AppendLine();
         w.AppendLine("return query;");
@@ -172,18 +171,41 @@ internal static class CrudInfrastructureEmitter
         w.AppendLine("return CreateQuery<TEntity>(db).AnyAsync(BuildIdPredicate<TEntity>(id), cancellationToken);");
         w.CloseBrace();
         w.AppendLine();
-        w.AppendLine("public static IQueryable<TEntity> ApplySpecification<TEntity>(IQueryable<TEntity> queryable, ISpecification<TEntity> specification) where TEntity : class");
+        w.AppendLine("public static IQueryable<TEntity> ApplySpecificationForList<TEntity>(IQueryable<TEntity> queryable, ISpecification<TEntity> specification) where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("queryable = ApplySpecificationCriteria(queryable, specification);");
+        w.AppendLine("queryable = ApplySpecificationIncludes(queryable, specification);");
+        w.AppendLine("queryable = ApplySpecificationPaging(queryable, specification);");
+        w.AppendLine("return queryable;");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public static IQueryable<TEntity> ApplySpecificationForCount<TEntity>(IQueryable<TEntity> queryable, ISpecification<TEntity> specification) where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("return ApplySpecificationCriteria(queryable, specification);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("private static IQueryable<TEntity> ApplySpecificationCriteria<TEntity>(IQueryable<TEntity> queryable, ISpecification<TEntity> specification) where TEntity : class");
         w.OpenBrace();
         w.AppendLine("if (specification.Criteria is not null)");
         w.OpenBrace();
         w.AppendLine("queryable = queryable.Where(specification.Criteria);");
         w.CloseBrace();
         w.AppendLine();
+        w.AppendLine("return queryable;");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("private static IQueryable<TEntity> ApplySpecificationIncludes<TEntity>(IQueryable<TEntity> queryable, ISpecification<TEntity> specification) where TEntity : class");
+        w.OpenBrace();
         w.AppendLine("for (int i = 0; i < specification.Includes.Count; i++)");
         w.OpenBrace();
         w.AppendLine("queryable = queryable.Include(specification.Includes[i]);");
         w.CloseBrace();
         w.AppendLine();
+        w.AppendLine("return queryable;");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("private static IQueryable<TEntity> ApplySpecificationPaging<TEntity>(IQueryable<TEntity> queryable, ISpecification<TEntity> specification) where TEntity : class");
+        w.OpenBrace();
         w.AppendLine("if (specification.Skip.HasValue)");
         w.OpenBrace();
         w.AppendLine("queryable = queryable.Skip(specification.Skip.Value);");
@@ -209,6 +231,7 @@ internal static class CrudInfrastructureEmitter
         w.AppendLine("queryable = queryable.Take(take);");
         w.CloseBrace();
         w.AppendLine();
+        w.AppendLine("// `take == 0` intentionally means no upper bound to preserve existing query behavior.");
         w.AppendLine("return await queryable.ToListAsync(cancellationToken);");
         w.CloseBrace();
         w.AppendLine();
@@ -258,6 +281,15 @@ internal static class CrudInfrastructureEmitter
         w.AppendLine("var body = Expression.Equal(left, Expression.Constant(false));");
         w.AppendLine("return Expression.Lambda<Func<TEntity, bool>>(body, parameter);");
         w.CloseBrace();
+        w.CloseBrace();
+    }
+
+    private static void EmitEntityTraits(SourceWriter w)
+    {
+        w.AppendLine("private static class EntityTraits<TEntity> where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("public static readonly bool SupportsSoftDelete = typeof(ISoftDelete).IsAssignableFrom(typeof(TEntity));");
+        w.AppendLine("public static readonly Expression<Func<TEntity, bool>> SoftDeletePredicate = BuildSoftDeletePredicate<TEntity>();");
         w.CloseBrace();
     }
 }

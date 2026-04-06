@@ -12,7 +12,8 @@ namespace RynorArch.Generator.Tests;
 internal sealed record GeneratorRunResult(
     CSharpCompilation OutputCompilation,
     ImmutableArray<Diagnostic> Diagnostics,
-    ImmutableDictionary<string, string> GeneratedSources);
+    ImmutableDictionary<string, string> GeneratedSources,
+    ImmutableArray<string> GeneratedHintNames);
 
 internal static class GeneratorTestHarness
 {
@@ -48,10 +49,12 @@ internal static class GeneratorTestHarness
             .AddRange(runResult.Diagnostics);
 
         var generatedSources = ImmutableDictionary.CreateBuilder<string, string>(StringComparer.Ordinal);
+        var generatedHintNames = ImmutableArray.CreateBuilder<string>();
         foreach (var result in runResult.Results)
         {
             foreach (var generatedSource in result.GeneratedSources)
             {
+                generatedHintNames.Add(generatedSource.HintName);
                 generatedSources[generatedSource.HintName] = generatedSource.SourceText.ToString();
             }
         }
@@ -59,7 +62,8 @@ internal static class GeneratorTestHarness
         return new GeneratorRunResult(
             (CSharpCompilation)outputCompilation,
             allDiagnostics,
-            generatedSources.ToImmutable());
+            generatedSources.ToImmutable(),
+            generatedHintNames.ToImmutable());
     }
 
     private static IEnumerable<MetadataReference> CreateMetadataReferences()

@@ -30,6 +30,9 @@ public sealed class GeneratorOutputTests
         Assert.Contains("RynorArch.CrudInfrastructure.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("public interface ITripRepository : ICrudRepository<Trip>;", result.GeneratedSources["Trip.Repository.g.cs"]);
         Assert.Contains("public sealed partial class TripRepository : CrudRepository<Trip>, ITripRepository", result.GeneratedSources["Trip.Repository.g.cs"]);
+        Assert.Contains("private static class EntityTraits<TEntity> where TEntity : class", result.GeneratedSources["RynorArch.CrudInfrastructure.g.cs"]);
+        Assert.Contains("ApplySpecificationForList", result.GeneratedSources["RynorArch.CrudInfrastructure.g.cs"]);
+        Assert.Contains("ApplySpecificationForCount", result.GeneratedSources["RynorArch.CrudInfrastructure.g.cs"]);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error);
     }
 
@@ -67,6 +70,54 @@ public sealed class GeneratorOutputTests
         Assert.Contains("Expression<Func<Trip, bool>> filter = x => x.Destination.Contains(Destination!);", generatedSource);
         Assert.Contains("public IReadOnlyList<Expression<Func<Trip, object>>> Includes { get; init; } = Array.Empty<Expression<Func<Trip, object>>>();", generatedSource);
         Assert.Contains("return Expression.Lambda<Func<Trip, bool>>(combined, parameter);", generatedSource);
+    }
+
+    [Fact]
+    public void Emits_unit_of_work_once_for_multiple_entities()
+    {
+        var result = GeneratorTestHarness.Run("""
+            using RynorArch.Abstractions.Attributes;
+            using RynorArch.Abstractions.Base;
+            using RynorArch.Abstractions.Enums;
+
+            [assembly: Architecture(
+                Pattern = ArchitecturePattern.FullStack,
+                UseSpecification = true,
+                UseUnitOfWork = true)]
+
+            namespace Demo.Domain;
+
+            [Entity]
+            public partial class Trip : EntityBase
+            {
+                [QueryFilter]
+                public string Destination { get; set; } = string.Empty;
+            }
+
+            [Entity]
+            public partial class Hotel : EntityBase
+            {
+                [QueryFilter]
+                public string Name { get; set; } = string.Empty;
+            }
+            """,
+            """
+            using Microsoft.EntityFrameworkCore;
+            using Demo.Domain;
+
+            namespace Demo.Domain.Cqrs;
+
+            public sealed class AppDbContext : DbContext
+            {
+                public DbSet<Trip> Trips => Set<Trip>();
+                public DbSet<Hotel> Hotels => Set<Hotel>();
+            }
+            """);
+
+        Assert.Equal(1, result.GeneratedHintNames.Count(name => name == "IUnitOfWork.g.cs"));
+        Assert.Contains("queryable = queryable.Where(x => x.Destination.Contains(query.Destination!));", result.GeneratedSources["Trip.Cqrs.g.cs"], StringComparison.Ordinal);
+        Assert.Contains("Expression<Func<Trip, bool>> filter = x => x.Destination.Contains(Destination!);", result.GeneratedSources["Trip.Specification.g.cs"], StringComparison.Ordinal);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error);
     }
 
     [Fact]
@@ -120,6 +171,7 @@ public sealed class GeneratorOutputTests
         Assert.Contains("TripPaginationExtensions.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("Trip.DomainEvents.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("IUnitOfWork.g.cs", result.GeneratedSources.Keys);
+        Assert.Equal(1, result.GeneratedHintNames.Count(name => name == "IUnitOfWork.g.cs"));
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error);
     }
 
