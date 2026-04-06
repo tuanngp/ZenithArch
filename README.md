@@ -173,6 +173,8 @@ public partial class CreateTripValidator
 - `samples/RynorArch.Sample` demonstrates a realistic consumer project with `FullStack` mode enabled.
 - Generated files should usually stay out of source control unless your team intentionally reviews generated diffs as part of the release process.
 - If you were depending on the old fully generated repository implementation shape, read `docs/UPGRADING.md` before updating.
+- A global `RynorArch.GenerationReport.g.cs` file is emitted to summarize entities, feature flags, and generated artifact names.
+- Generated files now include traceability metadata comments (`rynor-artifact`, `rynor-entity`, `rynor-assumptions`) to speed up debugging.
 
 ## Troubleshooting and Upgrades
 

@@ -19,7 +19,7 @@ internal static class ValidationEmitter
     internal static string Generate(EntityModel entity)
     {
         var w = new SourceWriter(1024);
-        w.AppendFileHeader();
+        w.AppendFileHeader("Validation", entity.Name);
 
         w.AppendLine("using FluentValidation;");
         w.AppendLine();

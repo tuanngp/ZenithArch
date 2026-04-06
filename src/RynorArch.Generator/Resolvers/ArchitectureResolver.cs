@@ -26,7 +26,7 @@ internal static class ArchitectureResolver
             if (config.UseUnitOfWork)
             {
                 context.ReportDiagnostic(Diagnostic.Create(
-                    DiagnosticDescriptors.PatternConflict,
+                    DiagnosticDescriptors.FeatureFlagIgnored,
                     Location.None,
                     "UseUnitOfWork is set to true but Pattern is CQRS. UnitOfWork is only generated for Repository or FullStack patterns."));
             }
@@ -39,7 +39,7 @@ internal static class ArchitectureResolver
             if (config.EnableValidation)
             {
                 context.ReportDiagnostic(Diagnostic.Create(
-                    DiagnosticDescriptors.PatternConflict,
+                    DiagnosticDescriptors.FeatureFlagIgnored,
                     Location.None,
                     "EnableValidation is set to true but Pattern is Repository. Validators are only generated for CQRS or FullStack patterns."));
             }
@@ -79,6 +79,13 @@ internal static class ArchitectureResolver
         if (config.GenerateCachingDecorators && config.IsCqrs)
         {
             CachingEmitter.Emit(context, entity);
+        }
+        else if (config.GenerateCachingDecorators)
+        {
+            context.ReportDiagnostic(Diagnostic.Create(
+                DiagnosticDescriptors.FeatureFlagIgnored,
+                Location.None,
+                "GenerateCachingDecorators is set to true but selected pattern does not generate CQRS queries."));
         }
 
         // Pagination

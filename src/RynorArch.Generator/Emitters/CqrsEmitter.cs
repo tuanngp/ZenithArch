@@ -19,7 +19,7 @@ internal static class CqrsEmitter
     internal static string Generate(EntityModel entity, ArchitectureConfig config)
     {
         var w = new SourceWriter(4096);
-        w.AppendFileHeader();
+        w.AppendFileHeader("CQRS", entity.Name, "expects AppDbContext in compilation");
 
         w.AppendLine("using System;");
         w.AppendLine("using System.Collections.Generic;");

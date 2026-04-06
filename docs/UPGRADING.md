@@ -56,3 +56,12 @@ Most consumers should not need migration changes beyond rebuilding and validatin
 - Do not auto-upgrade generator packages in production applications.
 - Keep at least one sample project pinned to the current production version for comparison.
 - Treat generator output changes as potentially breaking even when compile succeeds.
+
+## Developer experience checks during upgrade
+
+After upgrading, validate observability and diagnostics in addition to compile success:
+
+1. Confirm `RynorArch.GenerationReport.g.cs` is emitted and lists expected entities/artifacts.
+2. Check generated headers for `rynor-artifact` metadata to ensure traceability is intact.
+3. Review `RYNOR007`-`RYNOR011` diagnostics and resolve all errors before rollout.
+4. If CQRS is enabled, verify `AppDbContext` convention is still satisfied (`RYNOR008`).

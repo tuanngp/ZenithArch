@@ -8,7 +8,7 @@ internal static class CrudInfrastructureEmitter
     public static void Emit(SourceProductionContext context)
     {
         var w = new SourceWriter(8192);
-        w.AppendFileHeader();
+        w.AppendFileHeader("Global.CrudInfrastructure");
 
         w.AppendLine("using System;");
         w.AppendLine("using System.Collections.Generic;");

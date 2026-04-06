@@ -57,4 +57,44 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor MissingRequiredDependency = new(
+        id: "RYNOR007",
+        title: "Missing required dependency",
+        messageFormat: "Feature '{0}' requires dependency '{1}'. Add the dependency to the project or disable the feature flag.",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor MissingAppDbContextConvention = new(
+        id: "RYNOR008",
+        title: "AppDbContext convention not satisfied",
+        messageFormat: "CQRS generation requires a discoverable 'AppDbContext' type deriving from 'Microsoft.EntityFrameworkCore.DbContext'. Add one or rename your DbContext to match the convention.",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor EndpointBehaviorNotice = new(
+        id: "RYNOR009",
+        title: "Generated endpoint behavior notice",
+        messageFormat: "Generated endpoints return generic HTTP responses and may need manual hardening for enterprise API semantics (for example 404 handling, problem details, and authorization)",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor CachingBehaviorNotice = new(
+        id: "RYNOR010",
+        title: "Generated cache behavior notice",
+        messageFormat: "Generated cache behavior stores query responses but does not emit automatic invalidation for write operations. Add explicit invalidation strategy in your application pipeline.",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor FeatureFlagIgnored = new(
+        id: "RYNOR011",
+        title: "Feature flag ignored by selected pattern",
+        messageFormat: "{0}",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
 }

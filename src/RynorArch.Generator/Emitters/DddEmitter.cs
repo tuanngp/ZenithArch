@@ -21,7 +21,7 @@ internal static class DddEmitter
     internal static string Generate(EntityModel entity)
     {
         var w = new SourceWriter(1024);
-        w.AppendFileHeader();
+        w.AppendFileHeader("DDD.DomainEvents", entity.Name);
 
         w.AppendLine("using System;");
         w.AppendLine("using RynorArch.Abstractions.Base;");

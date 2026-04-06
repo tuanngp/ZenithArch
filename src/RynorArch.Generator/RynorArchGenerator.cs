@@ -50,7 +50,7 @@ public sealed class RynorArchGenerator : IIncrementalGenerator
         IncrementalValuesProvider<EntityModel> validEntities = entityProvider
             .Where(static entity => entity is not null)!;
 
-        IncrementalValuesProvider<string?> nonPartialEntities = context.SyntaxProvider
+        IncrementalValuesProvider<(string ClassName, Location Location)?> nonPartialEntityDiagnostics = context.SyntaxProvider
             .ForAttributeWithMetadataName(
                 fullyQualifiedMetadataName: EntityAttributeFqn,
                 predicate: static (node, _) => node is ClassDeclarationSyntax,
@@ -62,12 +62,12 @@ public sealed class RynorArchGenerator : IIncrementalGenerator
                         || ctx.TargetNode is not ClassDeclarationSyntax classDeclaration
                         || EntityTransformer.IsPartialDeclaration(classDeclaration))
                     {
-                        return null;
+                        return ((string ClassName, Location Location)?)null;
                     }
 
-                    return typeSymbol.Name;
+                    return (typeSymbol.Name, classDeclaration.Identifier.GetLocation());
                 })
-            .Where(static name => name is not null);
+            .Where(static entry => entry is not null);
 
         // Step 2: Extract architecture configuration from assembly-level attribute.
         // Uses CompilationProvider — invalidates only when compilation changes structurally.
@@ -88,12 +88,13 @@ public sealed class RynorArchGenerator : IIncrementalGenerator
         });
 
         // Step 4.5: Global (Assembly-wide) code generation
-        IncrementalValueProvider<(ImmutableArray<EntityModel> Entities, ArchitectureConfig Config)> collectedForGlobal =
-            validEntities.Collect().Combine(configProvider);
+        IncrementalValueProvider<((ImmutableArray<EntityModel> Entities, ArchitectureConfig Config) Data, Compilation Compilation)> collectedForGlobal =
+            validEntities.Collect().Combine(configProvider).Combine(context.CompilationProvider);
 
         context.RegisterSourceOutput(collectedForGlobal, static (spc, pair) =>
         {
-            GlobalResolver.Resolve(spc, pair.Entities, pair.Config);
+            var architectureLocation = GetArchitectureLocation(pair.Compilation) ?? Location.None;
+            GlobalResolver.Resolve(spc, pair.Data.Entities, pair.Data.Config, pair.Compilation, architectureLocation);
         });
 
         // Step 5: Diagnostic — warn if no entities found.
@@ -117,15 +118,15 @@ public sealed class RynorArchGenerator : IIncrementalGenerator
             }
         });
 
-        context.RegisterSourceOutput(nonPartialEntities, static (spc, className) =>
+        context.RegisterSourceOutput(nonPartialEntityDiagnostics, static (spc, entry) =>
         {
             spc.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.EntityMustBePartial,
-                Location.None,
-                className));
+                entry!.Value.Location,
+                entry.Value.ClassName));
         });
 
-        IncrementalValuesProvider<(string PropertyName, string EntityName)?> unsupportedQueryFilters = context.SyntaxProvider
+        IncrementalValuesProvider<(string PropertyName, string EntityName, Location Location)?> unsupportedQueryFilters = context.SyntaxProvider
             .ForAttributeWithMetadataName(
                 fullyQualifiedMetadataName: QueryFilterAttributeFqn,
                 predicate: static (node, _) => node is PropertyDeclarationSyntax,
@@ -134,12 +135,13 @@ public sealed class RynorArchGenerator : IIncrementalGenerator
                     ct.ThrowIfCancellationRequested();
 
                     if (ctx.TargetSymbol is not IPropertySymbol propertySymbol)
-                        return ((string PropertyName, string EntityName)?)null;
+                        return ((string PropertyName, string EntityName, Location Location)?)null;
 
                     if (EntityTransformer.IsSupportedQueryFilterType(propertySymbol.Type))
-                        return ((string PropertyName, string EntityName)?)null;
+                        return ((string PropertyName, string EntityName, Location Location)?)null;
 
-                    return ((string PropertyName, string EntityName)?)(propertySymbol.Name, propertySymbol.ContainingType.Name);
+                    var location = propertySymbol.Locations.Length > 0 ? propertySymbol.Locations[0] : Location.None;
+                    return ((string PropertyName, string EntityName, Location Location)?)(propertySymbol.Name, propertySymbol.ContainingType.Name, location);
                 })
             .Where(static entry => entry is not null);
 
@@ -147,40 +149,58 @@ public sealed class RynorArchGenerator : IIncrementalGenerator
         {
             spc.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.UnsupportedFilterType,
-                Location.None,
+                entry!.Value.Location,
                 entry!.Value.PropertyName,
                 entry.Value.EntityName));
         });
 
         // Step 6: AggregateRoot validation — check [AggregateRoot] without [Entity].
         // Uses a separate provider to detect misuse.
-        IncrementalValuesProvider<string?> aggregateRootWithoutEntity = context.SyntaxProvider
+        IncrementalValuesProvider<(string ClassName, Location Location)?> aggregateRootWithoutEntity = context.SyntaxProvider
             .ForAttributeWithMetadataName(
                 fullyQualifiedMetadataName: AggregateRootAttributeFqn,
                 predicate: static (node, _) => node is ClassDeclarationSyntax,
                 transform: static (ctx, ct) =>
                 {
                     if (ctx.TargetSymbol is not INamedTypeSymbol typeSymbol)
-                        return null;
+                        return ((string ClassName, Location Location)?)null;
 
                     // Check if it also has [Entity]
                     var attributes = typeSymbol.GetAttributes();
                     for (int i = 0; i < attributes.Length; i++)
                     {
                         if (attributes[i].AttributeClass?.ToDisplayString() == EntityAttributeFqn)
-                            return null; // Valid — has both attributes
+                            return ((string ClassName, Location Location)?)null; // Valid — has both attributes
                     }
 
-                    return typeSymbol.Name; // Invalid — AggregateRoot without Entity
+                    var location = ctx.TargetNode is ClassDeclarationSyntax cls
+                        ? cls.Identifier.GetLocation()
+                        : typeSymbol.Locations[0];
+                    return (typeSymbol.Name, location); // Invalid — AggregateRoot without Entity
                 })
-            .Where(static name => name is not null);
+            .Where(static entry => entry is not null);
 
-        context.RegisterSourceOutput(aggregateRootWithoutEntity, static (spc, className) =>
+        context.RegisterSourceOutput(aggregateRootWithoutEntity, static (spc, entry) =>
         {
             spc.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.AggregateRootWithoutEntity,
-                Location.None,
-                className));
+                entry!.Value.Location,
+                entry.Value.ClassName));
         });
+    }
+
+    private static Location? GetArchitectureLocation(Compilation compilation)
+    {
+        foreach (var attr in compilation.Assembly.GetAttributes())
+        {
+            if (attr.AttributeClass?.ToDisplayString() != "RynorArch.Abstractions.Attributes.ArchitectureAttribute")
+            {
+                continue;
+            }
+
+            return attr.ApplicationSyntaxReference?.GetSyntax().GetLocation();
+        }
+
+        return null;
     }
 }

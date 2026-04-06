@@ -21,7 +21,7 @@ internal static class SpecificationEmitter
     internal static string Generate(EntityModel entity)
     {
         var w = new SourceWriter(2048);
-        w.AppendFileHeader();
+        w.AppendFileHeader("Specification", entity.Name);
 
         w.AppendLine("using System;");
         w.AppendLine("using System.Collections.Generic;");

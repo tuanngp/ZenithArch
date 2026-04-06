@@ -44,6 +44,47 @@ using RynorArch.Abstractions.Enums;
 [assembly: Architecture(Pattern = ArchitecturePattern.Cqrs)]
 ```
 
+### `RYNOR007` Missing required dependency
+
+One or more enabled features require packages/framework references that are not available to the compilation.
+
+Common examples:
+- CQRS without `MediatR`
+- Validation enabled without `FluentValidation`
+- Persistence features without `Microsoft.EntityFrameworkCore`
+- Endpoints enabled without `Microsoft.AspNetCore.App`
+- Caching decorators enabled without `Microsoft.Extensions.Caching.*`
+
+### `RYNOR008` AppDbContext convention not satisfied
+
+CQRS generation expects an `AppDbContext : DbContext` type in the compilation.
+
+Fix options:
+- Rename your existing DbContext to `AppDbContext`, or
+- Introduce an `AppDbContext` wrapper type for generated handlers, or
+- Switch to a non-CQRS pattern and wire handlers manually.
+
+### `RYNOR009` Generated endpoint behavior notice
+
+Endpoint generation is active and compilation succeeded, but the generated endpoints are intentionally minimal.
+Harden them for enterprise APIs (authorization, richer error contracts, and resource-not-found semantics).
+
+### `RYNOR010` Generated cache behavior notice
+
+Generated cache pipeline behaviors do not emit automatic invalidation for write flows.
+Implement invalidation in command handlers/pipeline behaviors before using generated caches in production.
+
+### `RYNOR011` Feature flag ignored by selected pattern
+
+A feature flag was enabled, but the selected architecture pattern does not support generating that artifact.
+Align pattern and flags in `[assembly: Architecture(...)]` to silence this warning.
+
+## Debugging generated output
+
+- Inspect `RynorArch.GenerationReport.g.cs` to see what artifacts were emitted.
+- Check file headers for `rynor-artifact`, `rynor-entity`, and `rynor-assumptions` metadata.
+- Use diagnostics as the primary signal before debugging emitted code bodies.
+
 ## Generated files in source control
 
 - Keep generated files out of source control by default.

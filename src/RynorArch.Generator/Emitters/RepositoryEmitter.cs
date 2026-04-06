@@ -18,7 +18,7 @@ internal static class RepositoryEmitter
     internal static string Generate(EntityModel entity, ArchitectureConfig config)
     {
         var w = new SourceWriter(1024);
-        w.AppendFileHeader();
+        w.AppendFileHeader("Repository", entity.Name);
 
         w.AppendLine("using Microsoft.EntityFrameworkCore;");
         w.AppendLine("using RynorArch.Generated.Infrastructure;");
@@ -65,7 +65,7 @@ internal static class RepositoryEmitter
     internal static string GenerateUnitOfWorkInterface()
     {
         var w = new SourceWriter(512);
-        w.AppendFileHeader();
+        w.AppendFileHeader("Global.UnitOfWork");
 
         w.AppendLine("using System;");
         w.AppendLine("using System.Threading;");

@@ -28,9 +28,11 @@ public sealed class GeneratorOutputTests
         Assert.Contains("Trip.Repository.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("Trip.Specification.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("RynorArch.CrudInfrastructure.g.cs", result.GeneratedSources.Keys);
+        Assert.Contains("RynorArch.GenerationReport.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("public interface ITripRepository : ICrudRepository<Trip>;", result.GeneratedSources["Trip.Repository.g.cs"]);
         Assert.Contains("public sealed partial class TripRepository : CrudRepository<Trip>, ITripRepository", result.GeneratedSources["Trip.Repository.g.cs"]);
         Assert.Contains("private static class EntityTraits<TEntity> where TEntity : class", result.GeneratedSources["RynorArch.CrudInfrastructure.g.cs"]);
+        Assert.Contains("// rynor-artifact: Global.GenerationReport", result.GeneratedSources["RynorArch.GenerationReport.g.cs"]);
         Assert.Contains("ApplySpecificationForList", result.GeneratedSources["RynorArch.CrudInfrastructure.g.cs"]);
         Assert.Contains("ApplySpecificationForCount", result.GeneratedSources["RynorArch.CrudInfrastructure.g.cs"]);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error);
@@ -163,6 +165,7 @@ public sealed class GeneratorOutputTests
         Assert.Contains("Trip.Cqrs.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("Trip.Repository.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("RynorArch.CrudInfrastructure.g.cs", result.GeneratedSources.Keys);
+        Assert.Contains("RynorArch.GenerationReport.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("Trip.Specification.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("Trip.Validation.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("TripDto.g.cs", result.GeneratedSources.Keys);
@@ -171,6 +174,9 @@ public sealed class GeneratorOutputTests
         Assert.Contains("TripPaginationExtensions.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("Trip.DomainEvents.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("IUnitOfWork.g.cs", result.GeneratedSources.Keys);
+        Assert.Contains("// rynor-artifact: CQRS", result.GeneratedSources["Trip.Cqrs.g.cs"]);
+        Assert.Contains("// rynor-assumptions: expects AppDbContext in compilation", result.GeneratedSources["Trip.Cqrs.g.cs"]);
+        Assert.Contains("public static readonly string[] Artifacts = new[]", result.GeneratedSources["RynorArch.GenerationReport.g.cs"]);
         Assert.Equal(1, result.GeneratedHintNames.Count(name => name == "IUnitOfWork.g.cs"));
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error);
     }
