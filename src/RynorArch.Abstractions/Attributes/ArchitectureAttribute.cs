@@ -42,6 +42,12 @@ public sealed class ArchitectureAttribute : Attribute
     public bool GenerateEndpoints { get; set; }
 
     /// <summary>
+    /// Endpoint generation is experimental. Set this to true together with GenerateEndpoints
+    /// to explicitly opt in.
+    /// </summary>
+    public bool EnableExperimentalEndpoints { get; set; }
+
+    /// <summary>
     /// When true, generates DTO records and mapping extensions for Entity.
     /// </summary>
     public bool GenerateDtos { get; set; }
@@ -60,4 +66,15 @@ public sealed class ArchitectureAttribute : Attribute
     /// When true, generates paging and sorting extensions for queries.
     /// </summary>
     public bool GeneratePagination { get; set; }
+
+    /// <summary>
+    /// Explicit DbContext type used by generated CQRS handlers. When omitted, handlers
+    /// depend on Microsoft.EntityFrameworkCore.DbContext.
+    /// </summary>
+    public Type? DbContextType { get; set; }
+
+    /// <summary>
+    /// Controls how CQRS write handlers persist changes.
+    /// </summary>
+    public CqrsSaveMode CqrsSaveMode { get; set; } = CqrsSaveMode.PerHandler;
 }

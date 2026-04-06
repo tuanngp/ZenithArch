@@ -30,6 +30,29 @@ internal static class CachingEmitter
         sb.AppendLine();
         sb.AppendLine($"namespace {ns};");
         sb.AppendLine();
+        sb.AppendLine($"public interface IGet{entity.Name}ByIdCacheInvalidator");
+        sb.AppendLine("{");
+        sb.AppendLine("    Task InvalidateAsync(Guid id, CancellationToken cancellationToken);");
+        sb.AppendLine("}");
+        sb.AppendLine();
+        sb.AppendLine($"public sealed class Get{entity.Name}ByIdDistributedCacheInvalidator : IGet{entity.Name}ByIdCacheInvalidator");
+        sb.AppendLine("{");
+        sb.AppendLine("    private readonly IDistributedCache _cache;");
+        sb.AppendLine();
+        sb.AppendLine($"    public Get{entity.Name}ByIdDistributedCacheInvalidator(IDistributedCache cache)");
+        sb.AppendLine("    {");
+        sb.AppendLine("        _cache = cache;");
+        sb.AppendLine("    }");
+        sb.AppendLine();
+        sb.AppendLine("    public Task InvalidateAsync(Guid id, CancellationToken cancellationToken)");
+        sb.AppendLine("    {");
+        sb.AppendLine("        return _cache.RemoveAsync(BuildCacheKey(id), cancellationToken);");
+        sb.AppendLine("    }");
+        sb.AppendLine();
+        sb.AppendLine("    private static string BuildCacheKey(Guid id) =>");
+        sb.AppendLine($"        \"{entity.Name}_\" + id;");
+        sb.AppendLine("}");
+        sb.AppendLine();
         sb.AppendLine($"public partial class Get{entity.Name}ByIdQueryCacheBehavior : IPipelineBehavior<Get{entity.Name}ByIdQuery, {entity.Name}?>");
         sb.AppendLine("{");
         sb.AppendLine("    private readonly IDistributedCache _cache;");
@@ -37,7 +60,7 @@ internal static class CachingEmitter
         sb.AppendLine();
         sb.AppendLine($"    public async Task<{entity.Name}?> Handle(Get{entity.Name}ByIdQuery request, RequestHandlerDelegate<{entity.Name}?> next, CancellationToken cancellationToken)");
         sb.AppendLine("    {");
-        sb.AppendLine($"        var cacheKey = \"{entity.Name}_\" + request.Id;");
+        sb.AppendLine("        var cacheKey = BuildCacheKey(request.Id);");
         sb.AppendLine("        var cachedSpan = await _cache.GetAsync(cacheKey, cancellationToken);");
         sb.AppendLine("        if (cachedSpan != null)");
         sb.AppendLine("        {");
@@ -52,6 +75,9 @@ internal static class CachingEmitter
         sb.AppendLine("        }");
         sb.AppendLine("        return response;");
         sb.AppendLine("    }");
+        sb.AppendLine();
+        sb.AppendLine("    private static string BuildCacheKey(Guid id) =>");
+        sb.AppendLine($"        \"{entity.Name}_\" + id;");
         sb.AppendLine("}");
 
         context.AddSource($"Get{entity.Name}ByIdQueryCacheBehavior.g.cs", SourceText.From(sb.ToString(), Encoding.UTF8));

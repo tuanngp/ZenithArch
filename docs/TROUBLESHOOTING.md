@@ -44,6 +44,8 @@ using RynorArch.Abstractions.Enums;
 [assembly: Architecture(Pattern = ArchitecturePattern.Cqrs)]
 ```
 
+RynorArch does not generate sources without explicit architecture configuration.
+
 ### `RYNOR007` Missing required dependency
 
 One or more enabled features require packages/framework references that are not available to the compilation.
@@ -55,14 +57,13 @@ Common examples:
 - Endpoints enabled without `Microsoft.AspNetCore.App`
 - Caching decorators enabled without `Microsoft.Extensions.Caching.*`
 
-### `RYNOR008` AppDbContext convention not satisfied
+### `RYNOR008` Configured DbContext type is invalid
 
-CQRS generation expects an `AppDbContext : DbContext` type in the compilation.
+`DbContextType` was configured but the type cannot be resolved or does not derive from `Microsoft.EntityFrameworkCore.DbContext`.
 
 Fix options:
-- Rename your existing DbContext to `AppDbContext`, or
-- Introduce an `AppDbContext` wrapper type for generated handlers, or
-- Switch to a non-CQRS pattern and wire handlers manually.
+- set `DbContextType = typeof(YourDbContext)` to a valid type in the compilation
+- remove `DbContextType` to fall back to `Microsoft.EntityFrameworkCore.DbContext`
 
 ### `RYNOR009` Generated endpoint behavior notice
 
@@ -71,13 +72,27 @@ Harden them for enterprise APIs (authorization, richer error contracts, and reso
 
 ### `RYNOR010` Generated cache behavior notice
 
-Generated cache pipeline behaviors do not emit automatic invalidation for write flows.
-Implement invalidation in command handlers/pipeline behaviors before using generated caches in production.
+Generated cache pipeline behaviors include per-entity invalidation contracts.
+Ensure invalidators are registered in DI (generated DI helper does this when enabled).
 
 ### `RYNOR011` Feature flag ignored by selected pattern
 
 A feature flag was enabled, but the selected architecture pattern does not support generating that artifact.
 Align pattern and flags in `[assembly: Architecture(...)]` to silence this warning.
+
+### `RYNOR012` Endpoint generation requires experimental opt-in
+
+`GenerateEndpoints` is enabled but `EnableExperimentalEndpoints` is not.
+
+Fix by opting in explicitly:
+
+```csharp
+[assembly: Architecture(
+	Pattern = ArchitecturePattern.Cqrs,
+	GenerateEndpoints = true,
+	EnableExperimentalEndpoints = true
+)]
+```
 
 ## Debugging generated output
 

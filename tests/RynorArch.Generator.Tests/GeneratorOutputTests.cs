@@ -175,9 +175,44 @@ public sealed class GeneratorOutputTests
         Assert.Contains("Trip.DomainEvents.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("IUnitOfWork.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("// rynor-artifact: CQRS", result.GeneratedSources["Trip.Cqrs.g.cs"]);
-        Assert.Contains("// rynor-assumptions: expects AppDbContext in compilation", result.GeneratedSources["Trip.Cqrs.g.cs"]);
+        Assert.Contains("// rynor-assumptions: uses configured DbContext type for handlers", result.GeneratedSources["Trip.Cqrs.g.cs"]);
         Assert.Contains("public static readonly string[] Artifacts = new[]", result.GeneratedSources["RynorArch.GenerationReport.g.cs"]);
         Assert.Equal(1, result.GeneratedHintNames.Count(name => name == "IUnitOfWork.g.cs"));
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error);
+    }
+
+    [Fact]
+    public void Generates_cqrs_save_behavior_for_per_request_transaction_mode()
+    {
+        var result = GeneratorTestHarness.Run("""
+            using RynorArch.Abstractions.Attributes;
+            using RynorArch.Abstractions.Base;
+            using RynorArch.Abstractions.Enums;
+            using Microsoft.EntityFrameworkCore;
+
+            [assembly: Architecture(
+                Pattern = ArchitecturePattern.Cqrs,
+                CqrsSaveMode = CqrsSaveMode.PerRequestTransaction,
+                DbContextType = typeof(Demo.Domain.AppDbContext))]
+
+            namespace Demo.Domain;
+
+            [Entity]
+            public partial class Trip : EntityBase
+            {
+                public string Destination { get; set; } = string.Empty;
+            }
+
+            public sealed class AppDbContext : DbContext
+            {
+                public DbSet<Trip> Trips => Set<Trip>();
+            }
+            """);
+
+        Assert.Contains("RynorArch.CqrsSaveBehavior.g.cs", result.GeneratedSources.Keys);
+        Assert.Contains("IRynorArchWriteCommand", result.GeneratedSources["RynorArch.CqrsSaveBehavior.g.cs"]);
+        Assert.Contains("CreateTripCommand : IRequest<Guid>, IRynorArchWriteCommand", result.GeneratedSources["Trip.Cqrs.g.cs"]);
+        Assert.Contains("await RynorArchCrudRuntime.AddAsync(_db, entity, cancellationToken);", result.GeneratedSources["Trip.Cqrs.g.cs"]);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error);
     }
 

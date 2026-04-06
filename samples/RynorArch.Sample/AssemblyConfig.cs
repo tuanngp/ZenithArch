@@ -5,6 +5,7 @@ using RynorArch.Abstractions.Enums;
     Pattern = ArchitecturePattern.FullStack,
     GenerateDependencyInjection = true,
     GenerateEndpoints = true,
+    EnableExperimentalEndpoints = true,
     GenerateDtos = true,
     GenerateEfConfigurations = true,
     GenerateCachingDecorators = true,

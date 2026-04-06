@@ -53,9 +53,9 @@ internal static class DiagnosticDescriptors
     public static readonly DiagnosticDescriptor MissingArchitectureConfiguration = new(
         id: "RYNOR006",
         title: "Missing architecture configuration",
-        messageFormat: "No [assembly: Architecture(...)] configuration was found. RynorArch will fall back to default CQRS settings. Add an explicit assembly configuration to keep generation predictable.",
+        messageFormat: "No [assembly: Architecture(...)] configuration was found. RynorArch does not generate code without explicit architecture configuration.",
         category: Category,
-        defaultSeverity: DiagnosticSeverity.Warning,
+        defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
     public static readonly DiagnosticDescriptor MissingRequiredDependency = new(
@@ -66,10 +66,10 @@ internal static class DiagnosticDescriptors
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
 
-    public static readonly DiagnosticDescriptor MissingAppDbContextConvention = new(
+    public static readonly DiagnosticDescriptor InvalidConfiguredDbContextType = new(
         id: "RYNOR008",
-        title: "AppDbContext convention not satisfied",
-        messageFormat: "CQRS generation requires a discoverable 'AppDbContext' type deriving from 'Microsoft.EntityFrameworkCore.DbContext'. Add one or rename your DbContext to match the convention.",
+        title: "Configured DbContext type is invalid",
+        messageFormat: "Configured DbContext type '{0}' must resolve in the compilation and derive from 'Microsoft.EntityFrameworkCore.DbContext'",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
@@ -85,15 +85,23 @@ internal static class DiagnosticDescriptors
     public static readonly DiagnosticDescriptor CachingBehaviorNotice = new(
         id: "RYNOR010",
         title: "Generated cache behavior notice",
-        messageFormat: "Generated cache behavior stores query responses but does not emit automatic invalidation for write operations. Add explicit invalidation strategy in your application pipeline.",
+        messageFormat: "Generated cache behavior stores query responses and emits per-entity invalidation contracts for write flows. Ensure invalidators are registered in DI.",
         category: Category,
-        defaultSeverity: DiagnosticSeverity.Warning,
+        defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true);
 
     public static readonly DiagnosticDescriptor FeatureFlagIgnored = new(
         id: "RYNOR011",
         title: "Feature flag ignored by selected pattern",
         messageFormat: "{0}",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor ExperimentalEndpointFlagRequired = new(
+        id: "RYNOR012",
+        title: "Endpoint generation requires experimental opt-in",
+        messageFormat: "GenerateEndpoints is enabled, but endpoint generation is experimental. Set EnableExperimentalEndpoints = true to opt in explicitly.",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true);

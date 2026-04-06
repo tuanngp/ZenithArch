@@ -7,9 +7,12 @@
 - **Roslyn Incremental Source Generator**: Extremely fast, highly cached, only rebuilds what's necessary.
 - **Zero Runtime Reflection**: Generated code operates directly on your types.
 - **Deterministic Output**: Consistent, predictable output files (`.g.cs`).
+- **Explicit Configuration Required**: Generation fails fast when `[assembly: Architecture(...)]` is missing.
 - **Clean Architecture Enforced**: Strict separation of concerns depending on the chosen pattern. Handlers are decoupled from repositories unless FullStack is explicitly used.
 - **Hybrid Generation Model**: Public contracts stay explicit per entity, while shared CRUD and EF interaction now flow through a generated generic infrastructure layer emitted once per compilation.
 - **Optimized Shared Runtime**: Generic CRUD helpers now cache entity traits, emit one-per-compilation support artifacts, and centralize specification/list semantics to reduce build and runtime overhead.
+- **Configurable CQRS Persistence**: Choose per-handler saves or per-request transaction save behavior.
+- **Configurable DbContext Type**: CQRS handlers can target a specific DbContext type via `DbContextType = typeof(...)`.
 - **Extensible via Partial Classes**: All generated handlers, repositories, and validators are `partial` and provide lifecycle hooks (`OnBeforeHandle`, `OnValidate`, etc.) for you to inject custom logic.
 - **DDD Integration**: First-class support for `[AggregateRoot]` and Domain Events.
 
@@ -86,17 +89,36 @@ using RynorArch.Abstractions.Enums;
     Pattern = ArchitecturePattern.Cqrs,
     UseSpecification = true,
     UseUnitOfWork = false,
-    EnableValidation = true
+    EnableValidation = true,
+    DbContextType = typeof(MyApp.Infrastructure.Data.AppDbContext),
+    CqrsSaveMode = CqrsSaveMode.PerRequestTransaction
 )]
 ```
 
 ### Supported Patterns
 
-- `ArchitecturePattern.Cqrs` - Generates MediatR Commands, Queries, and Handlers. Handlers dependency-inject the DbContext directly.
+- `ArchitecturePattern.Cqrs` - Generates MediatR Commands, Queries, and Handlers. Handlers dependency-inject either `DbContext` or the type configured by `DbContextType`.
 - `ArchitecturePattern.Repository` - Generates repository interfaces and thin repository wrappers backed by shared generic CRUD infrastructure, plus an optional `UnitOfWork` interface.
 - `ArchitecturePattern.FullStack` - Generates both CQRS and Repository artifacts on top of the shared CRUD/runtime layer.
 
 Always declare the assembly-level configuration explicitly, even if the defaults happen to match your current needs. This keeps upgrades and generated output predictable.
+
+### Endpoint generation policy
+
+Endpoint generation is intentionally gated as experimental. To enable it, both flags are required:
+
+```csharp
+[assembly: Architecture(
+    Pattern = ArchitecturePattern.Cqrs,
+    GenerateEndpoints = true,
+    EnableExperimentalEndpoints = true
+)]
+```
+
+### CQRS save modes
+
+- `CqrsSaveMode.PerHandler` (default): each write handler calls `SaveChangesAsync` immediately.
+- `CqrsSaveMode.PerRequestTransaction`: generated write handlers stage changes and a generated MediatR pipeline behavior commits once per request in a transaction.
 
 ## Usage
 
@@ -131,6 +153,8 @@ If set to **CQRS** mode with Validation and Specifications enabled, the generato
 4. **Validators**: `CreateTripValidator`, `UpdateTripValidator` stubs with basic rules implemented.
 5. **Domain Events**: `TripCreatedEvent`, `TripUpdatedEvent`, `TripDeletedEvent` (because of `[AggregateRoot]`).
 6. **Shared Infrastructure**: one generated CRUD/runtime support file reused across all entities in the compilation.
+
+When caching decorators are enabled, generation also includes cache invalidation contracts per entity and default distributed-cache invalidator implementations.
 
 ### Extending Generated Code
 

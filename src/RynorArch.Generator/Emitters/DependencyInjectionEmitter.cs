@@ -31,10 +31,20 @@ internal static class DependencyInjectionEmitter
         foreach (var ns in namespaces)
         {
             sb.AppendLine($"using {ns};");
+            if (config.IsCqrs)
+            {
+                sb.AppendLine($"using {ns}.Cqrs;");
+            }
             if (config.IsRepository)
             {
                 sb.AppendLine($"using {ns}.Repositories;");
             }
+        }
+
+        if (config.IsCqrs && config.IsPerRequestTransactionSaveMode)
+        {
+            sb.AppendLine("using RynorArch.Generated.Infrastructure;");
+            sb.AppendLine("using MediatR;");
         }
         
         sb.AppendLine();
@@ -51,6 +61,16 @@ internal static class DependencyInjectionEmitter
             {
                 sb.AppendLine($"        services.AddScoped<I{entity.Name}Repository, {entity.Name}Repository>();");
             }
+
+            if (config.IsCqrs && config.GenerateCachingDecorators)
+            {
+                sb.AppendLine($"        services.AddScoped<IGet{entity.Name}ByIdCacheInvalidator, Get{entity.Name}ByIdDistributedCacheInvalidator>();");
+            }
+        }
+
+        if (config.IsCqrs && config.IsPerRequestTransactionSaveMode)
+        {
+            sb.AppendLine("        services.AddScoped(typeof(IPipelineBehavior<,>), typeof(RynorArchSaveChangesBehavior<,>));");
         }
         
         // Unit of Work registration is best left to manual user code since AppDbContext needs specific setup

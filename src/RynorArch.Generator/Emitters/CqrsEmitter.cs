@@ -19,7 +19,7 @@ internal static class CqrsEmitter
     internal static string Generate(EntityModel entity, ArchitectureConfig config)
     {
         var w = new SourceWriter(4096);
-        w.AppendFileHeader("CQRS", entity.Name, "expects AppDbContext in compilation");
+        w.AppendFileHeader("CQRS", entity.Name, "uses configured DbContext type for handlers");
 
         w.AppendLine("using System;");
         w.AppendLine("using System.Collections.Generic;");
@@ -41,30 +41,33 @@ internal static class CqrsEmitter
             w.AppendLine();
         }
 
-        EmitCommands(w, entity);
+        EmitCommands(w, entity, config);
         EmitQueries(w, entity);
-        EmitCreateHandler(w, entity);
-        EmitUpdateHandler(w, entity);
-        EmitDeleteHandler(w, entity);
-        EmitGetByIdHandler(w, entity);
-        EmitGetListHandler(w, entity);
+        EmitCreateHandler(w, entity, config);
+        EmitUpdateHandler(w, entity, config);
+        EmitDeleteHandler(w, entity, config);
+        EmitGetByIdHandler(w, entity, config);
+        EmitGetListHandler(w, entity, config);
 
         return w.ToString();
     }
 
-    private static void EmitCommands(SourceWriter w, EntityModel entity)
+    private static void EmitCommands(SourceWriter w, EntityModel entity, ArchitectureConfig config)
     {
         string name = entity.Name;
+        string writeCommandInterface = config.IsPerRequestTransactionSaveMode
+            ? ", IRynorArchWriteCommand"
+            : string.Empty;
 
         // Create command
-        w.AppendLine($"public sealed record Create{name}Command : IRequest<Guid>");
+        w.AppendLine($"public sealed record Create{name}Command : IRequest<Guid>{writeCommandInterface}");
         w.OpenBrace();
         EmitRequiredProperties(w, entity);
         w.CloseBrace();
         w.AppendLine();
 
         // Update command
-        w.AppendLine($"public sealed record Update{name}Command : IRequest<bool>");
+        w.AppendLine($"public sealed record Update{name}Command : IRequest<bool>{writeCommandInterface}");
         w.OpenBrace();
         w.AppendLine("public Guid Id { get; init; }");
         EmitRequiredProperties(w, entity);
@@ -72,7 +75,7 @@ internal static class CqrsEmitter
         w.AppendLine();
 
         // Delete command
-        w.AppendLine($"public sealed record Delete{name}Command(Guid Id) : IRequest<bool>;");
+        w.AppendLine($"public sealed record Delete{name}Command(Guid Id) : IRequest<bool>{writeCommandInterface};");
         w.AppendLine();
     }
 
@@ -101,17 +104,35 @@ internal static class CqrsEmitter
         w.AppendLine();
     }
 
-    private static void EmitCreateHandler(SourceWriter w, EntityModel entity)
+    private static void EmitCreateHandler(SourceWriter w, EntityModel entity, ArchitectureConfig config)
     {
         string name = entity.Name;
+        string dbContextType = config.CqrsDbContextTypeName;
+        bool usesCacheInvalidation = config.GenerateCachingDecorators;
+        bool usesPerRequestSave = config.IsPerRequestTransactionSaveMode;
 
         w.AppendLine($"public sealed partial class Create{name}Handler : IRequestHandler<Create{name}Command, Guid>");
         w.OpenBrace();
-        w.AppendLine("private readonly AppDbContext _db;");
+        w.AppendLine($"private readonly {dbContextType} _db;");
+        if (usesCacheInvalidation)
+        {
+            w.AppendLine($"private readonly IEnumerable<IGet{name}ByIdCacheInvalidator> _cacheInvalidators;");
+        }
         w.AppendLine();
-        w.AppendLine($"public Create{name}Handler(AppDbContext db)");
+        if (usesCacheInvalidation)
+        {
+            w.AppendLine($"public Create{name}Handler({dbContextType} db, IEnumerable<IGet{name}ByIdCacheInvalidator> cacheInvalidators)");
+        }
+        else
+        {
+            w.AppendLine($"public Create{name}Handler({dbContextType} db)");
+        }
         w.OpenBrace();
         w.AppendLine("_db = db;");
+        if (usesCacheInvalidation)
+        {
+            w.AppendLine("_cacheInvalidators = cacheInvalidators;");
+        }
         w.CloseBrace();
         w.AppendLine();
 
@@ -143,27 +164,62 @@ internal static class CqrsEmitter
         w.AppendLine();
         w.AppendLine("OnBeforeHandle(command, entity);");
         w.AppendLine();
-        w.AppendLine("await RynorArchCrudRuntime.AddAndSaveAsync(_db, entity, cancellationToken);");
+        if (usesPerRequestSave)
+        {
+            w.AppendLine("await RynorArchCrudRuntime.AddAsync(_db, entity, cancellationToken);");
+        }
+        else
+        {
+            w.AppendLine("await RynorArchCrudRuntime.AddAndSaveAsync(_db, entity, cancellationToken);");
+        }
+        if (usesCacheInvalidation)
+        {
+            w.AppendLine("await InvalidateCacheAsync(entity.Id, cancellationToken);");
+        }
         w.AppendLine();
         w.AppendLine("OnAfterHandle(command, entity);");
         w.AppendLine();
         w.AppendLine("return entity.Id;");
         w.CloseBrace();
+
+        if (usesCacheInvalidation)
+        {
+            EmitCacheInvalidationMethod(w);
+        }
+
         w.CloseBrace();
         w.AppendLine();
     }
 
-    private static void EmitUpdateHandler(SourceWriter w, EntityModel entity)
+    private static void EmitUpdateHandler(SourceWriter w, EntityModel entity, ArchitectureConfig config)
     {
         string name = entity.Name;
+        string dbContextType = config.CqrsDbContextTypeName;
+        bool usesCacheInvalidation = config.GenerateCachingDecorators;
+        bool usesPerRequestSave = config.IsPerRequestTransactionSaveMode;
 
         w.AppendLine($"public sealed partial class Update{name}Handler : IRequestHandler<Update{name}Command, bool>");
         w.OpenBrace();
-        w.AppendLine("private readonly AppDbContext _db;");
+        w.AppendLine($"private readonly {dbContextType} _db;");
+        if (usesCacheInvalidation)
+        {
+            w.AppendLine($"private readonly IEnumerable<IGet{name}ByIdCacheInvalidator> _cacheInvalidators;");
+        }
         w.AppendLine();
-        w.AppendLine($"public Update{name}Handler(AppDbContext db)");
+        if (usesCacheInvalidation)
+        {
+            w.AppendLine($"public Update{name}Handler({dbContextType} db, IEnumerable<IGet{name}ByIdCacheInvalidator> cacheInvalidators)");
+        }
+        else
+        {
+            w.AppendLine($"public Update{name}Handler({dbContextType} db)");
+        }
         w.OpenBrace();
         w.AppendLine("_db = db;");
+        if (usesCacheInvalidation)
+        {
+            w.AppendLine("_cacheInvalidators = cacheInvalidators;");
+        }
         w.CloseBrace();
         w.AppendLine();
 
@@ -192,27 +248,62 @@ internal static class CqrsEmitter
         w.AppendLine();
         w.AppendLine("OnBeforeHandle(command, entity);");
         w.AppendLine();
-        w.AppendLine("await RynorArchCrudRuntime.SaveUpdatedEntityAsync(_db, entity, cancellationToken);");
+        if (usesPerRequestSave)
+        {
+            w.AppendLine("RynorArchCrudRuntime.MarkUpdated(_db, entity);");
+        }
+        else
+        {
+            w.AppendLine("await RynorArchCrudRuntime.SaveUpdatedEntityAsync(_db, entity, cancellationToken);");
+        }
+        if (usesCacheInvalidation)
+        {
+            w.AppendLine("await InvalidateCacheAsync(entity.Id, cancellationToken);");
+        }
         w.AppendLine();
         w.AppendLine("OnAfterHandle(command, entity);");
         w.AppendLine();
         w.AppendLine("return true;");
         w.CloseBrace();
+
+        if (usesCacheInvalidation)
+        {
+            EmitCacheInvalidationMethod(w);
+        }
+
         w.CloseBrace();
         w.AppendLine();
     }
 
-    private static void EmitDeleteHandler(SourceWriter w, EntityModel entity)
+    private static void EmitDeleteHandler(SourceWriter w, EntityModel entity, ArchitectureConfig config)
     {
         string name = entity.Name;
+        string dbContextType = config.CqrsDbContextTypeName;
+        bool usesCacheInvalidation = config.GenerateCachingDecorators;
+        bool usesPerRequestSave = config.IsPerRequestTransactionSaveMode;
 
         w.AppendLine($"public sealed partial class Delete{name}Handler : IRequestHandler<Delete{name}Command, bool>");
         w.OpenBrace();
-        w.AppendLine("private readonly AppDbContext _db;");
+        w.AppendLine($"private readonly {dbContextType} _db;");
+        if (usesCacheInvalidation)
+        {
+            w.AppendLine($"private readonly IEnumerable<IGet{name}ByIdCacheInvalidator> _cacheInvalidators;");
+        }
         w.AppendLine();
-        w.AppendLine($"public Delete{name}Handler(AppDbContext db)");
+        if (usesCacheInvalidation)
+        {
+            w.AppendLine($"public Delete{name}Handler({dbContextType} db, IEnumerable<IGet{name}ByIdCacheInvalidator> cacheInvalidators)");
+        }
+        else
+        {
+            w.AppendLine($"public Delete{name}Handler({dbContextType} db)");
+        }
         w.OpenBrace();
         w.AppendLine("_db = db;");
+        if (usesCacheInvalidation)
+        {
+            w.AppendLine("_cacheInvalidators = cacheInvalidators;");
+        }
         w.CloseBrace();
         w.AppendLine();
 
@@ -227,25 +318,43 @@ internal static class CqrsEmitter
         w.AppendLine();
         w.AppendLine("OnBeforeHandle(command, entity);");
         w.AppendLine();
-        w.AppendLine("await RynorArchCrudRuntime.DeleteAndSaveAsync(_db, entity, cancellationToken);");
+        if (usesPerRequestSave)
+        {
+            w.AppendLine("RynorArchCrudRuntime.Delete(_db, entity);");
+        }
+        else
+        {
+            w.AppendLine("await RynorArchCrudRuntime.DeleteAndSaveAsync(_db, entity, cancellationToken);");
+        }
+        if (usesCacheInvalidation)
+        {
+            w.AppendLine("await InvalidateCacheAsync(command.Id, cancellationToken);");
+        }
         w.AppendLine();
         w.AppendLine("OnAfterHandle(command);");
         w.AppendLine();
         w.AppendLine("return true;");
         w.CloseBrace();
+
+        if (usesCacheInvalidation)
+        {
+            EmitCacheInvalidationMethod(w);
+        }
+
         w.CloseBrace();
         w.AppendLine();
     }
 
-    private static void EmitGetByIdHandler(SourceWriter w, EntityModel entity)
+    private static void EmitGetByIdHandler(SourceWriter w, EntityModel entity, ArchitectureConfig config)
     {
         string name = entity.Name;
+        string dbContextType = config.CqrsDbContextTypeName;
 
         w.AppendLine($"public sealed partial class Get{name}ByIdHandler : IRequestHandler<Get{name}ByIdQuery, {name}?>");
         w.OpenBrace();
-        w.AppendLine("private readonly AppDbContext _db;");
+        w.AppendLine($"private readonly {dbContextType} _db;");
         w.AppendLine();
-        w.AppendLine($"public Get{name}ByIdHandler(AppDbContext db)");
+        w.AppendLine($"public Get{name}ByIdHandler({dbContextType} db)");
         w.OpenBrace();
         w.AppendLine("_db = db;");
         w.CloseBrace();
@@ -264,15 +373,16 @@ internal static class CqrsEmitter
         w.AppendLine();
     }
 
-    private static void EmitGetListHandler(SourceWriter w, EntityModel entity)
+    private static void EmitGetListHandler(SourceWriter w, EntityModel entity, ArchitectureConfig config)
     {
         string name = entity.Name;
+        string dbContextType = config.CqrsDbContextTypeName;
 
         w.AppendLine($"public sealed partial class Get{name}ListHandler : IRequestHandler<Get{name}ListQuery, IReadOnlyList<{name}>>");
         w.OpenBrace();
-        w.AppendLine("private readonly AppDbContext _db;");
+        w.AppendLine($"private readonly {dbContextType} _db;");
         w.AppendLine();
-        w.AppendLine($"public Get{name}ListHandler(AppDbContext db)");
+        w.AppendLine($"public Get{name}ListHandler({dbContextType} db)");
         w.OpenBrace();
         w.AppendLine("_db = db;");
         w.CloseBrace();
@@ -317,5 +427,17 @@ internal static class CqrsEmitter
                 w.AppendLine($"public {prop.TypeName} {prop.Name} {{ get; init; }} = default!;");
             }
         }
+    }
+
+    private static void EmitCacheInvalidationMethod(SourceWriter w)
+    {
+        w.AppendLine();
+        w.AppendLine("private async Task InvalidateCacheAsync(Guid id, CancellationToken cancellationToken)");
+        w.OpenBrace();
+        w.AppendLine("foreach (var invalidator in _cacheInvalidators)");
+        w.OpenBrace();
+        w.AppendLine("await invalidator.InvalidateAsync(id, cancellationToken);");
+        w.CloseBrace();
+        w.CloseBrace();
     }
 }

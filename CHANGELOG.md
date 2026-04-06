@@ -23,6 +23,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Optimized the shared CRUD runtime to cache per-entity soft-delete traits and clarify specification application for list versus count operations.
 - Moved `IUnitOfWork` emission to a one-per-compilation path instead of repeating the source add per entity.
 - Centralized QueryFilter generation rules so CQRS list handlers and generated specifications stay aligned.
+- Enforced fail-fast behavior when `[assembly: Architecture(...)]` is missing (`RYNOR006` now blocks generation).
+- Replaced hard `AppDbContext` convention with configurable `DbContextType` validation for CQRS handlers (`RYNOR008`).
+- Added cache invalidation contracts and default distributed-cache invalidator implementations for generated query caches.
+- Added `CqrsSaveMode` with per-request transaction save behavior and generated MediatR pipeline support.
+- Gated endpoint generation behind explicit experimental opt-in (`EnableExperimentalEndpoints`, `RYNOR012`).
 
 ## [1.0.6]
 

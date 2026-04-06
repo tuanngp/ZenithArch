@@ -128,10 +128,13 @@ internal static class EntityTransformer
             bool enableValidation = false;
             bool generateDependencyInjection = false;
             bool generateEndpoints = false;
+            bool enableExperimentalEndpoints = false;
             bool generateDtos = false;
             bool generateEfConfigurations = false;
             bool generateCachingDecorators = false;
             bool generatePagination = false;
+            string cqrsDbContextTypeName = ArchitectureConfig.DefaultCqrsDbContextTypeName;
+            int cqrsSaveMode = 0;
 
             var namedArgs = attr.NamedArguments;
             for (int j = 0; j < namedArgs.Length; j++)
@@ -169,6 +172,21 @@ internal static class EntityTransformer
                     case "GeneratePagination":
                         generatePagination = (bool)arg.Value.Value!;
                         break;
+                    case "EnableExperimentalEndpoints":
+                        enableExperimentalEndpoints = (bool)arg.Value.Value!;
+                        break;
+                    case "CqrsSaveMode":
+                        if (arg.Value.Value is int configuredSaveMode)
+                        {
+                            cqrsSaveMode = configuredSaveMode;
+                        }
+                        break;
+                    case "DbContextType":
+                        if (arg.Value.Value is INamedTypeSymbol dbContextSymbol)
+                        {
+                            cqrsDbContextTypeName = dbContextSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                        }
+                        break;
                 }
             }
 
@@ -179,10 +197,13 @@ internal static class EntityTransformer
                 enableValidation,
                 generateDependencyInjection,
                 generateEndpoints,
+                enableExperimentalEndpoints,
                 generateDtos,
                 generateEfConfigurations,
                 generateCachingDecorators,
-                generatePagination);
+                generatePagination,
+                cqrsDbContextTypeName,
+                cqrsSaveMode);
         }
 
         return ArchitectureConfig.Default;

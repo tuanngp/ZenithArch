@@ -30,7 +30,7 @@ You may need code changes if you previously:
 
 1. Replace any dependency on generated repository internals with the repository interface or the public generated handler types.
 2. Re-run the build and inspect the new generated infrastructure file plus the thinner repository output.
-3. Validate soft-delete, auditable, and specification behavior in one representative module before wider rollout.
+3. Validate soft-delete, auditable, specification, and CQRS save-mode behavior in one representative module before wider rollout.
 
 ## Deep optimization notes
 
@@ -63,5 +63,6 @@ After upgrading, validate observability and diagnostics in addition to compile s
 
 1. Confirm `RynorArch.GenerationReport.g.cs` is emitted and lists expected entities/artifacts.
 2. Check generated headers for `rynor-artifact` metadata to ensure traceability is intact.
-3. Review `RYNOR007`-`RYNOR011` diagnostics and resolve all errors before rollout.
-4. If CQRS is enabled, verify `AppDbContext` convention is still satisfied (`RYNOR008`).
+3. Review `RYNOR007`-`RYNOR012` diagnostics and resolve all errors before rollout.
+4. If CQRS is enabled, validate `DbContextType` (if set) resolves to a real `DbContext` (`RYNOR008`).
+5. If endpoint generation is enabled, confirm explicit experimental opt-in is present (`RYNOR012`).

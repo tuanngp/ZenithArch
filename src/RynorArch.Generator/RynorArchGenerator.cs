@@ -78,23 +78,33 @@ public sealed class RynorArchGenerator : IIncrementalGenerator
             .Select(static (compilation, ct) => EntityTransformer.HasArchitectureConfiguration(compilation, ct));
 
         // Step 3: Combine each entity with the architecture config.
-        IncrementalValuesProvider<(EntityModel Entity, ArchitectureConfig Config)> combined =
-            validEntities.Combine(configProvider);
+        IncrementalValuesProvider<((EntityModel Entity, ArchitectureConfig Config) Data, bool HasConfiguration)> combined =
+            validEntities.Combine(configProvider).Combine(hasArchitectureConfiguration);
 
         // Step 4: Emit code — each entity is processed independently, enabling parallelism.
         context.RegisterSourceOutput(combined, static (spc, pair) =>
         {
-            ArchitectureResolver.Resolve(spc, pair.Entity, pair.Config);
+            if (!pair.HasConfiguration)
+            {
+                return;
+            }
+
+            ArchitectureResolver.Resolve(spc, pair.Data.Entity, pair.Data.Config);
         });
 
         // Step 4.5: Global (Assembly-wide) code generation
-        IncrementalValueProvider<((ImmutableArray<EntityModel> Entities, ArchitectureConfig Config) Data, Compilation Compilation)> collectedForGlobal =
-            validEntities.Collect().Combine(configProvider).Combine(context.CompilationProvider);
+        IncrementalValueProvider<(((ImmutableArray<EntityModel> Entities, ArchitectureConfig Config) Data, Compilation Compilation) Payload, bool HasConfiguration)> collectedForGlobal =
+            validEntities.Collect().Combine(configProvider).Combine(context.CompilationProvider).Combine(hasArchitectureConfiguration);
 
         context.RegisterSourceOutput(collectedForGlobal, static (spc, pair) =>
         {
-            var architectureLocation = GetArchitectureLocation(pair.Compilation) ?? Location.None;
-            GlobalResolver.Resolve(spc, pair.Data.Entities, pair.Data.Config, pair.Compilation, architectureLocation);
+            if (!pair.HasConfiguration)
+            {
+                return;
+            }
+
+            var architectureLocation = GetArchitectureLocation(pair.Payload.Compilation) ?? Location.None;
+            GlobalResolver.Resolve(spc, pair.Payload.Data.Entities, pair.Payload.Data.Config, pair.Payload.Compilation, architectureLocation);
         });
 
         // Step 5: Diagnostic — warn if no entities found.

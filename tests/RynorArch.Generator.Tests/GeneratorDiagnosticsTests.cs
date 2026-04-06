@@ -84,7 +84,7 @@ public sealed class GeneratorDiagnosticsTests
     }
 
     [Fact]
-    public void Reports_warning_when_architecture_configuration_is_missing()
+    public void Reports_error_when_architecture_configuration_is_missing()
     {
         var result = GeneratorTestHarness.Run("""
             using RynorArch.Abstractions.Attributes;
@@ -98,19 +98,20 @@ public sealed class GeneratorDiagnosticsTests
             }
             """);
 
-        AssertContainsDiagnostic(result.Diagnostics, "RYNOR006", DiagnosticSeverity.Warning);
+        AssertContainsDiagnostic(result.Diagnostics, "RYNOR006", DiagnosticSeverity.Error);
     }
 
     [Fact]
-    public void Reports_error_when_cqrs_context_does_not_follow_appdbcontext_convention()
+    public void Reports_error_when_configured_dbcontext_type_is_not_derived_from_dbcontext()
     {
         var result = GeneratorTestHarness.Run("""
             using RynorArch.Abstractions.Attributes;
             using RynorArch.Abstractions.Base;
             using RynorArch.Abstractions.Enums;
-            using Microsoft.EntityFrameworkCore;
 
-            [assembly: Architecture(Pattern = ArchitecturePattern.Cqrs)]
+            [assembly: Architecture(
+                Pattern = ArchitecturePattern.Cqrs,
+                DbContextType = typeof(NotADbContext))]
 
             namespace Demo.Domain;
 
@@ -120,9 +121,8 @@ public sealed class GeneratorDiagnosticsTests
                 public string Destination { get; set; } = string.Empty;
             }
 
-            public sealed class CustomDbContext : DbContext
+            public sealed class NotADbContext
             {
-                public DbSet<Trip> Trips => Set<Trip>();
             }
             """);
 
@@ -157,6 +157,36 @@ public sealed class GeneratorDiagnosticsTests
             """);
 
         AssertContainsDiagnostic(result.Diagnostics, "RYNOR011", DiagnosticSeverity.Warning);
+    }
+
+    [Fact]
+    public void Reports_warning_when_endpoints_are_enabled_without_experimental_opt_in()
+    {
+        var result = GeneratorTestHarness.Run("""
+            using RynorArch.Abstractions.Attributes;
+            using RynorArch.Abstractions.Base;
+            using RynorArch.Abstractions.Enums;
+            using Microsoft.EntityFrameworkCore;
+
+            [assembly: Architecture(
+                Pattern = ArchitecturePattern.Cqrs,
+                GenerateEndpoints = true)]
+
+            namespace Demo.Domain;
+
+            [Entity]
+            public partial class Trip : EntityBase
+            {
+                public string Destination { get; set; } = string.Empty;
+            }
+
+            public sealed class AppDbContext : DbContext
+            {
+                public DbSet<Trip> Trips => Set<Trip>();
+            }
+            """);
+
+        AssertContainsDiagnostic(result.Diagnostics, "RYNOR012", DiagnosticSeverity.Warning);
     }
 
     private static void AssertContainsDiagnostic(

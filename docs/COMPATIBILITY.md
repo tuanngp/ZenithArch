@@ -10,8 +10,10 @@
 
 - Add `RynorArch.Abstractions` as a normal package reference.
 - Add `RynorArch.Generator` as an analyzer-only package reference.
-- Declare `[assembly: Architecture(...)]` explicitly to avoid relying on defaults.
+- Declare `[assembly: Architecture(...)]` explicitly; generation is blocked when this is missing.
 - Expect a generated shared infrastructure layer for CRUD/EF interaction when using `Cqrs`, `Repository`, or `FullStack`.
+- If using CQRS, optionally set `DbContextType = typeof(...)` to bind handlers to a specific DbContext type.
+- Endpoint generation requires explicit experimental opt-in (`GenerateEndpoints = true` and `EnableExperimentalEndpoints = true`).
 
 ## Feature dependencies
 

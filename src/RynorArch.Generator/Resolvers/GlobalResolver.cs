@@ -22,6 +22,11 @@ internal static class GlobalResolver
             CrudInfrastructureEmitter.Emit(context);
         }
 
+        if (entities.Length > 0 && config.IsCqrs && config.IsPerRequestTransactionSaveMode)
+        {
+            CqrsSaveBehaviorEmitter.Emit(context, config.CqrsDbContextTypeName);
+        }
+
         if (entities.Length > 0 && config.IsRepository && config.UseUnitOfWork)
         {
             context.AddSource("IUnitOfWork.g.cs", RepositoryEmitter.GenerateUnitOfWorkInterface());
@@ -32,7 +37,7 @@ internal static class GlobalResolver
             DependencyInjectionEmitter.Emit(context, entities, config);
         }
 
-        if (config.GenerateEndpoints && config.IsCqrs)
+        if (config.GenerateEndpoints && config.EnableExperimentalEndpoints && config.IsCqrs)
         {
             EndpointEmitter.Emit(context, entities, config);
         }
@@ -68,7 +73,23 @@ internal static class GlobalResolver
             ReportMissingDependency(context, location, "Persistence features", "Microsoft.EntityFrameworkCore");
         }
 
-        if (config.GenerateEndpoints && !HasType(compilation, "Microsoft.AspNetCore.Routing.IEndpointRouteBuilder"))
+        if (config.IsCqrs
+            && HasType(compilation, "Microsoft.EntityFrameworkCore.DbContext")
+            && !ValidateConfiguredDbContextType(compilation, config.CqrsDbContextTypeName))
+        {
+            context.ReportDiagnostic(Diagnostic.Create(
+                DiagnosticDescriptors.InvalidConfiguredDbContextType,
+                location,
+                config.CqrsDbContextTypeName));
+        }
+
+        if (config.GenerateEndpoints && !config.EnableExperimentalEndpoints)
+        {
+            context.ReportDiagnostic(Diagnostic.Create(
+                DiagnosticDescriptors.ExperimentalEndpointFlagRequired,
+                location));
+        }
+        else if (config.GenerateEndpoints && !HasType(compilation, "Microsoft.AspNetCore.Routing.IEndpointRouteBuilder"))
         {
             ReportMissingDependency(context, location, "GenerateEndpoints", "Microsoft.AspNetCore.App");
         }
@@ -85,14 +106,7 @@ internal static class GlobalResolver
             ReportMissingDependency(context, location, "GenerateCachingDecorators", "Microsoft.Extensions.Caching.*");
         }
 
-        if (config.IsCqrs && HasType(compilation, "Microsoft.EntityFrameworkCore.DbContext") && !HasConventionAppDbContext(compilation))
-        {
-            context.ReportDiagnostic(Diagnostic.Create(
-                DiagnosticDescriptors.MissingAppDbContextConvention,
-                location));
-        }
-
-        if (config.GenerateEndpoints && config.IsCqrs)
+        if (config.GenerateEndpoints && config.EnableExperimentalEndpoints && config.IsCqrs)
         {
             context.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.EndpointBehaviorNotice,
@@ -119,7 +133,7 @@ internal static class GlobalResolver
     private static bool HasType(Compilation compilation, string metadataName) =>
         compilation.GetTypeByMetadataName(metadataName) is not null;
 
-    private static bool HasConventionAppDbContext(Compilation compilation)
+    private static bool ValidateConfiguredDbContextType(Compilation compilation, string configuredTypeName)
     {
         var dbContextSymbol = compilation.GetTypeByMetadataName("Microsoft.EntityFrameworkCore.DbContext");
         if (dbContextSymbol is null)
@@ -127,38 +141,18 @@ internal static class GlobalResolver
             return false;
         }
 
-        return ContainsAppDbContext(compilation.Assembly.GlobalNamespace, dbContextSymbol);
-    }
-
-    private static bool ContainsAppDbContext(INamespaceSymbol ns, INamedTypeSymbol dbContextSymbol)
-    {
-        foreach (var member in ns.GetTypeMembers())
-        {
-            if (IsAppDbContext(member, dbContextSymbol))
-            {
-                return true;
-            }
-        }
-
-        foreach (var nested in ns.GetNamespaceMembers())
-        {
-            if (ContainsAppDbContext(nested, dbContextSymbol))
-            {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    private static bool IsAppDbContext(INamedTypeSymbol symbol, INamedTypeSymbol dbContextSymbol)
-    {
-        if (!string.Equals(symbol.Name, "AppDbContext", System.StringComparison.Ordinal))
+        var resolved = compilation.GetTypeByMetadataName(ToMetadataName(configuredTypeName));
+        if (resolved is null)
         {
             return false;
         }
 
-        for (INamedTypeSymbol? current = symbol.BaseType; current is not null; current = current.BaseType)
+        if (SymbolEqualityComparer.Default.Equals(resolved, dbContextSymbol))
+        {
+            return true;
+        }
+
+        for (INamedTypeSymbol? current = resolved.BaseType; current is not null; current = current.BaseType)
         {
             if (SymbolEqualityComparer.Default.Equals(current, dbContextSymbol))
             {
@@ -167,5 +161,13 @@ internal static class GlobalResolver
         }
 
         return false;
+    }
+
+    private static string ToMetadataName(string configuredTypeName)
+    {
+        const string globalPrefix = "global::";
+        return configuredTypeName.StartsWith(globalPrefix, System.StringComparison.Ordinal)
+            ? configuredTypeName.Substring(globalPrefix.Length)
+            : configuredTypeName;
     }
 }

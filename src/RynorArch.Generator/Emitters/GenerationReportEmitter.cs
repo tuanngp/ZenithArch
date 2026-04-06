@@ -24,10 +24,13 @@ internal static class GenerationReportEmitter
         w.AppendLine($"public const bool EnableValidation = {config.EnableValidation.ToString().ToLowerInvariant()};");
         w.AppendLine($"public const bool GenerateDependencyInjection = {config.GenerateDependencyInjection.ToString().ToLowerInvariant()};");
         w.AppendLine($"public const bool GenerateEndpoints = {config.GenerateEndpoints.ToString().ToLowerInvariant()};");
+        w.AppendLine($"public const bool EnableExperimentalEndpoints = {config.EnableExperimentalEndpoints.ToString().ToLowerInvariant()};");
         w.AppendLine($"public const bool GenerateDtos = {config.GenerateDtos.ToString().ToLowerInvariant()};");
         w.AppendLine($"public const bool GenerateEfConfigurations = {config.GenerateEfConfigurations.ToString().ToLowerInvariant()};");
         w.AppendLine($"public const bool GenerateCachingDecorators = {config.GenerateCachingDecorators.ToString().ToLowerInvariant()};");
         w.AppendLine($"public const bool GeneratePagination = {config.GeneratePagination.ToString().ToLowerInvariant()};");
+        w.AppendLine($"public const int CqrsSaveMode = {config.CqrsSaveMode};");
+        w.AppendLine($"public const string CqrsDbContextTypeName = \"{config.CqrsDbContextTypeName}\";");
         w.AppendLine();
 
         w.AppendLine("public static readonly string[] Entities = new[]");
@@ -59,6 +62,11 @@ internal static class GenerationReportEmitter
             list.Add("RynorArch.CrudInfrastructure.g.cs");
         }
 
+        if (entities.Length > 0 && config.IsCqrs && config.IsPerRequestTransactionSaveMode)
+        {
+            list.Add("RynorArch.CqrsSaveBehavior.g.cs");
+        }
+
         if (entities.Length > 0 && config.IsRepository && config.UseUnitOfWork)
         {
             list.Add("IUnitOfWork.g.cs");
@@ -69,7 +77,7 @@ internal static class GenerationReportEmitter
             list.Add("RynorArchServiceCollectionExtensions.g.cs");
         }
 
-        if (config.GenerateEndpoints && config.IsCqrs)
+        if (config.GenerateEndpoints && config.EnableExperimentalEndpoints && config.IsCqrs)
         {
             list.Add("RynorArchEndpointExtensions.g.cs");
         }
