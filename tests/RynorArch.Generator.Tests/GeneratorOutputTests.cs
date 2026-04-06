@@ -27,6 +27,9 @@ public sealed class GeneratorOutputTests
 
         Assert.Contains("Trip.Repository.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("Trip.Specification.g.cs", result.GeneratedSources.Keys);
+        Assert.Contains("RynorArch.CrudInfrastructure.g.cs", result.GeneratedSources.Keys);
+        Assert.Contains("public interface ITripRepository : ICrudRepository<Trip>;", result.GeneratedSources["Trip.Repository.g.cs"]);
+        Assert.Contains("public sealed partial class TripRepository : CrudRepository<Trip>, ITripRepository", result.GeneratedSources["Trip.Repository.g.cs"]);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error);
     }
 
@@ -91,12 +94,24 @@ public sealed class GeneratorOutputTests
             public partial class Trip : EntityBase
             {
                 [QueryFilter]
-                public string Destination { get; init; } = string.Empty;
+                public string Destination { get; set; } = string.Empty;
+            }
+            """,
+            """
+            using Microsoft.EntityFrameworkCore;
+            using Demo.Domain;
+
+            namespace Demo.Domain.Cqrs;
+
+            public sealed class AppDbContext : DbContext
+            {
+                public DbSet<Trip> Trips => Set<Trip>();
             }
             """);
 
         Assert.Contains("Trip.Cqrs.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("Trip.Repository.g.cs", result.GeneratedSources.Keys);
+        Assert.Contains("RynorArch.CrudInfrastructure.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("Trip.Specification.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("Trip.Validation.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("TripDto.g.cs", result.GeneratedSources.Keys);
@@ -105,6 +120,7 @@ public sealed class GeneratorOutputTests
         Assert.Contains("TripPaginationExtensions.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("Trip.DomainEvents.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("IUnitOfWork.g.cs", result.GeneratedSources.Keys);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error);
     }
 
     private static string Normalize(string value)

@@ -8,6 +8,7 @@
 - **Zero Runtime Reflection**: Generated code operates directly on your types.
 - **Deterministic Output**: Consistent, predictable output files (`.g.cs`).
 - **Clean Architecture Enforced**: Strict separation of concerns depending on the chosen pattern. Handlers are decoupled from repositories unless FullStack is explicitly used.
+- **Hybrid Generation Model**: Public contracts stay explicit per entity, while shared CRUD and EF interaction now flow through a generated generic infrastructure layer emitted once per compilation.
 - **Extensible via Partial Classes**: All generated handlers, repositories, and validators are `partial` and provide lifecycle hooks (`OnBeforeHandle`, `OnValidate`, etc.) for you to inject custom logic.
 - **DDD Integration**: First-class support for `[AggregateRoot]` and Domain Events.
 
@@ -52,6 +53,14 @@ Add references to the core packages in your `.csproj`:
 
 For a working end-to-end sample, see `samples/RynorArch.Sample`.
 
+## Hybrid Architecture
+
+RynorArch now uses a hybrid model to keep generated source smaller as your entity count grows:
+
+- Per-entity generated types remain explicit for commands, queries, handlers, DTOs, validators, specifications, and domain events.
+- Shared CRUD and EF Core interaction are emitted once into a generic infrastructure layer and reused by the per-entity wrappers.
+- Generated repositories now act as thin wrappers over a shared `CrudRepository<TEntity>` base instead of duplicating full CRUD implementations for every entity.
+
 ## Compatibility Matrix
 
 | Area | Status |
@@ -82,8 +91,8 @@ using RynorArch.Abstractions.Enums;
 ### Supported Patterns
 
 - `ArchitecturePattern.Cqrs` - Generates MediatR Commands, Queries, and Handlers. Handlers dependency-inject the DbContext directly.
-- `ArchitecturePattern.Repository` - Generates `IRepository<T>` interfaces, concrete Repository implementations, and optionally a `UnitOfWork` interface.
-- `ArchitecturePattern.FullStack` - Generates both CQRS and Repository artifacts.
+- `ArchitecturePattern.Repository` - Generates repository interfaces and thin repository wrappers backed by shared generic CRUD infrastructure, plus an optional `UnitOfWork` interface.
+- `ArchitecturePattern.FullStack` - Generates both CQRS and Repository artifacts on top of the shared CRUD/runtime layer.
 
 Always declare the assembly-level configuration explicitly, even if the defaults happen to match your current needs. This keeps upgrades and generated output predictable.
 
@@ -115,10 +124,11 @@ public partial class Trip : EntityBase
 If set to **CQRS** mode with Validation and Specifications enabled, the generator will produce:
 
 1. **Commands & Queries**: `CreateTripCommand`, `UpdateTripCommand`, `DeleteTripCommand`, `GetTripByIdQuery`, `GetTripListQuery`.
-2. **Handlers**: `CreateTripHandler`, `UpdateTripHandler`, etc.
+2. **Handlers**: `CreateTripHandler`, `UpdateTripHandler`, etc., which now delegate shared persistence concerns into generated generic infrastructure.
 3. **Specifications**: `TripSpecification` mapped to `[QueryFilter]` properties.
 4. **Validators**: `CreateTripValidator`, `UpdateTripValidator` stubs with basic rules implemented.
 5. **Domain Events**: `TripCreatedEvent`, `TripUpdatedEvent`, `TripDeletedEvent` (because of `[AggregateRoot]`).
+6. **Shared Infrastructure**: one generated CRUD/runtime support file reused across all entities in the compilation.
 
 ### Extending Generated Code
 
@@ -160,6 +170,7 @@ public partial class CreateTripValidator
 
 - `samples/RynorArch.Sample` demonstrates a realistic consumer project with `FullStack` mode enabled.
 - Generated files should usually stay out of source control unless your team intentionally reviews generated diffs as part of the release process.
+- If you were depending on the old fully generated repository implementation shape, read `docs/UPGRADING.md` before updating.
 
 ## Troubleshooting and Upgrades
 

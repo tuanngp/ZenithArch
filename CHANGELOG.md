@@ -18,6 +18,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Updated generated sources to include the `using` directives they rely on explicitly.
 - Expanded the solution to include the CLI and generator test project.
 - Updated the CLI support matrix to `net8.0`, `net9.0`, and `net10.0`.
+- Refactored repository generation to emit thin per-entity wrappers over a shared generated `CrudRepository<TEntity>` base.
+- Refactored CQRS handler persistence logic to delegate shared EF/Core CRUD work into generated generic runtime helpers emitted once per compilation.
 
 ## [1.0.6]
 

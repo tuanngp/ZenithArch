@@ -26,6 +26,7 @@ internal static class CqrsEmitter
         w.AppendLine("using System.Linq;");
         w.AppendLine("using MediatR;");
         w.AppendLine("using Microsoft.EntityFrameworkCore;");
+        w.AppendLine("using RynorArch.Generated.Infrastructure;");
         w.AppendLine("using System.Threading;");
         w.AppendLine("using System.Threading.Tasks;");
         if (!string.IsNullOrEmpty(entity.Namespace))
@@ -142,8 +143,7 @@ internal static class CqrsEmitter
         w.AppendLine();
         w.AppendLine("OnBeforeHandle(command, entity);");
         w.AppendLine();
-        w.AppendLine($"_db.Set<{name}>().Add(entity);");
-        w.AppendLine("await _db.SaveChangesAsync(cancellationToken);");
+        w.AppendLine("await RynorArchCrudRuntime.AddAndSaveAsync(_db, entity, cancellationToken);");
         w.AppendLine();
         w.AppendLine("OnAfterHandle(command, entity);");
         w.AppendLine();
@@ -176,7 +176,7 @@ internal static class CqrsEmitter
         w.OpenBrace();
         w.AppendLine("OnValidate(command);");
         w.AppendLine();
-        w.AppendLine($"var entity = await _db.Set<{name}>().FindAsync(new object[] {{ command.Id }}, cancellationToken);");
+        w.AppendLine($"var entity = await RynorArchCrudRuntime.FindByIdAsync<{name}>(_db, command.Id, cancellationToken);");
         w.AppendLine("if (entity is null) return false;");
         w.AppendLine();
 
@@ -192,7 +192,7 @@ internal static class CqrsEmitter
         w.AppendLine();
         w.AppendLine("OnBeforeHandle(command, entity);");
         w.AppendLine();
-        w.AppendLine("await _db.SaveChangesAsync(cancellationToken);");
+        w.AppendLine("await RynorArchCrudRuntime.SaveUpdatedEntityAsync(_db, entity, cancellationToken);");
         w.AppendLine();
         w.AppendLine("OnAfterHandle(command, entity);");
         w.AppendLine();
@@ -222,13 +222,12 @@ internal static class CqrsEmitter
 
         w.AppendLine($"public async Task<bool> Handle(Delete{name}Command command, CancellationToken cancellationToken)");
         w.OpenBrace();
-        w.AppendLine($"var entity = await _db.Set<{name}>().FindAsync(new object[] {{ command.Id }}, cancellationToken);");
+        w.AppendLine($"var entity = await RynorArchCrudRuntime.FindByIdAsync<{name}>(_db, command.Id, cancellationToken);");
         w.AppendLine("if (entity is null) return false;");
         w.AppendLine();
         w.AppendLine("OnBeforeHandle(command, entity);");
         w.AppendLine();
-        w.AppendLine($"_db.Set<{name}>().Remove(entity);");
-        w.AppendLine("await _db.SaveChangesAsync(cancellationToken);");
+        w.AppendLine("await RynorArchCrudRuntime.DeleteAndSaveAsync(_db, entity, cancellationToken);");
         w.AppendLine();
         w.AppendLine("OnAfterHandle(command);");
         w.AppendLine();
@@ -257,7 +256,7 @@ internal static class CqrsEmitter
 
         w.AppendLine($"public async Task<{name}?> Handle(Get{name}ByIdQuery query, CancellationToken cancellationToken)");
         w.OpenBrace();
-        w.AppendLine($"var entity = await _db.Set<{name}>().FindAsync(new object[] {{ query.Id }}, cancellationToken);");
+        w.AppendLine($"var entity = await RynorArchCrudRuntime.FindByIdAsync<{name}>(_db, query.Id, cancellationToken);");
         w.AppendLine("OnAfterHandle(entity);");
         w.AppendLine("return entity;");
         w.CloseBrace();
@@ -284,7 +283,7 @@ internal static class CqrsEmitter
 
         w.AppendLine($"public async Task<IReadOnlyList<{name}>> Handle(Get{name}ListQuery query, CancellationToken cancellationToken)");
         w.OpenBrace();
-        w.AppendLine($"IQueryable<{name}> queryable = _db.Set<{name}>().AsNoTracking();");
+        w.AppendLine($"IQueryable<{name}> queryable = RynorArchCrudRuntime.CreateQuery<{name}>(_db);");
         w.AppendLine();
 
         // Apply filters from QueryFilter properties
@@ -310,12 +309,7 @@ internal static class CqrsEmitter
 
         w.AppendLine("OnBeforeQuery(query, ref queryable);");
         w.AppendLine();
-        w.AppendLine("return await queryable");
-        w.IncreaseIndent();
-        w.AppendLine(".Skip(query.Skip)");
-        w.AppendLine(".Take(query.Take)");
-        w.AppendLine(".ToListAsync(cancellationToken);");
-        w.DecreaseIndent();
+        w.AppendLine("return await RynorArchCrudRuntime.ListAsync(queryable, query.Skip, query.Take, cancellationToken);");
         w.CloseBrace();
         w.CloseBrace();
     }

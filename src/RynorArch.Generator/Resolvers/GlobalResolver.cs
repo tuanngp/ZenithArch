@@ -9,6 +9,11 @@ internal static class GlobalResolver
 {
     public static void Resolve(SourceProductionContext context, ImmutableArray<EntityModel> entities, ArchitectureConfig config)
     {
+        if (entities.Length > 0 && (config.IsCqrs || config.IsRepository))
+        {
+            CrudInfrastructureEmitter.Emit(context);
+        }
+
         if (config.GenerateDependencyInjection)
         {
             DependencyInjectionEmitter.Emit(context, entities, config);

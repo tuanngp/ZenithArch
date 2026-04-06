@@ -24,26 +24,15 @@ internal static class RepositoryEmitter
 
     internal static string Generate(EntityModel entity, ArchitectureConfig config)
     {
-        var w = new SourceWriter(2048);
+        var w = new SourceWriter(1024);
         w.AppendFileHeader();
 
-        w.AppendLine("using System;");
-        w.AppendLine("using System.Collections.Generic;");
-        w.AppendLine("using System.Linq;");
-        w.AppendLine("using System.Linq.Expressions;");
-        w.AppendLine("using System.Threading;");
-        w.AppendLine("using System.Threading.Tasks;");
         w.AppendLine("using Microsoft.EntityFrameworkCore;");
+        w.AppendLine("using RynorArch.Generated.Infrastructure;");
         if (!string.IsNullOrEmpty(entity.Namespace))
         {
             w.AppendLine($"using {entity.Namespace};");
         }
-
-        if (config.UseSpecification)
-        {
-            w.AppendLine("using RynorArch.Abstractions.Interfaces;");
-        }
-
         w.AppendLine();
 
         if (!string.IsNullOrEmpty(entity.Namespace))
@@ -63,188 +52,20 @@ internal static class RepositoryEmitter
     {
         string name = entity.Name;
 
-        w.AppendLine($"public interface I{name}Repository");
-        w.OpenBrace();
-        w.AppendLine($"Task<{name}?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);");
-        w.AppendLine($"Task<IReadOnlyList<{name}>> GetAllAsync(CancellationToken cancellationToken = default);");
-        w.AppendLine($"Task<{name}> AddAsync({name} entity, CancellationToken cancellationToken = default);");
-        w.AppendLine($"Task UpdateAsync({name} entity, CancellationToken cancellationToken = default);");
-        w.AppendLine($"Task DeleteAsync({name} entity, CancellationToken cancellationToken = default);");
-        w.AppendLine($"Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default);");
-
-        if (config.UseSpecification)
-        {
-            w.AppendLine($"Task<IReadOnlyList<{name}>> ListAsync(ISpecification<{name}> specification, CancellationToken cancellationToken = default);");
-            w.AppendLine($"Task<int> CountAsync(ISpecification<{name}> specification, CancellationToken cancellationToken = default);");
-        }
-
-        w.CloseBrace();
+        _ = config;
+        w.AppendLine($"public interface I{name}Repository : ICrudRepository<{name}>;");
     }
 
     private static void EmitImplementation(SourceWriter w, EntityModel entity, ArchitectureConfig config)
     {
         string name = entity.Name;
 
-        w.AppendLine($"public sealed partial class {name}Repository : I{name}Repository");
+        _ = config;
+        w.AppendLine($"public sealed partial class {name}Repository : CrudRepository<{name}>, I{name}Repository");
         w.OpenBrace();
-        w.AppendLine("private readonly DbContext _db;");
-        w.AppendLine();
-        w.AppendLine($"public {name}Repository(DbContext db)");
+        w.AppendLine($"public {name}Repository(DbContext db) : base(db)");
         w.OpenBrace();
-        w.AppendLine("_db = db;");
         w.CloseBrace();
-        w.AppendLine();
-
-        // GetById
-        w.AppendLine($"public async Task<{name}?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)");
-        w.OpenBrace();
-        if (entity.IsSoftDelete)
-        {
-            w.AppendLine($"return await _db.Set<{name}>().FirstOrDefaultAsync(x => x.Id == id && !x.IsDeleted, cancellationToken);");
-        }
-        else
-        {
-            w.AppendLine($"return await _db.Set<{name}>().FindAsync(new object[] {{ id }}, cancellationToken);");
-        }
-        w.CloseBrace();
-        w.AppendLine();
-
-        // GetAll
-        w.AppendLine($"public async Task<IReadOnlyList<{name}>> GetAllAsync(CancellationToken cancellationToken = default)");
-        w.OpenBrace();
-        w.AppendLine($"IQueryable<{name}> query = _db.Set<{name}>().AsNoTracking();");
-        if (entity.IsSoftDelete)
-        {
-            w.AppendLine("query = query.Where(x => !x.IsDeleted);");
-        }
-        w.AppendLine("return await query.ToListAsync(cancellationToken);");
-        w.CloseBrace();
-        w.AppendLine();
-
-        // Add
-        w.AppendLine($"public async Task<{name}> AddAsync({name} entity, CancellationToken cancellationToken = default)");
-        w.OpenBrace();
-        if (entity.IsAuditable)
-        {
-            w.AppendLine("entity.CreatedAt = DateTime.UtcNow;");
-        }
-        w.AppendLine($"await _db.Set<{name}>().AddAsync(entity, cancellationToken);");
-        w.AppendLine("await _db.SaveChangesAsync(cancellationToken);");
-        w.AppendLine("return entity;");
-        w.CloseBrace();
-        w.AppendLine();
-
-        // Update
-        w.AppendLine($"public Task UpdateAsync({name} entity, CancellationToken cancellationToken = default)");
-        w.OpenBrace();
-        if (entity.IsAuditable)
-        {
-            w.AppendLine("entity.LastModifiedAt = DateTime.UtcNow;");
-        }
-        w.AppendLine($"_db.Set<{name}>().Update(entity);");
-        w.AppendLine("return _db.SaveChangesAsync(cancellationToken);");
-        w.CloseBrace();
-        w.AppendLine();
-
-        // Delete
-        w.AppendLine($"public Task DeleteAsync({name} entity, CancellationToken cancellationToken = default)");
-        w.OpenBrace();
-        if (entity.IsSoftDelete)
-        {
-            w.AppendLine("entity.IsDeleted = true;");
-            if (entity.IsAuditable)
-            {
-                w.AppendLine("entity.LastModifiedAt = DateTime.UtcNow;");
-            }
-            w.AppendLine($"_db.Set<{name}>().Update(entity);");
-        }
-        else
-        {
-            w.AppendLine($"_db.Set<{name}>().Remove(entity);");
-        }
-        w.AppendLine("return _db.SaveChangesAsync(cancellationToken);");
-        w.CloseBrace();
-        w.AppendLine();
-
-        // Exists
-        w.AppendLine($"public async Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default)");
-        w.OpenBrace();
-        if (entity.IsSoftDelete)
-        {
-            w.AppendLine($"return await _db.Set<{name}>().AnyAsync(e => e.Id == id && !e.IsDeleted, cancellationToken);");
-        }
-        else
-        {
-            w.AppendLine($"return await _db.Set<{name}>().AnyAsync(e => e.Id == id, cancellationToken);");
-        }
-        w.CloseBrace();
-
-        if (config.UseSpecification)
-        {
-            w.AppendLine();
-            EmitSpecificationMethods(w, entity);
-        }
-
-        w.CloseBrace();
-    }
-
-    private static void EmitSpecificationMethods(SourceWriter w, EntityModel entity)
-    {
-        string name = entity.Name;
-
-        // List with specification
-        w.AppendLine($"public async Task<IReadOnlyList<{name}>> ListAsync(ISpecification<{name}> specification, CancellationToken cancellationToken = default)");
-        w.OpenBrace();
-        w.AppendLine($"IQueryable<{name}> queryable = _db.Set<{name}>().AsNoTracking();");
-        if (entity.IsSoftDelete)
-        {
-            w.AppendLine("queryable = queryable.Where(x => !x.IsDeleted);");
-        }
-        w.AppendLine("queryable = ApplySpecification(queryable, specification);");
-        w.AppendLine("return await queryable.ToListAsync(cancellationToken);");
-        w.CloseBrace();
-        w.AppendLine();
-
-        // Count with specification
-        w.AppendLine($"public async Task<int> CountAsync(ISpecification<{name}> specification, CancellationToken cancellationToken = default)");
-        w.OpenBrace();
-        w.AppendLine($"IQueryable<{name}> queryable = _db.Set<{name}>().AsNoTracking();");
-        if (entity.IsSoftDelete)
-        {
-            w.AppendLine("queryable = queryable.Where(x => !x.IsDeleted);");
-        }
-        w.AppendLine("if (specification.Criteria is not null)");
-        w.IncreaseIndent();
-        w.AppendLine("queryable = queryable.Where(specification.Criteria);");
-        w.DecreaseIndent();
-        w.AppendLine("return await queryable.CountAsync(cancellationToken);");
-        w.CloseBrace();
-        w.AppendLine();
-
-        // ApplySpecification helper
-        w.AppendLine($"private static IQueryable<{name}> ApplySpecification(IQueryable<{name}> queryable, ISpecification<{name}> specification)");
-        w.OpenBrace();
-        w.AppendLine("if (specification.Criteria is not null)");
-        w.IncreaseIndent();
-        w.AppendLine("queryable = queryable.Where(specification.Criteria);");
-        w.DecreaseIndent();
-        w.AppendLine();
-        w.AppendLine("for (int i = 0; i < specification.Includes.Count; i++)");
-        w.IncreaseIndent();
-        w.AppendLine("queryable = queryable.Include(specification.Includes[i]);");
-        w.DecreaseIndent();
-        w.AppendLine();
-        w.AppendLine("if (specification.Skip.HasValue)");
-        w.IncreaseIndent();
-        w.AppendLine("queryable = queryable.Skip(specification.Skip.Value);");
-        w.DecreaseIndent();
-        w.AppendLine();
-        w.AppendLine("if (specification.Take.HasValue)");
-        w.IncreaseIndent();
-        w.AppendLine("queryable = queryable.Take(specification.Take.Value);");
-        w.DecreaseIndent();
-        w.AppendLine();
-        w.AppendLine("return queryable;");
         w.CloseBrace();
     }
 
@@ -253,6 +74,10 @@ internal static class RepositoryEmitter
         var w = new SourceWriter(512);
         w.AppendFileHeader();
 
+        w.AppendLine("using System;");
+        w.AppendLine("using System.Threading;");
+        w.AppendLine("using System.Threading.Tasks;");
+        w.AppendLine();
         w.AppendLine("/// <summary>");
         w.AppendLine("/// Unit of Work interface for coordinating repository transactions.");
         w.AppendLine("/// </summary>");
