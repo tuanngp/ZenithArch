@@ -11,6 +11,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Automated generator regression tests for diagnostics and generated outputs.
 - GitHub Actions CI and tag-based release workflows.
 - Troubleshooting, compatibility, upgrade, contribution, and security documentation.
+- New enterprise operation docs: endpoint hardening, caching operations, and profile migration guidance.
 
 ### Changed
 - Centralized package metadata and versioning in `Directory.Build.props`.
@@ -32,6 +33,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Upgraded generated DI extension to auto-register CQRS handlers, validators, and cache query behaviors.
 - Added actionable dependency hints (`RYNOR007`) and save-mode wiring warning (`RYNOR013`).
 - Expanded CLI with `init` command, profile-based setup prompts, automatic `AssemblyConfig.cs`, and next-step guidance output.
+- Added low-touch UnitOfWork wiring via generated `AddRynorArchDependencies<TDbContext>()` overload and generated runtime adapter.
+- Made `RynorArch.Sample` runnable end-to-end as a minimal web app using in-memory EF Core.
+- Added profile migration recommendation diagnostic (`RYNOR014`) and linked behavior notices to hardening docs.
 
 ## [1.0.6]
 

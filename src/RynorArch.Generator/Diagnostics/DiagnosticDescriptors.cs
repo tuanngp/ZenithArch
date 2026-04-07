@@ -77,7 +77,7 @@ internal static class DiagnosticDescriptors
     public static readonly DiagnosticDescriptor EndpointBehaviorNotice = new(
         id: "RYNOR009",
         title: "Generated endpoint behavior notice",
-        messageFormat: "Generated endpoints return generic HTTP responses and may need manual hardening for enterprise API semantics (for example 404 handling, problem details, and authorization)",
+        messageFormat: "Generated endpoints return generic HTTP responses and may need manual hardening for enterprise API semantics (for example 404 handling, problem details, and authorization). See docs/ENDPOINT_HARDENING.md.",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true);
@@ -85,7 +85,7 @@ internal static class DiagnosticDescriptors
     public static readonly DiagnosticDescriptor CachingBehaviorNotice = new(
         id: "RYNOR010",
         title: "Generated cache behavior notice",
-        messageFormat: "Generated cache behavior stores query responses and emits per-entity invalidation contracts; call AddRynorArchDependencies to register invalidators and cache pipeline behaviors",
+        messageFormat: "Generated cache behavior stores query responses and emits per-entity invalidation contracts; call AddRynorArchDependencies to register invalidators and cache pipeline behaviors. See docs/CACHING_OPERATIONS.md.",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true);
@@ -112,5 +112,13 @@ internal static class DiagnosticDescriptors
         messageFormat: "CqrsSaveMode.PerRequestTransaction is enabled while GenerateDependencyInjection is false; either enable generated DI or manually register IPipelineBehavior<,> with RynorArchSaveChangesBehavior<,>",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor LegacyConfigurationProfileHint = new(
+        id: "RYNOR014",
+        title: "Consider starter profile migration",
+        messageFormat: "Configuration uses explicit legacy-style flags. Consider `Profile = ArchitectureProfile.{0}` to reduce setup drift. See docs/UPGRADING_PROFILES.md.",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true);
 }

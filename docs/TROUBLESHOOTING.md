@@ -70,11 +70,13 @@ Fix options:
 
 Endpoint generation is active and compilation succeeded, but the generated endpoints are intentionally minimal.
 Harden them for enterprise APIs (authorization, richer error contracts, and resource-not-found semantics).
+Follow the hardening checklist in `docs/ENDPOINT_HARDENING.md`.
 
 ### `RYNOR010` Generated cache behavior notice
 
 Generated cache pipeline behaviors include per-entity invalidation contracts.
 Ensure invalidators are registered in DI (generated DI helper does this when enabled).
+Operational rollout guidance is in `docs/CACHING_OPERATIONS.md`.
 
 ### `RYNOR011` Feature flag ignored by selected pattern
 
@@ -102,6 +104,16 @@ Fix by opting in explicitly:
 Fix options:
 - set `GenerateDependencyInjection = true`, or
 - manually register `IPipelineBehavior<,>` to `RynorArchSaveChangesBehavior<,>`
+
+### `RYNOR014` Consider starter profile migration
+
+Your module still uses a legacy explicit-flag style configuration.
+
+Fix options:
+- set `Profile = ArchitectureProfile.CqrsQuickStart` / `RepositoryQuickStart` / `FullStackQuickStart`
+- keep only explicit flags that intentionally override profile defaults
+
+See `docs/UPGRADING_PROFILES.md` for migration mapping examples.
 
 ## Debugging generated output
 

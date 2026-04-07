@@ -26,6 +26,10 @@ internal static class DependencyInjectionEmitter
         {
             sb.AppendLine("using FluentValidation;");
         }
+        if (config.IsRepository && config.UseUnitOfWork)
+        {
+            sb.AppendLine("using Microsoft.EntityFrameworkCore;");
+        }
         sb.AppendLine("using Microsoft.Extensions.DependencyInjection;");
         
         // Add using statements for all entity namespaces
@@ -55,7 +59,7 @@ internal static class DependencyInjectionEmitter
             }
         }
 
-        if (config.IsCqrs && config.IsPerRequestTransactionSaveMode)
+        if ((config.IsCqrs && config.IsPerRequestTransactionSaveMode) || (config.IsRepository && config.UseUnitOfWork))
         {
             sb.AppendLine("using RynorArch.Generated.Infrastructure;");
         }
@@ -114,14 +118,21 @@ internal static class DependencyInjectionEmitter
             sb.AppendLine();
         }
         
-        // Unit of Work registration is best left to manual user code since AppDbContext needs specific setup
-        // if (config.UseUnitOfWork)
-        // {
-        //     sb.AppendLine("        services.AddScoped<IUnitOfWork, UnitOfWork>();");
-        // }
-
         sb.AppendLine("        return services;");
         sb.AppendLine("    }");
+
+        if (config.IsRepository && config.UseUnitOfWork)
+        {
+            sb.AppendLine();
+            sb.AppendLine("    public static IServiceCollection AddRynorArchDependencies<TDbContext>(this IServiceCollection services, bool registerMediatR = true)");
+            sb.AppendLine("        where TDbContext : DbContext");
+            sb.AppendLine("    {");
+            sb.AppendLine("        AddRynorArchDependencies(services, registerMediatR);");
+            sb.AppendLine("        services.AddScoped<IUnitOfWork>(sp => new RynorArchGeneratedUnitOfWork<TDbContext>(sp.GetRequiredService<TDbContext>()));");
+            sb.AppendLine("        return services;");
+            sb.AppendLine("    }");
+        }
+
         sb.AppendLine("}");
 
         context.AddSource("RynorArchServiceCollectionExtensions.g.cs", SourceText.From(sb.ToString(), Encoding.UTF8));

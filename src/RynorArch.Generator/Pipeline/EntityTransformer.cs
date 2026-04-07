@@ -234,7 +234,8 @@ internal static class EntityTransformer
                 generateCachingDecorators,
                 generatePagination,
                 cqrsDbContextTypeName,
-                cqrsSaveMode);
+                cqrsSaveMode,
+                profile);
         }
 
         return ArchitectureConfig.Default;

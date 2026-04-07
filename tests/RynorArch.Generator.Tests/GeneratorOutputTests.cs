@@ -123,6 +123,33 @@ public sealed class GeneratorOutputTests
     }
 
     [Fact]
+    public void Generates_unit_of_work_adapter_and_generic_di_overload_for_repository_profile()
+    {
+        var result = GeneratorTestHarness.Run("""
+            using RynorArch.Abstractions.Attributes;
+            using RynorArch.Abstractions.Base;
+            using RynorArch.Abstractions.Enums;
+
+            [assembly: Architecture(Profile = ArchitectureProfile.RepositoryQuickStart)]
+
+            namespace Demo.Domain;
+
+            [Entity]
+            public partial class Trip : EntityBase
+            {
+                [QueryFilter]
+                public string Destination { get; set; } = string.Empty;
+            }
+            """);
+
+        Assert.Contains("RynorArchServiceCollectionExtensions.g.cs", result.GeneratedSources.Keys);
+        Assert.Contains("public static IServiceCollection AddRynorArchDependencies<TDbContext>(this IServiceCollection services, bool registerMediatR = true)", result.GeneratedSources["RynorArchServiceCollectionExtensions.g.cs"]);
+        Assert.Contains("services.AddScoped<IUnitOfWork>(sp => new RynorArchGeneratedUnitOfWork<TDbContext>(sp.GetRequiredService<TDbContext>()));", result.GeneratedSources["RynorArchServiceCollectionExtensions.g.cs"]);
+        Assert.Contains("public sealed class RynorArchGeneratedUnitOfWork<TDbContext> : IUnitOfWork where TDbContext : DbContext", result.GeneratedSources["RynorArch.CrudInfrastructure.g.cs"]);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error);
+    }
+
+    [Fact]
     public void Generates_fullstack_feature_set_for_aggregate_roots()
     {
         var result = GeneratorTestHarness.Run("""

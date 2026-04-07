@@ -116,6 +116,8 @@ Any explicit flag on `Architecture(...)` overrides profile defaults.
 - `ArchitecturePattern.Repository` - Generates repository interfaces and thin repository wrappers backed by shared generic CRUD infrastructure, plus an optional `UnitOfWork` interface.
 - `ArchitecturePattern.FullStack` - Generates both CQRS and Repository artifacts on top of the shared CRUD/runtime layer.
 
+When `UseUnitOfWork = true` in Repository or FullStack mode, use `builder.Services.AddRynorArchDependencies<AppDbContext>();` to auto-register the generated `IUnitOfWork` adapter.
+
 Always declare the assembly-level configuration explicitly, even if the defaults happen to match your current needs. This keeps upgrades and generated output predictable.
 
 ### Endpoint generation policy
@@ -212,6 +214,7 @@ public partial class CreateTripValidator
 ## Samples and Generated Files
 
 - `samples/RynorArch.Sample` demonstrates a realistic consumer project with `FullStack` mode enabled.
+- The sample now runs as a minimal web app with in-memory EF Core so you can verify generated endpoints immediately.
 - Generated files should usually stay out of source control unless your team intentionally reviews generated diffs as part of the release process.
 - If you were depending on the old fully generated repository implementation shape, read `docs/UPGRADING.md` before updating.
 - A global `RynorArch.GenerationReport.g.cs` file is emitted to summarize entities, feature flags, and generated artifact names.
@@ -224,8 +227,11 @@ public partial class CreateTripValidator
 - Integration: `docs/INTEGRATION_GUIDE.md`
 - Feature matrix: `docs/FEATURE_MATRIX.md`
 - Attribute reference: `docs/ATTRIBUTE_REFERENCE.md`
+- Endpoint hardening: `docs/ENDPOINT_HARDENING.md`
+- Caching operations: `docs/CACHING_OPERATIONS.md`
 - Compatibility: `docs/COMPATIBILITY.md`
 - Upgrade guidance: `docs/UPGRADING.md`
+- Profile migration: `docs/UPGRADING_PROFILES.md`
 - Release process: `docs/RELEASING.md`
 - Changelog: `CHANGELOG.md`
 

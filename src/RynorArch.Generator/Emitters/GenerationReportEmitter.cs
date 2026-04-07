@@ -18,6 +18,7 @@ internal static class GenerationReportEmitter
         w.OpenBrace();
 
         w.AppendLine($"public const int EntityCount = {entities.Length};");
+        w.AppendLine($"public const int Profile = {config.Profile};");
         w.AppendLine($"public const int Pattern = {config.Pattern};");
         w.AppendLine($"public const bool UseSpecification = {config.UseSpecification.ToString().ToLowerInvariant()};");
         w.AppendLine($"public const bool UseUnitOfWork = {config.UseUnitOfWork.ToString().ToLowerInvariant()};");

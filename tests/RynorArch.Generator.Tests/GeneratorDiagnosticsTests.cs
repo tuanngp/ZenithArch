@@ -219,6 +219,43 @@ public sealed class GeneratorDiagnosticsTests
         AssertContainsDiagnostic(result.Diagnostics, "RYNOR013", DiagnosticSeverity.Warning);
     }
 
+    [Fact]
+    public void Reports_info_for_legacy_explicit_configuration_that_can_use_profile_defaults()
+    {
+        var result = GeneratorTestHarness.Run("""
+            using RynorArch.Abstractions.Attributes;
+            using RynorArch.Abstractions.Base;
+            using RynorArch.Abstractions.Enums;
+            using Microsoft.EntityFrameworkCore;
+
+            [assembly: Architecture(
+                Pattern = ArchitecturePattern.FullStack,
+                UseSpecification = true,
+                UseUnitOfWork = true,
+                EnableValidation = true,
+                GenerateDependencyInjection = true,
+                GenerateDtos = true,
+                GenerateEfConfigurations = true,
+                GeneratePagination = true,
+                CqrsSaveMode = CqrsSaveMode.PerRequestTransaction)]
+
+            namespace Demo.Domain;
+
+            [Entity]
+            public partial class Trip : EntityBase
+            {
+                public string Destination { get; set; } = string.Empty;
+            }
+
+            public sealed class AppDbContext : DbContext
+            {
+                public DbSet<Trip> Trips => Set<Trip>();
+            }
+            """);
+
+        AssertContainsDiagnostic(result.Diagnostics, "RYNOR014", DiagnosticSeverity.Info);
+    }
+
     private static void AssertContainsDiagnostic(
         IEnumerable<Diagnostic> diagnostics,
         string id,

@@ -8,6 +8,17 @@
 4. Read `CHANGELOG.md` for behavior changes and diagnostics updates.
 5. Roll out to additional modules only after the first upgraded module is stable.
 
+## Profile-first migration (recommended)
+
+Profile-first configuration is now the preferred setup style for new and upgraded modules.
+See `docs/UPGRADING_PROFILES.md` for explicit before/after mappings.
+
+When you migrate:
+
+1. Choose the closest starter profile.
+2. Remove explicit flags that duplicate profile defaults.
+3. Keep only intentional overrides.
+
 ## Hybrid refactor migration notes
 
 The current generator reduces per-entity source size by moving shared CRUD and EF Core interaction into a generated generic infrastructure layer.
@@ -66,3 +77,4 @@ After upgrading, validate observability and diagnostics in addition to compile s
 3. Review `RYNOR007`-`RYNOR013` diagnostics and resolve all errors before rollout.
 4. If CQRS is enabled, validate `DbContextType` (if set) resolves to a real `DbContext` (`RYNOR008`).
 5. If endpoint generation is enabled, confirm explicit experimental opt-in is present (`RYNOR012`).
+6. If using repository `UseUnitOfWork`, switch startup wiring to `AddRynorArchDependencies<TDbContext>()` for low-touch registration of the generated `IUnitOfWork` adapter.

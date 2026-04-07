@@ -5,7 +5,7 @@ namespace RynorArch.Generator.Emitters;
 
 internal static class CrudInfrastructureEmitter
 {
-    public static void Emit(SourceProductionContext context)
+    public static void Emit(SourceProductionContext context, bool emitUnitOfWorkAdapter)
     {
         var w = new SourceWriter(8192);
         w.AppendFileHeader("Global.CrudInfrastructure");
@@ -26,6 +26,11 @@ internal static class CrudInfrastructureEmitter
         w.AppendLine();
         EmitCrudRepositoryBase(w);
         w.AppendLine();
+        if (emitUnitOfWorkAdapter)
+        {
+            EmitUnitOfWorkAdapter(w);
+            w.AppendLine();
+        }
         EmitRuntimeHelpers(w);
 
         context.AddSource("RynorArch.CrudInfrastructure.g.cs", w.ToString());
@@ -295,6 +300,29 @@ internal static class CrudInfrastructureEmitter
         w.DecreaseIndent();
         w.AppendLine("var body = Expression.Equal(left, Expression.Constant(false));");
         w.AppendLine("return Expression.Lambda<Func<TEntity, bool>>(body, parameter);");
+        w.CloseBrace();
+        w.CloseBrace();
+    }
+
+    private static void EmitUnitOfWorkAdapter(SourceWriter w)
+    {
+        w.AppendLine("public sealed class RynorArchGeneratedUnitOfWork<TDbContext> : IUnitOfWork where TDbContext : DbContext");
+        w.OpenBrace();
+        w.AppendLine("private readonly TDbContext _db;");
+        w.AppendLine();
+        w.AppendLine("public RynorArchGeneratedUnitOfWork(TDbContext db)");
+        w.OpenBrace();
+        w.AppendLine("_db = db;");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)");
+        w.OpenBrace();
+        w.AppendLine("return _db.SaveChangesAsync(cancellationToken);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public void Dispose()");
+        w.OpenBrace();
+        w.AppendLine("// DbContext disposal is owned by the DI scope.");
         w.CloseBrace();
         w.CloseBrace();
     }

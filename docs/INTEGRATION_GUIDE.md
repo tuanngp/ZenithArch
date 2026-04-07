@@ -35,8 +35,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
-builder.Services.AddRynorArchDependencies();
+builder.Services.AddRynorArchDependencies<AppDbContext>();
 ```
+
+Notes:
+- Prefer `AddRynorArchDependencies<TDbContext>()` when `UseUnitOfWork = true` so generated `IUnitOfWork` is auto-wired.
+- The non-generic overload remains valid when you do not use UnitOfWork.
 
 ## Endpoint generation
 
@@ -52,11 +56,14 @@ Remember endpoint generation requires both:
 - `GenerateEndpoints = true`
 - `EnableExperimentalEndpoints = true`
 
+Before production rollout, apply the checklist in `docs/ENDPOINT_HARDENING.md`.
+
 ## Caching decorators
 
 When `GenerateCachingDecorators = true`:
 - register a distributed cache provider (for example Redis or memory-backed distributed cache)
 - call `AddRynorArchDependencies()` so generated cache behaviors and invalidators are wired
+- follow `docs/CACHING_OPERATIONS.md` for TTL, key design, and rollout guardrails
 
 ## Save mode
 

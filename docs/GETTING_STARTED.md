@@ -64,6 +64,12 @@ In your app startup:
 builder.Services.AddRynorArchDependencies();
 ```
 
+If `UseUnitOfWork = true` (Repository/FullStack), prefer:
+
+```csharp
+builder.Services.AddRynorArchDependencies<AppDbContext>();
+```
+
 The generated DI extension registers handlers/repositories (by pattern), validators, and cache behaviors (if enabled).
 
 ## Common first-run issues

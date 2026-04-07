@@ -10,6 +10,9 @@ public sealed class ArchitectureConfig : IEquatable<ArchitectureConfig>
 {
     public const string DefaultCqrsDbContextTypeName = "global::Microsoft.EntityFrameworkCore.DbContext";
 
+    /// <summary>0 = Custom, 1 = CqrsQuickStart, 2 = RepositoryQuickStart, 3 = FullStackQuickStart</summary>
+    public int Profile { get; }
+
     /// <summary>0 = Cqrs, 1 = Repository, 2 = FullStack</summary>
     public int Pattern { get; }
     public bool UseSpecification { get; }
@@ -38,8 +41,10 @@ public sealed class ArchitectureConfig : IEquatable<ArchitectureConfig>
         bool generateCachingDecorators = false,
         bool generatePagination = false,
         string? cqrsDbContextTypeName = null,
-        int cqrsSaveMode = 0)
+        int cqrsSaveMode = 0,
+        int profile = 0)
     {
+        Profile = profile;
         Pattern = pattern;
         UseSpecification = useSpecification;
         UseUnitOfWork = useUnitOfWork;
@@ -73,6 +78,7 @@ public sealed class ArchitectureConfig : IEquatable<ArchitectureConfig>
         if (ReferenceEquals(this, other)) return true;
 
         return Pattern == other.Pattern
+            && Profile == other.Profile
             && UseSpecification == other.UseSpecification
             && UseUnitOfWork == other.UseUnitOfWork
             && EnableValidation == other.EnableValidation
@@ -94,6 +100,7 @@ public sealed class ArchitectureConfig : IEquatable<ArchitectureConfig>
         unchecked
         {
             int hash = (int)2166136261;
+            hash = (hash ^ Profile) * 16777619;
             hash = (hash ^ Pattern) * 16777619;
             hash = (hash ^ UseSpecification.GetHashCode()) * 16777619;
             hash = (hash ^ UseUnitOfWork.GetHashCode()) * 16777619;

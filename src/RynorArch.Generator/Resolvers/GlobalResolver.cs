@@ -19,7 +19,7 @@ internal static class GlobalResolver
 
         if (entities.Length > 0 && (config.IsCqrs || config.IsRepository))
         {
-            CrudInfrastructureEmitter.Emit(context);
+            CrudInfrastructureEmitter.Emit(context, config.IsRepository && config.UseUnitOfWork);
         }
 
         if (entities.Length > 0 && config.IsCqrs && config.IsPerRequestTransactionSaveMode)
@@ -151,6 +151,14 @@ internal static class GlobalResolver
                 DiagnosticDescriptors.CachingBehaviorNotice,
                 location));
         }
+
+        if (ShouldSuggestProfileMigration(config))
+        {
+            context.ReportDiagnostic(Diagnostic.Create(
+                DiagnosticDescriptors.LegacyConfigurationProfileHint,
+                location,
+                GetSuggestedProfile(config)));
+        }
     }
 
     private static void ReportMissingDependency(
@@ -207,5 +215,40 @@ internal static class GlobalResolver
         return configuredTypeName.StartsWith(globalPrefix, System.StringComparison.Ordinal)
             ? configuredTypeName.Substring(globalPrefix.Length)
             : configuredTypeName;
+    }
+
+    private static bool ShouldSuggestProfileMigration(ArchitectureConfig config)
+    {
+        if (config.Profile != 0)
+        {
+            return false;
+        }
+
+        return config.UseSpecification
+            || config.UseUnitOfWork
+            || config.EnableValidation
+            || config.GenerateDependencyInjection
+            || config.GenerateEndpoints
+            || config.EnableExperimentalEndpoints
+            || config.GenerateDtos
+            || config.GenerateEfConfigurations
+            || config.GenerateCachingDecorators
+            || config.GeneratePagination
+            || config.CqrsSaveMode != 0;
+    }
+
+    private static string GetSuggestedProfile(ArchitectureConfig config)
+    {
+        if (config.Pattern == 1)
+        {
+            return "RepositoryQuickStart";
+        }
+
+        if (config.Pattern == 2)
+        {
+            return "FullStackQuickStart";
+        }
+
+        return "CqrsQuickStart";
     }
 }
