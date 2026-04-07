@@ -49,11 +49,20 @@ Add references to the core packages in your `.csproj`:
 
 ## Quick Start
 
-1. Add `RynorArch.Abstractions` and `RynorArch.Generator` to your application project.
-2. Add an explicit `[assembly: Architecture(...)]` configuration.
+### Path A: fastest path (CLI)
+
+1. Add `RynorArch.Abstractions` and `RynorArch.Generator` packages.
+2. Run `rynor init` to generate `AssemblyConfig.cs` from a starter profile.
+3. Run `rynor scaffold Trip MyApp.Domain` to generate entity + extension partials.
+4. Build and call `builder.Services.AddRynorArchDependencies();` in your startup.
+
+### Path B: generator-first (no CLI)
+
+1. Add `RynorArch.Abstractions` and `RynorArch.Generator` packages.
+2. Create `AssemblyConfig.cs` with a profile-based architecture config.
 3. Mark your domain classes with `[Entity]` and make them `partial`.
-4. Build the project and inspect the generated `.g.cs` files.
-5. Extend generated handlers or validators with partial classes only where your business logic diverges.
+4. Build and inspect generated `.g.cs` files.
+5. Call `builder.Services.AddRynorArchDependencies();` in startup.
 
 For a working end-to-end sample, see `samples/RynorArch.Sample`.
 
@@ -86,14 +95,20 @@ using RynorArch.Abstractions.Attributes;
 using RynorArch.Abstractions.Enums;
 
 [assembly: Architecture(
+    Profile = ArchitectureProfile.CqrsQuickStart,
     Pattern = ArchitecturePattern.Cqrs,
-    UseSpecification = true,
-    UseUnitOfWork = false,
-    EnableValidation = true,
-    DbContextType = typeof(MyApp.Infrastructure.Data.AppDbContext),
-    CqrsSaveMode = CqrsSaveMode.PerRequestTransaction
+    GenerateDependencyInjection = true,
+    DbContextType = typeof(MyApp.Infrastructure.Data.AppDbContext)
 )]
 ```
+
+### Starter profiles
+
+- `ArchitectureProfile.CqrsQuickStart`: CQRS + validation + specification + generated DI.
+- `ArchitectureProfile.RepositoryQuickStart`: repository + specification + unit of work + generated DI.
+- `ArchitectureProfile.FullStackQuickStart`: CQRS + repository + common productivity features + generated DI.
+
+Any explicit flag on `Architecture(...)` overrides profile defaults.
 
 ### Supported Patterns
 
@@ -119,6 +134,8 @@ Endpoint generation is intentionally gated as experimental. To enable it, both f
 
 - `CqrsSaveMode.PerHandler` (default): each write handler calls `SaveChangesAsync` immediately.
 - `CqrsSaveMode.PerRequestTransaction`: generated write handlers stage changes and a generated MediatR pipeline behavior commits once per request in a transaction.
+
+If you use `PerRequestTransaction`, keep `GenerateDependencyInjection = true` or manually register `IPipelineBehavior<,>` with `RynorArchSaveChangesBehavior<,>`.
 
 ## Usage
 
@@ -203,6 +220,10 @@ public partial class CreateTripValidator
 ## Troubleshooting and Upgrades
 
 - Troubleshooting: `docs/TROUBLESHOOTING.md`
+- Getting started: `docs/GETTING_STARTED.md`
+- Integration: `docs/INTEGRATION_GUIDE.md`
+- Feature matrix: `docs/FEATURE_MATRIX.md`
+- Attribute reference: `docs/ATTRIBUTE_REFERENCE.md`
 - Compatibility: `docs/COMPATIBILITY.md`
 - Upgrade guidance: `docs/UPGRADING.md`
 - Release process: `docs/RELEASING.md`

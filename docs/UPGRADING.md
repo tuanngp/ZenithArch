@@ -63,6 +63,6 @@ After upgrading, validate observability and diagnostics in addition to compile s
 
 1. Confirm `RynorArch.GenerationReport.g.cs` is emitted and lists expected entities/artifacts.
 2. Check generated headers for `rynor-artifact` metadata to ensure traceability is intact.
-3. Review `RYNOR007`-`RYNOR012` diagnostics and resolve all errors before rollout.
+3. Review `RYNOR007`-`RYNOR013` diagnostics and resolve all errors before rollout.
 4. If CQRS is enabled, validate `DbContextType` (if set) resolves to a real `DbContext` (`RYNOR008`).
 5. If endpoint generation is enabled, confirm explicit experimental opt-in is present (`RYNOR012`).

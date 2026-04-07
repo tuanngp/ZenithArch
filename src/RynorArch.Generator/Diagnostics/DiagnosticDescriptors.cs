@@ -53,7 +53,7 @@ internal static class DiagnosticDescriptors
     public static readonly DiagnosticDescriptor MissingArchitectureConfiguration = new(
         id: "RYNOR006",
         title: "Missing architecture configuration",
-        messageFormat: "No [assembly: Architecture(...)] configuration was found. RynorArch does not generate code without explicit architecture configuration.",
+        messageFormat: "No [assembly: Architecture(...)] configuration was found; create AssemblyConfig.cs and add [assembly: Architecture(Pattern = ArchitecturePattern.Cqrs)]",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
@@ -61,7 +61,7 @@ internal static class DiagnosticDescriptors
     public static readonly DiagnosticDescriptor MissingRequiredDependency = new(
         id: "RYNOR007",
         title: "Missing required dependency",
-        messageFormat: "Feature '{0}' requires dependency '{1}'. Add the dependency to the project or disable the feature flag.",
+        messageFormat: "Feature '{0}' requires dependency '{1}'; add {2} or disable the related feature flag",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Error,
         isEnabledByDefault: true);
@@ -85,7 +85,7 @@ internal static class DiagnosticDescriptors
     public static readonly DiagnosticDescriptor CachingBehaviorNotice = new(
         id: "RYNOR010",
         title: "Generated cache behavior notice",
-        messageFormat: "Generated cache behavior stores query responses and emits per-entity invalidation contracts for write flows. Ensure invalidators are registered in DI.",
+        messageFormat: "Generated cache behavior stores query responses and emits per-entity invalidation contracts; call AddRynorArchDependencies to register invalidators and cache pipeline behaviors",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true);
@@ -102,6 +102,14 @@ internal static class DiagnosticDescriptors
         id: "RYNOR012",
         title: "Endpoint generation requires experimental opt-in",
         messageFormat: "GenerateEndpoints is enabled, but endpoint generation is experimental. Set EnableExperimentalEndpoints = true to opt in explicitly.",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor SaveModeRequiresGeneratedDi = new(
+        id: "RYNOR013",
+        title: "CQRS save mode needs generated DI wiring",
+        messageFormat: "CqrsSaveMode.PerRequestTransaction is enabled while GenerateDependencyInjection is false; either enable generated DI or manually register IPipelineBehavior<,> with RynorArchSaveChangesBehavior<,>",
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true);

@@ -10,6 +10,12 @@ namespace RynorArch.Abstractions.Attributes;
 public sealed class ArchitectureAttribute : Attribute
 {
     /// <summary>
+    /// Optional starter profile that pre-fills common flag combinations.
+    /// Explicit flag values always override profile defaults.
+    /// </summary>
+    public ArchitectureProfile Profile { get; set; } = ArchitectureProfile.Custom;
+
+    /// <summary>
     /// The architecture pattern to enforce. Determines which code artifacts are generated.
     /// </summary>
     public ArchitecturePattern Pattern { get; set; } = ArchitecturePattern.Cqrs;
@@ -33,6 +39,7 @@ public sealed class ArchitectureAttribute : Attribute
 
     /// <summary>
     /// When true, generates static IServiceCollection extension for DI registration.
+    /// Recommended for most projects to reduce manual wiring.
     /// </summary>
     public bool GenerateDependencyInjection { get; set; }
 

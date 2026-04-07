@@ -28,6 +28,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Added cache invalidation contracts and default distributed-cache invalidator implementations for generated query caches.
 - Added `CqrsSaveMode` with per-request transaction save behavior and generated MediatR pipeline support.
 - Gated endpoint generation behind explicit experimental opt-in (`EnableExperimentalEndpoints`, `RYNOR012`).
+- Added `ArchitectureProfile` quick-start presets to reduce first-run configuration friction.
+- Upgraded generated DI extension to auto-register CQRS handlers, validators, and cache query behaviors.
+- Added actionable dependency hints (`RYNOR007`) and save-mode wiring warning (`RYNOR013`).
+- Expanded CLI with `init` command, profile-based setup prompts, automatic `AssemblyConfig.cs`, and next-step guidance output.
 
 ## [1.0.6]
 

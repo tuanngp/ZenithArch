@@ -216,6 +216,41 @@ public sealed class GeneratorOutputTests
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error);
     }
 
+    [Fact]
+    public void Applies_cqrs_quickstart_profile_and_emits_auto_di_wiring()
+    {
+        var result = GeneratorTestHarness.Run("""
+            using RynorArch.Abstractions.Attributes;
+            using RynorArch.Abstractions.Base;
+            using RynorArch.Abstractions.Enums;
+            using Microsoft.EntityFrameworkCore;
+
+            [assembly: Architecture(
+                Profile = ArchitectureProfile.CqrsQuickStart,
+                GenerateCachingDecorators = true)]
+
+            namespace Demo.Domain;
+
+            [Entity]
+            public partial class Trip : EntityBase
+            {
+                public string Destination { get; set; } = string.Empty;
+            }
+
+            public sealed class AppDbContext : DbContext
+            {
+                public DbSet<Trip> Trips => Set<Trip>();
+            }
+            """);
+
+        Assert.Contains("RynorArchServiceCollectionExtensions.g.cs", result.GeneratedSources.Keys);
+        Assert.Contains("public static IServiceCollection AddRynorArchDependencies(this IServiceCollection services, bool registerMediatR = true)", result.GeneratedSources["RynorArchServiceCollectionExtensions.g.cs"]);
+        Assert.Contains("services.AddScoped<IRequestHandler<CreateTripCommand, Guid>, CreateTripHandler>();", result.GeneratedSources["RynorArchServiceCollectionExtensions.g.cs"]);
+        Assert.Contains("services.AddScoped<IValidator<CreateTripCommand>, CreateTripValidator>();", result.GeneratedSources["RynorArchServiceCollectionExtensions.g.cs"]);
+        Assert.Contains("services.AddScoped<IPipelineBehavior<GetTripByIdQuery, Trip?>, GetTripByIdQueryCacheBehavior>();", result.GeneratedSources["RynorArchServiceCollectionExtensions.g.cs"]);
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error);
+    }
+
     private static string Normalize(string value)
         => value.Replace("\r\n", "\n").Trim();
 }

@@ -2,15 +2,11 @@ using RynorArch.Abstractions.Attributes;
 using RynorArch.Abstractions.Enums;
 
 [assembly: Architecture(
+    Profile = ArchitectureProfile.FullStackQuickStart,
     Pattern = ArchitecturePattern.FullStack,
     GenerateDependencyInjection = true,
     GenerateEndpoints = true,
     EnableExperimentalEndpoints = true,
-    GenerateDtos = true,
-    GenerateEfConfigurations = true,
     GenerateCachingDecorators = true,
-    GeneratePagination = true,
-    EnableValidation = true,
-    UseSpecification = true,
-    UseUnitOfWork = true
+    CqrsSaveMode = CqrsSaveMode.PerRequestTransaction
 )]

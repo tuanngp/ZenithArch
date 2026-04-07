@@ -59,18 +59,33 @@ internal static class GlobalResolver
 
         if (config.IsCqrs && !HasType(compilation, "MediatR.IMediator"))
         {
-            ReportMissingDependency(context, location, "CQRS/FullStack", "MediatR");
+            ReportMissingDependency(
+                context,
+                location,
+                "CQRS/FullStack",
+                "MediatR",
+                "<PackageReference Include=\"MediatR\" Version=\"14.*\" />");
         }
 
         if (config.EnableValidation && !HasType(compilation, "FluentValidation.AbstractValidator`1"))
         {
-            ReportMissingDependency(context, location, "EnableValidation", "FluentValidation");
+            ReportMissingDependency(
+                context,
+                location,
+                "EnableValidation",
+                "FluentValidation",
+                "<PackageReference Include=\"FluentValidation\" Version=\"12.*\" />");
         }
 
         if ((config.IsCqrs || config.IsRepository || config.GenerateEfConfigurations) &&
             !HasType(compilation, "Microsoft.EntityFrameworkCore.DbContext"))
         {
-            ReportMissingDependency(context, location, "Persistence features", "Microsoft.EntityFrameworkCore");
+            ReportMissingDependency(
+                context,
+                location,
+                "Persistence features",
+                "Microsoft.EntityFrameworkCore",
+                "<PackageReference Include=\"Microsoft.EntityFrameworkCore\" Version=\"10.*\" />");
         }
 
         if (config.IsCqrs
@@ -91,7 +106,12 @@ internal static class GlobalResolver
         }
         else if (config.GenerateEndpoints && !HasType(compilation, "Microsoft.AspNetCore.Routing.IEndpointRouteBuilder"))
         {
-            ReportMissingDependency(context, location, "GenerateEndpoints", "Microsoft.AspNetCore.App");
+            ReportMissingDependency(
+                context,
+                location,
+                "GenerateEndpoints",
+                "Microsoft.AspNetCore.App",
+                "<FrameworkReference Include=\"Microsoft.AspNetCore.App\" />");
         }
         else if (config.GenerateEndpoints && !config.IsCqrs)
         {
@@ -103,7 +123,19 @@ internal static class GlobalResolver
 
         if (config.GenerateCachingDecorators && !HasType(compilation, "Microsoft.Extensions.Caching.Distributed.IDistributedCache"))
         {
-            ReportMissingDependency(context, location, "GenerateCachingDecorators", "Microsoft.Extensions.Caching.*");
+            ReportMissingDependency(
+                context,
+                location,
+                "GenerateCachingDecorators",
+                "Microsoft.Extensions.Caching.*",
+                "<PackageReference Include=\"Microsoft.Extensions.Caching.StackExchangeRedis\" Version=\"10.*\" />");
+        }
+
+        if (config.IsPerRequestTransactionSaveMode && !config.GenerateDependencyInjection)
+        {
+            context.ReportDiagnostic(Diagnostic.Create(
+                DiagnosticDescriptors.SaveModeRequiresGeneratedDi,
+                location));
         }
 
         if (config.GenerateEndpoints && config.EnableExperimentalEndpoints && config.IsCqrs)
@@ -121,13 +153,19 @@ internal static class GlobalResolver
         }
     }
 
-    private static void ReportMissingDependency(SourceProductionContext context, Location location, string feature, string packageName)
+    private static void ReportMissingDependency(
+        SourceProductionContext context,
+        Location location,
+        string feature,
+        string packageName,
+        string referenceHint)
     {
         context.ReportDiagnostic(Diagnostic.Create(
             DiagnosticDescriptors.MissingRequiredDependency,
             location,
             feature,
-            packageName));
+            packageName,
+            referenceHint));
     }
 
     private static bool HasType(Compilation compilation, string metadataName) =>

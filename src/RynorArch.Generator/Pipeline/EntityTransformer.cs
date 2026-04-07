@@ -135,13 +135,44 @@ internal static class EntityTransformer
             bool generatePagination = false;
             string cqrsDbContextTypeName = ArchitectureConfig.DefaultCqrsDbContextTypeName;
             int cqrsSaveMode = 0;
+            int profile = 0;
 
             var namedArgs = attr.NamedArguments;
+
+            // First pass: resolve profile to establish low-touch defaults.
+            for (int j = 0; j < namedArgs.Length; j++)
+            {
+                var arg = namedArgs[j];
+                if (arg.Key == "Profile" && arg.Value.Value is int configuredProfile)
+                {
+                    profile = configuredProfile;
+                    break;
+                }
+            }
+
+            ApplyProfileDefaults(
+                profile,
+                ref pattern,
+                ref useSpecification,
+                ref useUnitOfWork,
+                ref enableValidation,
+                ref generateDependencyInjection,
+                ref generateEndpoints,
+                ref enableExperimentalEndpoints,
+                ref generateDtos,
+                ref generateEfConfigurations,
+                ref generateCachingDecorators,
+                ref generatePagination,
+                ref cqrsSaveMode);
+
+            // Second pass: explicit flags always override profile defaults.
             for (int j = 0; j < namedArgs.Length; j++)
             {
                 var arg = namedArgs[j];
                 switch (arg.Key)
                 {
+                    case "Profile":
+                        break;
                     case "Pattern":
                         pattern = (int)arg.Value.Value!;
                         break;
@@ -207,6 +238,68 @@ internal static class EntityTransformer
         }
 
         return ArchitectureConfig.Default;
+    }
+
+    private static void ApplyProfileDefaults(
+        int profile,
+        ref int pattern,
+        ref bool useSpecification,
+        ref bool useUnitOfWork,
+        ref bool enableValidation,
+        ref bool generateDependencyInjection,
+        ref bool generateEndpoints,
+        ref bool enableExperimentalEndpoints,
+        ref bool generateDtos,
+        ref bool generateEfConfigurations,
+        ref bool generateCachingDecorators,
+        ref bool generatePagination,
+        ref int cqrsSaveMode)
+    {
+        // 0 = Custom (no preset defaults)
+        if (profile == 0)
+        {
+            return;
+        }
+
+        // 1 = CqrsQuickStart
+        if (profile == 1)
+        {
+            pattern = 0;
+            useSpecification = true;
+            enableValidation = true;
+            generateDependencyInjection = true;
+            return;
+        }
+
+        // 2 = RepositoryQuickStart
+        if (profile == 2)
+        {
+            pattern = 1;
+            useSpecification = true;
+            useUnitOfWork = true;
+            generateDependencyInjection = true;
+            return;
+        }
+
+        // 3 = FullStackQuickStart
+        if (profile == 3)
+        {
+            pattern = 2;
+            useSpecification = true;
+            useUnitOfWork = true;
+            enableValidation = true;
+            generateDependencyInjection = true;
+            generateDtos = true;
+            generateEfConfigurations = true;
+            generatePagination = true;
+            cqrsSaveMode = 1;
+            return;
+        }
+
+        // Unknown profile: leave defaults untouched.
+        _ = generateEndpoints;
+        _ = enableExperimentalEndpoints;
+        _ = generateCachingDecorators;
     }
 
     public static bool HasArchitectureConfiguration(Compilation compilation, System.Threading.CancellationToken cancellationToken)

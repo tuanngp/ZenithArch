@@ -49,6 +49,7 @@ RynorArch does not generate sources without explicit architecture configuration.
 ### `RYNOR007` Missing required dependency
 
 One or more enabled features require packages/framework references that are not available to the compilation.
+The diagnostic now includes an exact `PackageReference` or `FrameworkReference` hint.
 
 Common examples:
 - CQRS without `MediatR`
@@ -93,6 +94,14 @@ Fix by opting in explicitly:
 	EnableExperimentalEndpoints = true
 )]
 ```
+
+### `RYNOR013` CQRS save mode needs generated DI wiring
+
+`CqrsSaveMode.PerRequestTransaction` is enabled while `GenerateDependencyInjection` is false.
+
+Fix options:
+- set `GenerateDependencyInjection = true`, or
+- manually register `IPipelineBehavior<,>` to `RynorArchSaveChangesBehavior<,>`
 
 ## Debugging generated output
 
