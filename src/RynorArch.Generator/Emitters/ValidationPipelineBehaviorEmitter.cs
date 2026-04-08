@@ -32,7 +32,12 @@ internal static class ValidationPipelineBehaviorEmitter
         w.AppendLine();
         w.AppendLine("public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)");
         w.OpenBrace();
-        w.AppendLine("var failures = new List<ValidationFailure>();");
+        w.AppendLine("if (_validators is ICollection<IValidator<TRequest>> validatorCollection && validatorCollection.Count == 0)");
+        w.OpenBrace();
+        w.AppendLine("return await next();");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("List<ValidationFailure>? failures = null;");
         w.AppendLine("var validationContext = new ValidationContext<TRequest>(request);");
         w.AppendLine();
         w.AppendLine("foreach (var validator in _validators)");
@@ -40,11 +45,12 @@ internal static class ValidationPipelineBehaviorEmitter
         w.AppendLine("var result = await validator.ValidateAsync(validationContext, cancellationToken);");
         w.AppendLine("if (!result.IsValid)");
         w.OpenBrace();
+        w.AppendLine("failures ??= new List<ValidationFailure>();");
         w.AppendLine("failures.AddRange(result.Errors);");
         w.CloseBrace();
         w.CloseBrace();
         w.AppendLine();
-        w.AppendLine("if (failures.Count > 0)");
+        w.AppendLine("if (failures is not null)");
         w.OpenBrace();
         w.AppendLine("throw new ValidationException(failures);");
         w.CloseBrace();

@@ -44,6 +44,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Corrected generated endpoint write semantics: `POST` now returns `{ id = ... }`, while `PUT`/`DELETE` now return `404` when target entities are missing.
 - Updated generated CQRS write handlers for aggregate roots to raise generated domain events (`Created`, `Updated`, `Deleted`) before persistence.
 - Hardened generated EF configuration string detection to support fully-qualified string type names.
+- Optimized generated validation behavior to avoid unnecessary allocations when no validators are registered and to lazily allocate validation failure buffers.
+- Made generated endpoint and DI outputs deterministic by sorting namespaces/entities, reducing incremental build churn and cache invalidation noise.
 
 ## [1.0.6]
 

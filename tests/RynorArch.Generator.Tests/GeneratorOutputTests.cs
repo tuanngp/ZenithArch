@@ -338,7 +338,11 @@ public sealed class GeneratorOutputTests
             """);
 
         Assert.Contains("RynorArch.ValidationBehavior.g.cs", result.GeneratedSources.Keys);
-        Assert.Contains("public sealed class RynorArchValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>", result.GeneratedSources["RynorArch.ValidationBehavior.g.cs"]);
+        var validationSource = result.GeneratedSources["RynorArch.ValidationBehavior.g.cs"];
+        Assert.Contains("public sealed class RynorArchValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>", validationSource);
+        Assert.Contains("if (_validators is ICollection<IValidator<TRequest>> validatorCollection && validatorCollection.Count == 0)", validationSource);
+        Assert.Contains("List<ValidationFailure>? failures = null;", validationSource);
+        Assert.Contains("failures ??= new List<ValidationFailure>();", validationSource);
         Assert.Contains("services.AddScoped(typeof(IPipelineBehavior<,>), typeof(RynorArchValidationBehavior<,>));", result.GeneratedSources["RynorArchServiceCollectionExtensions.g.cs"]);
     }
 
@@ -447,6 +451,58 @@ public sealed class GeneratorOutputTests
         Assert.Contains(".IsRequired();", efSource);
         Assert.Contains("builder.Property(x => x.Subtitle)", efSource);
         Assert.Contains(".IsRequired(false);", efSource);
+    }
+
+    [Fact]
+    public void Emits_deterministic_order_for_endpoint_and_di_outputs()
+    {
+        var result = GeneratorTestHarness.Run(
+            """
+            using RynorArch.Abstractions.Attributes;
+            using RynorArch.Abstractions.Base;
+            using RynorArch.Abstractions.Enums;
+
+            [assembly: Architecture(
+                Pattern = ArchitecturePattern.Cqrs,
+                GenerateDependencyInjection = true,
+                GenerateEndpoints = true,
+                EnableExperimentalEndpoints = true)]
+
+            namespace Demo.Z;
+
+            [Entity]
+            public partial class Zebra : EntityBase
+            {
+                public string Name { get; set; } = string.Empty;
+            }
+            """,
+            """
+            using RynorArch.Abstractions.Attributes;
+            using RynorArch.Abstractions.Base;
+
+            namespace Demo.A;
+
+            [Entity]
+            public partial class Alpha : EntityBase
+            {
+                public string Name { get; set; } = string.Empty;
+            }
+            """);
+
+        var endpointSource = result.GeneratedSources["RynorArchEndpointExtensions.g.cs"];
+        var diSource = result.GeneratedSources["RynorArchServiceCollectionExtensions.g.cs"];
+
+        int endpointAlpha = endpointSource.IndexOf("/api/alphas", StringComparison.Ordinal);
+        int endpointZebra = endpointSource.IndexOf("/api/zebras", StringComparison.Ordinal);
+        Assert.True(endpointAlpha >= 0 && endpointZebra >= 0 && endpointAlpha < endpointZebra);
+
+        int usingA = diSource.IndexOf("using Demo.A;", StringComparison.Ordinal);
+        int usingZ = diSource.IndexOf("using Demo.Z;", StringComparison.Ordinal);
+        Assert.True(usingA >= 0 && usingZ >= 0 && usingA < usingZ);
+
+        int registerAlpha = diSource.IndexOf("services.AddScoped<IRequestHandler<CreateAlphaCommand, Guid>, CreateAlphaHandler>();", StringComparison.Ordinal);
+        int registerZebra = diSource.IndexOf("services.AddScoped<IRequestHandler<CreateZebraCommand, Guid>, CreateZebraHandler>();", StringComparison.Ordinal);
+        Assert.True(registerAlpha >= 0 && registerZebra >= 0 && registerAlpha < registerZebra);
     }
 
     private static string Normalize(string value)
