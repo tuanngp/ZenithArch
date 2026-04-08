@@ -78,6 +78,25 @@ Generated cache pipeline behaviors include per-entity invalidation contracts.
 Ensure invalidators are registered in DI (generated DI helper does this when enabled).
 Operational rollout guidance is in `docs/CACHING_OPERATIONS.md`.
 
+### Validation is enabled but invalid commands still pass
+
+If `EnableValidation = true`, generated DI should register `RynorArchValidationBehavior<,>`.
+
+Check:
+- `AddRynorArchDependencies()` is called at startup, or equivalent manual registrations are present.
+- MediatR is configured for the same assembly containing generated handlers.
+- Generated validator files (`*.Validation.g.cs`) exist under `obj/`.
+
+If `GenerateDependencyInjection = false`, manually register `IPipelineBehavior<,>` to `RynorArchValidationBehavior<,>`.
+
+### Generated endpoints return unexpected write status codes
+
+Current generated behavior:
+- `POST` returns `201 Created` with `{ id = <guid> }` payload.
+- `PUT`/`DELETE` return `404` when the resource is missing and `204` when successful.
+
+If you still observe unconditional `204`, rebuild and verify the generated `RynorArchEndpointExtensions.g.cs` in `obj/`.
+
 ### `RYNOR011` Feature flag ignored by selected pattern
 
 A feature flag was enabled, but the selected architecture pattern does not support generating that artifact.

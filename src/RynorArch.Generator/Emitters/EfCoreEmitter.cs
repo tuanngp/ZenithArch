@@ -35,7 +35,7 @@ internal static class EfCoreEmitter
         
         foreach (var prop in entity.Properties)
         {
-            if (prop.TypeName == "string")
+            if (IsStringType(prop.TypeName))
             {
                 // Basic sensible defaults, real world would use attributes for MaxLength
                 sb.AppendLine($"        builder.Property(x => x.{prop.Name})");
@@ -58,4 +58,9 @@ internal static class EfCoreEmitter
 
         context.AddSource($"{entity.Name}Configuration.g.cs", SourceText.From(sb.ToString(), Encoding.UTF8));
     }
+
+    private static bool IsStringType(string typeName)
+        => typeName == "string"
+            || typeName == "System.String"
+            || typeName == "global::System.String";
 }

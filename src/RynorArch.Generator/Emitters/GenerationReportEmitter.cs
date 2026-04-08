@@ -68,6 +68,11 @@ internal static class GenerationReportEmitter
             list.Add("RynorArch.CqrsSaveBehavior.g.cs");
         }
 
+        if (entities.Length > 0 && config.IsCqrs && config.EnableValidation)
+        {
+            list.Add("RynorArch.ValidationBehavior.g.cs");
+        }
+
         if (entities.Length > 0 && config.IsRepository && config.UseUnitOfWork)
         {
             list.Add("IUnitOfWork.g.cs");

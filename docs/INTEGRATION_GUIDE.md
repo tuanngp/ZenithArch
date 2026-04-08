@@ -24,6 +24,11 @@ Notes:
 - `AddRynorArchDependencies()` can register MediatR automatically by default.
 - If using custom MediatR setup, call `AddRynorArchDependencies(registerMediatR: false)`.
 
+Validation behavior:
+- When `EnableValidation = true`, generated DI now registers `RynorArchValidationBehavior<,>`.
+- Generated `Create*` and `Update*` validators are executed automatically through MediatR pipeline behavior.
+- Partial `OnValidate(...)` hooks in handlers remain available for additional domain-specific checks.
+
 ## Repository setup
 
 ```csharp
@@ -58,6 +63,11 @@ Remember endpoint generation requires both:
 
 Before production rollout, apply the checklist in `docs/ENDPOINT_HARDENING.md`.
 
+Generated write semantics:
+- `POST` returns `201 Created` with a body containing `{ id = <guid> }`.
+- `PUT` returns `404` when the target resource does not exist, otherwise `204`.
+- `DELETE` returns `404` when the target resource does not exist, otherwise `204`.
+
 ## Caching decorators
 
 When `GenerateCachingDecorators = true`:
@@ -70,6 +80,15 @@ When `GenerateCachingDecorators = true`:
 If `CqrsSaveMode = CqrsSaveMode.PerRequestTransaction`:
 - keep generated DI wiring enabled, or
 - manually register `IPipelineBehavior<,>` to `RynorArchSaveChangesBehavior<,>`
+
+## Domain events for aggregate roots
+
+When `[AggregateRoot]` is present, generated CQRS write handlers now raise generated domain events before persistence:
+- `Create*Handler` raises `{Entity}CreatedEvent`
+- `Update*Handler` raises `{Entity}UpdatedEvent`
+- `Delete*Handler` raises `{Entity}DeletedEvent`
+
+The event types are generated under `{EntityNamespace}.DomainEvents`.
 
 ## AI-agent integration pattern
 

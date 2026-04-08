@@ -13,7 +13,7 @@ public abstract class EntityBase : IAggregateRoot
 
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
-    protected void RaiseDomainEvent(IDomainEvent domainEvent)
+    public void RaiseDomainEvent(IDomainEvent domainEvent)
     {
         _domainEvents.Add(domainEvent);
     }

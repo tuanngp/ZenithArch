@@ -64,7 +64,7 @@ internal static class EndpointEmitter
             sb.AppendLine($"        endpoints.MapPost(\"/api/{slug}\", async ([FromBody] Create{entity.Name}Command command, [FromServices] IMediator mediator) =>");
             sb.AppendLine("        {");
             sb.AppendLine($"            var result = await mediator.Send(command);");
-            sb.AppendLine($"            return Results.Created($\"/api/{slug}/{{result}}\", result);"); // Assuming result is ID
+            sb.AppendLine($"            return Results.Created($\"/api/{slug}/{{result}}\", new {{ id = result }});");
             sb.AppendLine($"        }}).WithName(\"Create{entity.Name}\")");
             sb.AppendLine($"          .WithTags(\"{entity.Name}\");");
             sb.AppendLine();
@@ -73,8 +73,8 @@ internal static class EndpointEmitter
             sb.AppendLine($"        endpoints.MapPut(\"/api/{slug}/{{id:guid}}\", async (Guid id, [FromBody] Update{entity.Name}Command command, [FromServices] IMediator mediator) =>");
             sb.AppendLine("        {");
             sb.AppendLine("            if (id != command.Id) return Results.BadRequest();");
-            sb.AppendLine($"            await mediator.Send(command);");
-            sb.AppendLine("            return Results.NoContent();");
+            sb.AppendLine($"            var success = await mediator.Send(command);");
+            sb.AppendLine("            return success ? Results.NoContent() : Results.NotFound();");
             sb.AppendLine($"        }}).WithName(\"Update{entity.Name}\")");
             sb.AppendLine($"          .WithTags(\"{entity.Name}\");");
             sb.AppendLine();
@@ -82,8 +82,8 @@ internal static class EndpointEmitter
             // Map DELETE
             sb.AppendLine($"        endpoints.MapDelete(\"/api/{slug}/{{id:guid}}\", async (Guid id, [FromServices] IMediator mediator) =>");
             sb.AppendLine("        {");
-            sb.AppendLine($"            await mediator.Send(new Delete{entity.Name}Command(id));");
-            sb.AppendLine("            return Results.NoContent();");
+            sb.AppendLine($"            var success = await mediator.Send(new Delete{entity.Name}Command(id));");
+            sb.AppendLine("            return success ? Results.NoContent() : Results.NotFound();");
             sb.AppendLine($"        }}).WithName(\"Delete{entity.Name}\")");
             sb.AppendLine($"          .WithTags(\"{entity.Name}\");");
             sb.AppendLine();

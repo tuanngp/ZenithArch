@@ -59,7 +59,8 @@ internal static class DependencyInjectionEmitter
             }
         }
 
-        if ((config.IsCqrs && config.IsPerRequestTransactionSaveMode) || (config.IsRepository && config.UseUnitOfWork))
+        if ((config.IsCqrs && (config.IsPerRequestTransactionSaveMode || config.EnableValidation))
+            || (config.IsRepository && config.UseUnitOfWork))
         {
             sb.AppendLine("using RynorArch.Generated.Infrastructure;");
         }
@@ -115,6 +116,12 @@ internal static class DependencyInjectionEmitter
         if (config.IsCqrs && config.IsPerRequestTransactionSaveMode)
         {
             sb.AppendLine("        services.AddScoped(typeof(IPipelineBehavior<,>), typeof(RynorArchSaveChangesBehavior<,>));");
+            sb.AppendLine();
+        }
+
+        if (config.IsCqrs && config.EnableValidation)
+        {
+            sb.AppendLine("        services.AddScoped(typeof(IPipelineBehavior<,>), typeof(RynorArchValidationBehavior<,>));");
             sb.AppendLine();
         }
         

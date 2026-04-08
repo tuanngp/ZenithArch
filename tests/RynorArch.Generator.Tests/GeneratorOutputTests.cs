@@ -201,6 +201,7 @@ public sealed class GeneratorOutputTests
         Assert.Contains("TripPaginationExtensions.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("Trip.DomainEvents.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("IUnitOfWork.g.cs", result.GeneratedSources.Keys);
+        Assert.Contains("RynorArch.ValidationBehavior.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("// rynor-artifact: CQRS", result.GeneratedSources["Trip.Cqrs.g.cs"]);
         Assert.Contains("// rynor-assumptions: uses configured DbContext type for handlers", result.GeneratedSources["Trip.Cqrs.g.cs"]);
         Assert.Contains("public static readonly string[] Artifacts = new[]", result.GeneratedSources["RynorArch.GenerationReport.g.cs"]);
@@ -274,8 +275,128 @@ public sealed class GeneratorOutputTests
         Assert.Contains("public static IServiceCollection AddRynorArchDependencies(this IServiceCollection services, bool registerMediatR = true)", result.GeneratedSources["RynorArchServiceCollectionExtensions.g.cs"]);
         Assert.Contains("services.AddScoped<IRequestHandler<CreateTripCommand, Guid>, CreateTripHandler>();", result.GeneratedSources["RynorArchServiceCollectionExtensions.g.cs"]);
         Assert.Contains("services.AddScoped<IValidator<CreateTripCommand>, CreateTripValidator>();", result.GeneratedSources["RynorArchServiceCollectionExtensions.g.cs"]);
+        Assert.Contains("services.AddScoped(typeof(IPipelineBehavior<,>), typeof(RynorArchValidationBehavior<,>));", result.GeneratedSources["RynorArchServiceCollectionExtensions.g.cs"]);
+        Assert.Contains("RynorArch.ValidationBehavior.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("services.AddScoped<IPipelineBehavior<GetTripByIdQuery, Trip?>, GetTripByIdQueryCacheBehavior>();", result.GeneratedSources["RynorArchServiceCollectionExtensions.g.cs"]);
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error);
+    }
+
+    [Fact]
+    public void Generates_endpoint_extensions_with_correct_write_semantics()
+    {
+        var result = GeneratorTestHarness.Run("""
+            using RynorArch.Abstractions.Attributes;
+            using RynorArch.Abstractions.Base;
+            using RynorArch.Abstractions.Enums;
+
+            [assembly: Architecture(
+                Pattern = ArchitecturePattern.Cqrs,
+                GenerateEndpoints = true,
+                EnableExperimentalEndpoints = true)]
+
+            namespace Demo.Domain;
+
+            [Entity]
+            public partial class Trip : EntityBase
+            {
+                public string Destination { get; set; } = string.Empty;
+            }
+            """);
+
+        Assert.Contains("RynorArchEndpointExtensions.g.cs", result.GeneratedSources.Keys);
+        var endpointSource = result.GeneratedSources["RynorArchEndpointExtensions.g.cs"];
+
+        Assert.Contains("return Results.Created($\"/api/trips/{result}\", new { id = result });", endpointSource);
+        Assert.Contains("var success = await mediator.Send(command);", endpointSource);
+        Assert.Contains("var success = await mediator.Send(new DeleteTripCommand(id));", endpointSource);
+        Assert.Contains("return success ? Results.NoContent() : Results.NotFound();", endpointSource);
+        Assert.DoesNotContain("await mediator.Send(command);\r\n            return Results.NoContent();", endpointSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("await mediator.Send(new DeleteTripCommand(id));\r\n            return Results.NoContent();", endpointSource, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Generates_validation_pipeline_behavior_when_validation_enabled()
+    {
+        var result = GeneratorTestHarness.Run("""
+            using RynorArch.Abstractions.Attributes;
+            using RynorArch.Abstractions.Base;
+            using RynorArch.Abstractions.Enums;
+
+            [assembly: Architecture(
+                Pattern = ArchitecturePattern.Cqrs,
+                EnableValidation = true,
+                GenerateDependencyInjection = true)]
+
+            namespace Demo.Domain;
+
+            [Entity]
+            public partial class Trip : EntityBase
+            {
+                [Required]
+                public string Destination { get; set; } = string.Empty;
+            }
+            """);
+
+        Assert.Contains("RynorArch.ValidationBehavior.g.cs", result.GeneratedSources.Keys);
+        Assert.Contains("public sealed class RynorArchValidationBehavior<TRequest, TResponse> : IPipelineBehavior<TRequest, TResponse>", result.GeneratedSources["RynorArch.ValidationBehavior.g.cs"]);
+        Assert.Contains("services.AddScoped(typeof(IPipelineBehavior<,>), typeof(RynorArchValidationBehavior<,>));", result.GeneratedSources["RynorArchServiceCollectionExtensions.g.cs"]);
+    }
+
+    [Fact]
+    public void Raises_domain_events_for_aggregate_root_write_handlers()
+    {
+        var result = GeneratorTestHarness.Run("""
+            using RynorArch.Abstractions.Attributes;
+            using RynorArch.Abstractions.Base;
+            using RynorArch.Abstractions.Enums;
+
+            [assembly: Architecture(Pattern = ArchitecturePattern.Cqrs)]
+
+            namespace Demo.Domain;
+
+            [Entity]
+            [AggregateRoot]
+            public partial class Trip : EntityBase
+            {
+                public string Destination { get; set; } = string.Empty;
+            }
+            """);
+
+        var cqrsSource = result.GeneratedSources["Trip.Cqrs.g.cs"];
+        Assert.Contains("using Demo.Domain.DomainEvents;", cqrsSource);
+        Assert.Contains("entity.RaiseDomainEvent(new TripCreatedEvent(entity.Id));", cqrsSource);
+        Assert.Contains("entity.RaiseDomainEvent(new TripUpdatedEvent(entity.Id));", cqrsSource);
+        Assert.Contains("entity.RaiseDomainEvent(new TripDeletedEvent(entity.Id));", cqrsSource);
+    }
+
+    [Fact]
+    public void Generates_ef_configuration_for_global_system_string_properties()
+    {
+        var result = GeneratorTestHarness.Run("""
+            using RynorArch.Abstractions.Attributes;
+            using RynorArch.Abstractions.Base;
+            using RynorArch.Abstractions.Enums;
+
+            [assembly: Architecture(
+                Pattern = ArchitecturePattern.Repository,
+                GenerateEfConfigurations = true)]
+
+            namespace Demo.Domain;
+
+            [Entity]
+            public partial class Trip : EntityBase
+            {
+                public global::System.String Title { get; set; } = string.Empty;
+                public global::System.String? Subtitle { get; set; }
+            }
+            """);
+
+        Assert.Contains("TripConfiguration.g.cs", result.GeneratedSources.Keys);
+        var efSource = result.GeneratedSources["TripConfiguration.g.cs"];
+        Assert.Contains("builder.Property(x => x.Title)", efSource);
+        Assert.Contains(".IsRequired();", efSource);
+        Assert.Contains("builder.Property(x => x.Subtitle)", efSource);
+        Assert.Contains(".IsRequired(false);", efSource);
     }
 
     private static string Normalize(string value)

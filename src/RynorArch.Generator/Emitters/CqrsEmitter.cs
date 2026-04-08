@@ -32,6 +32,10 @@ internal static class CqrsEmitter
         if (!string.IsNullOrEmpty(entity.Namespace))
         {
             w.AppendLine($"using {entity.Namespace};");
+            if (entity.IsAggregateRoot)
+            {
+                w.AppendLine($"using {entity.Namespace}.DomainEvents;");
+            }
         }
         w.AppendLine();
 
@@ -164,6 +168,11 @@ internal static class CqrsEmitter
         w.AppendLine();
         w.AppendLine("OnBeforeHandle(command, entity);");
         w.AppendLine();
+        if (entity.IsAggregateRoot)
+        {
+            w.AppendLine($"entity.RaiseDomainEvent(new {name}CreatedEvent(entity.Id));");
+            w.AppendLine();
+        }
         if (usesPerRequestSave)
         {
             w.AppendLine("await RynorArchCrudRuntime.AddAsync(_db, entity, cancellationToken);");
@@ -248,6 +257,11 @@ internal static class CqrsEmitter
         w.AppendLine();
         w.AppendLine("OnBeforeHandle(command, entity);");
         w.AppendLine();
+        if (entity.IsAggregateRoot)
+        {
+            w.AppendLine($"entity.RaiseDomainEvent(new {name}UpdatedEvent(entity.Id));");
+            w.AppendLine();
+        }
         if (usesPerRequestSave)
         {
             w.AppendLine("RynorArchCrudRuntime.MarkUpdated(_db, entity);");
@@ -318,6 +332,11 @@ internal static class CqrsEmitter
         w.AppendLine();
         w.AppendLine("OnBeforeHandle(command, entity);");
         w.AppendLine();
+        if (entity.IsAggregateRoot)
+        {
+            w.AppendLine($"entity.RaiseDomainEvent(new {name}DeletedEvent(entity.Id));");
+            w.AppendLine();
+        }
         if (usesPerRequestSave)
         {
             w.AppendLine("RynorArchCrudRuntime.Delete(_db, entity);");

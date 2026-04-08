@@ -27,6 +27,11 @@ internal static class GlobalResolver
             CqrsSaveBehaviorEmitter.Emit(context, config.CqrsDbContextTypeName);
         }
 
+        if (entities.Length > 0 && config.IsCqrs && config.EnableValidation)
+        {
+            ValidationPipelineBehaviorEmitter.Emit(context);
+        }
+
         if (entities.Length > 0 && config.IsRepository && config.UseUnitOfWork)
         {
             context.AddSource("IUnitOfWork.g.cs", RepositoryEmitter.GenerateUnitOfWorkInterface());
