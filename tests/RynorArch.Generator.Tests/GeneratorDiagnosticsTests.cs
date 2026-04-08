@@ -256,6 +256,37 @@ public sealed class GeneratorDiagnosticsTests
         AssertContainsDiagnostic(result.Diagnostics, "RYNOR014", DiagnosticSeverity.Info);
     }
 
+    [Fact]
+    public void Reports_warning_when_validation_is_enabled_without_generated_di()
+    {
+        var result = GeneratorTestHarness.Run("""
+            using RynorArch.Abstractions.Attributes;
+            using RynorArch.Abstractions.Base;
+            using RynorArch.Abstractions.Enums;
+            using Microsoft.EntityFrameworkCore;
+
+            [assembly: Architecture(
+                Pattern = ArchitecturePattern.Cqrs,
+                EnableValidation = true,
+                GenerateDependencyInjection = false)]
+
+            namespace Demo.Domain;
+
+            [Entity]
+            public partial class Trip : EntityBase
+            {
+                public string Destination { get; set; } = string.Empty;
+            }
+
+            public sealed class AppDbContext : DbContext
+            {
+                public DbSet<Trip> Trips => Set<Trip>();
+            }
+            """);
+
+        AssertContainsDiagnostic(result.Diagnostics, "RYNOR015", DiagnosticSeverity.Warning);
+    }
+
     private static void AssertContainsDiagnostic(
         IEnumerable<Diagnostic> diagnostics,
         string id,

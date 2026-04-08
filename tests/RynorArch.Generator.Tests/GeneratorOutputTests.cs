@@ -343,6 +343,32 @@ public sealed class GeneratorOutputTests
     }
 
     [Fact]
+    public void Does_not_generate_validation_pipeline_behavior_when_validation_is_disabled()
+    {
+        var result = GeneratorTestHarness.Run("""
+            using RynorArch.Abstractions.Attributes;
+            using RynorArch.Abstractions.Base;
+            using RynorArch.Abstractions.Enums;
+
+            [assembly: Architecture(
+                Pattern = ArchitecturePattern.Cqrs,
+                EnableValidation = false,
+                GenerateDependencyInjection = true)]
+
+            namespace Demo.Domain;
+
+            [Entity]
+            public partial class Trip : EntityBase
+            {
+                public string Destination { get; set; } = string.Empty;
+            }
+            """);
+
+        Assert.DoesNotContain("RynorArch.ValidationBehavior.g.cs", result.GeneratedSources.Keys);
+        Assert.DoesNotContain("RynorArchValidationBehavior<,>", result.GeneratedSources["RynorArchServiceCollectionExtensions.g.cs"], StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Raises_domain_events_for_aggregate_root_write_handlers()
     {
         var result = GeneratorTestHarness.Run("""
@@ -367,6 +393,30 @@ public sealed class GeneratorOutputTests
         Assert.Contains("entity.RaiseDomainEvent(new TripCreatedEvent(entity.Id));", cqrsSource);
         Assert.Contains("entity.RaiseDomainEvent(new TripUpdatedEvent(entity.Id));", cqrsSource);
         Assert.Contains("entity.RaiseDomainEvent(new TripDeletedEvent(entity.Id));", cqrsSource);
+    }
+
+    [Fact]
+    public void Does_not_raise_domain_events_for_non_aggregate_write_handlers()
+    {
+        var result = GeneratorTestHarness.Run("""
+            using RynorArch.Abstractions.Attributes;
+            using RynorArch.Abstractions.Base;
+            using RynorArch.Abstractions.Enums;
+
+            [assembly: Architecture(Pattern = ArchitecturePattern.Cqrs)]
+
+            namespace Demo.Domain;
+
+            [Entity]
+            public partial class Trip : EntityBase
+            {
+                public string Destination { get; set; } = string.Empty;
+            }
+            """);
+
+        var cqrsSource = result.GeneratedSources["Trip.Cqrs.g.cs"];
+        Assert.DoesNotContain("using Demo.Domain.DomainEvents;", cqrsSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("RaiseDomainEvent(", cqrsSource, StringComparison.Ordinal);
     }
 
     [Fact]

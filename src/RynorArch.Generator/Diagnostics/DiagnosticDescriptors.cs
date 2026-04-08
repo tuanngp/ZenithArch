@@ -121,4 +121,12 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor ValidationRequiresGeneratedDi = new(
+        id: "RYNOR015",
+        title: "Validation needs generated DI wiring",
+        messageFormat: "EnableValidation is enabled while GenerateDependencyInjection is false; either enable generated DI or manually register IPipelineBehavior<,> with RynorArchValidationBehavior<,>",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
 }

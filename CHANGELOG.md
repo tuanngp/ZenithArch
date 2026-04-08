@@ -40,6 +40,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Made `RynorArch.Sample` runnable end-to-end as a minimal web app using in-memory EF Core.
 - Added profile migration recommendation diagnostic (`RYNOR014`) and linked behavior notices to hardening docs.
 - Added generated `RynorArchValidationBehavior<,>` and DI wiring so `EnableValidation` now enforces command validators automatically at runtime.
+- Added `RYNOR015` warning to flag `EnableValidation` with `GenerateDependencyInjection = false` when validation pipeline wiring must be registered manually.
 - Corrected generated endpoint write semantics: `POST` now returns `{ id = ... }`, while `PUT`/`DELETE` now return `404` when target entities are missing.
 - Updated generated CQRS write handlers for aggregate roots to raise generated domain events (`Created`, `Updated`, `Deleted`) before persistence.
 - Hardened generated EF configuration string detection to support fully-qualified string type names.

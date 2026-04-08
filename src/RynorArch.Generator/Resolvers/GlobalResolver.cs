@@ -143,6 +143,13 @@ internal static class GlobalResolver
                 location));
         }
 
+        if (config.EnableValidation && !config.GenerateDependencyInjection)
+        {
+            context.ReportDiagnostic(Diagnostic.Create(
+                DiagnosticDescriptors.ValidationRequiresGeneratedDi,
+                location));
+        }
+
         if (config.GenerateEndpoints && config.EnableExperimentalEndpoints && config.IsCqrs)
         {
             context.ReportDiagnostic(Diagnostic.Create(

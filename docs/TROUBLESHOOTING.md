@@ -134,6 +134,14 @@ Fix options:
 
 See `docs/UPGRADING_PROFILES.md` for migration mapping examples.
 
+### `RYNOR015` Validation needs generated DI wiring
+
+`EnableValidation` is enabled while `GenerateDependencyInjection` is false.
+
+Fix options:
+- set `GenerateDependencyInjection = true`, or
+- manually register `IPipelineBehavior<,>` to `RynorArchValidationBehavior<,>`
+
 ## Debugging generated output
 
 - Inspect `RynorArch.GenerationReport.g.cs` to see what artifacts were emitted.
