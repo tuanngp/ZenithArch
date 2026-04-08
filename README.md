@@ -224,6 +224,7 @@ public partial class CreateTripValidator
 
 - Troubleshooting: `docs/TROUBLESHOOTING.md`
 - Getting started: `docs/GETTING_STARTED.md`
+- AI-agent playbook: `docs/AI_AGENT_PLAYBOOK.md`
 - Integration: `docs/INTEGRATION_GUIDE.md`
 - Feature matrix: `docs/FEATURE_MATRIX.md`
 - Attribute reference: `docs/ATTRIBUTE_REFERENCE.md`

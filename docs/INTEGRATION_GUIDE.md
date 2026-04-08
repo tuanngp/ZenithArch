@@ -70,3 +70,14 @@ When `GenerateCachingDecorators = true`:
 If `CqrsSaveMode = CqrsSaveMode.PerRequestTransaction`:
 - keep generated DI wiring enabled, or
 - manually register `IPipelineBehavior<,>` to `RynorArchSaveChangesBehavior<,>`
+
+## AI-agent integration pattern
+
+When an agent is implementing changes, use this minimal gate:
+
+1. Apply configuration and code changes.
+2. Run `dotnet build`.
+3. Run `rynor doctor`.
+4. Only continue if summary is `READY` or `READY WITH WARNINGS`.
+
+For full task contracts and output expectations, see `docs/AI_AGENT_PLAYBOOK.md`.

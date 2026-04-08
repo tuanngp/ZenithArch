@@ -1,6 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Text.RegularExpressions;
+using System.Xml.Linq;
 
 namespace RynorArch.Cli;
 
@@ -18,6 +21,31 @@ internal sealed class CliScaffoldOptions
     public bool EnableExperimentalEndpoints { get; set; }
     public bool GenerateCachingDecorators { get; set; }
     public bool UsePerRequestSaveMode { get; set; }
+}
+
+internal enum DoctorSeverity
+{
+    Pass,
+    Warn,
+    Fail,
+}
+
+internal sealed class DoctorCheckResult
+{
+    public string Id { get; }
+    public DoctorSeverity Severity { get; }
+    public string Check { get; }
+    public string Message { get; }
+    public string Fix { get; }
+
+    public DoctorCheckResult(string id, DoctorSeverity severity, string check, string message, string fix = "")
+    {
+        Id = id;
+        Severity = severity;
+        Check = check;
+        Message = message;
+        Fix = fix;
+    }
 }
 
 class Program
@@ -45,6 +73,10 @@ class Program
         {
             RunInit(args);
         }
+        else if (command == "doctor")
+        {
+            RunDoctor(args);
+        }
         else
         {
             ShowHelp();
@@ -57,6 +89,8 @@ class Program
         Console.WriteLine("Usage: rynor init <Namespace>");
         Console.WriteLine("\nUsage: rynor scaffold");
         Console.WriteLine("Usage: rynor scaffold <EntityName> [Namespace]");
+        Console.WriteLine("\nUsage: rynor doctor");
+        Console.WriteLine("Usage: rynor doctor <ProjectPath>");
     }
 
     static void RunInit(string[] args)
@@ -106,6 +140,474 @@ class Program
         }
         Console.WriteLine($"[Created] AssemblyConfig.cs");
         Console.WriteLine($"[Created] README_NEXT_STEPS.md");
+    }
+
+    static void RunDoctor(string[] args)
+    {
+        string targetPath = args.Length > 1 ? args[1] : Directory.GetCurrentDirectory();
+        targetPath = Path.GetFullPath(targetPath);
+
+        Console.WriteLine($"\n[Info] Running doctor checks in: {targetPath}");
+
+        var results = new List<DoctorCheckResult>();
+        if (!Directory.Exists(targetPath))
+        {
+            results.Add(new DoctorCheckResult(
+                "DR000",
+                DoctorSeverity.Fail,
+                "Project root",
+                $"Directory not found: {targetPath}",
+                "Run rynor doctor from your project root or pass a valid path."));
+            PrintDoctorSummary(results);
+            Environment.ExitCode = 1;
+            return;
+        }
+
+        CheckDotnetSdk(results);
+
+        string? projectFilePath = ResolveProjectFile(targetPath, results);
+        var packageReferences = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var frameworkReferences = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var projectReferences = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        if (!string.IsNullOrEmpty(projectFilePath))
+        {
+            LoadProjectReferences(projectFilePath, packageReferences, frameworkReferences, projectReferences, results);
+        }
+
+        string? architectureConfigPath = ResolveArchitectureConfigPath(targetPath, results);
+        string architectureConfigContent = string.Empty;
+        if (!string.IsNullOrEmpty(architectureConfigPath))
+        {
+            architectureConfigContent = File.ReadAllText(architectureConfigPath);
+            CheckArchitectureConfigConsistency(architectureConfigContent, results);
+        }
+
+        ValidateDependencies(packageReferences, frameworkReferences, projectReferences, architectureConfigContent, results);
+        CheckEntityPartialDeclarations(targetPath, results);
+        CheckGenerationReport(targetPath, results);
+
+        PrintDoctorSummary(results);
+        if (HasSeverity(results, DoctorSeverity.Fail))
+        {
+            Environment.ExitCode = 1;
+        }
+    }
+
+    static void CheckDotnetSdk(List<DoctorCheckResult> results)
+    {
+        try
+        {
+            var startInfo = new ProcessStartInfo
+            {
+                FileName = "dotnet",
+                Arguments = "--version",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+            };
+
+            using var process = Process.Start(startInfo);
+            if (process is null)
+            {
+                results.Add(new DoctorCheckResult("DR001", DoctorSeverity.Fail, "dotnet SDK", "Unable to run dotnet --version", "Install .NET SDK and ensure dotnet is available in PATH."));
+                return;
+            }
+
+            string output = process.StandardOutput.ReadToEnd().Trim();
+            process.WaitForExit();
+
+            if (process.ExitCode != 0 || string.IsNullOrWhiteSpace(output))
+            {
+                results.Add(new DoctorCheckResult("DR001", DoctorSeverity.Fail, "dotnet SDK", "dotnet --version did not return a valid SDK version", "Install .NET SDK 10.0.x for the recommended environment."));
+                return;
+            }
+
+            if (output.StartsWith("10.", StringComparison.Ordinal))
+            {
+                results.Add(new DoctorCheckResult("DR001", DoctorSeverity.Pass, "dotnet SDK", $"Detected SDK version {output}"));
+            }
+            else
+            {
+                results.Add(new DoctorCheckResult("DR001", DoctorSeverity.Warn, "dotnet SDK", $"Detected SDK version {output}", "Use .NET SDK 10.0.x for the validated support matrix."));
+            }
+        }
+        catch (Exception ex)
+        {
+            results.Add(new DoctorCheckResult("DR001", DoctorSeverity.Fail, "dotnet SDK", $"Failed to detect SDK version: {ex.Message}", "Install .NET SDK and confirm dotnet is available in PATH."));
+        }
+    }
+
+    static string? ResolveProjectFile(string targetPath, List<DoctorCheckResult> results)
+    {
+        string[] topLevel = Directory.GetFiles(targetPath, "*.csproj", SearchOption.TopDirectoryOnly);
+        string[] all = topLevel;
+        if (all.Length == 0)
+        {
+            all = Directory.GetFiles(targetPath, "*.csproj", SearchOption.AllDirectories);
+        }
+
+        if (all.Length == 0)
+        {
+            results.Add(new DoctorCheckResult("DR002", DoctorSeverity.Fail, "Project file", "No .csproj file was found", "Run rynor doctor from a .NET project root or pass a valid project folder."));
+            return null;
+        }
+
+        Array.Sort(all, StringComparer.OrdinalIgnoreCase);
+        string selected = all[0];
+
+        if (all.Length > 1)
+        {
+            results.Add(new DoctorCheckResult("DR002", DoctorSeverity.Warn, "Project file", $"Multiple .csproj files found, using {Path.GetFileName(selected)}", "Pass an explicit project path to avoid ambiguity."));
+        }
+        else
+        {
+            results.Add(new DoctorCheckResult("DR002", DoctorSeverity.Pass, "Project file", $"Using {Path.GetFileName(selected)}"));
+        }
+
+        return selected;
+    }
+
+    static void LoadProjectReferences(
+        string projectFilePath,
+        HashSet<string> packageReferences,
+        HashSet<string> frameworkReferences,
+        HashSet<string> projectReferences,
+        List<DoctorCheckResult> results)
+    {
+        try
+        {
+            var document = XDocument.Load(projectFilePath);
+            foreach (var element in document.Descendants())
+            {
+                string localName = element.Name.LocalName;
+
+                if (localName == "PackageReference")
+                {
+                    string? include = element.Attribute("Include")?.Value;
+                    if (!string.IsNullOrWhiteSpace(include))
+                    {
+                        packageReferences.Add(include);
+                    }
+                }
+                else if (localName == "FrameworkReference")
+                {
+                    string? include = element.Attribute("Include")?.Value;
+                    if (!string.IsNullOrWhiteSpace(include))
+                    {
+                        frameworkReferences.Add(include);
+                    }
+                }
+                else if (localName == "ProjectReference")
+                {
+                    string? include = element.Attribute("Include")?.Value;
+                    if (!string.IsNullOrWhiteSpace(include))
+                    {
+                        string projectName = Path.GetFileNameWithoutExtension(include);
+                        if (!string.IsNullOrWhiteSpace(projectName))
+                        {
+                            projectReferences.Add(projectName);
+                        }
+                    }
+                }
+            }
+
+            results.Add(new DoctorCheckResult("DR003", DoctorSeverity.Pass, "Project references", "Loaded package/framework/project references"));
+        }
+        catch (Exception ex)
+        {
+            results.Add(new DoctorCheckResult("DR003", DoctorSeverity.Fail, "Project references", $"Failed to parse .csproj: {ex.Message}", "Fix project XML syntax and rerun doctor."));
+        }
+    }
+
+    static string? ResolveArchitectureConfigPath(string targetPath, List<DoctorCheckResult> results)
+    {
+        string assemblyConfigPath = Path.Combine(targetPath, "AssemblyConfig.cs");
+        if (File.Exists(assemblyConfigPath))
+        {
+            results.Add(new DoctorCheckResult("DR004", DoctorSeverity.Pass, "Architecture config", "Found AssemblyConfig.cs"));
+            return assemblyConfigPath;
+        }
+
+        foreach (string file in EnumerateSourceFiles(targetPath))
+        {
+            string content = File.ReadAllText(file);
+            if (content.Contains("[assembly: Architecture(", StringComparison.Ordinal))
+            {
+                results.Add(new DoctorCheckResult("DR004", DoctorSeverity.Warn, "Architecture config", $"Found assembly Architecture attribute in {Path.GetFileName(file)}", "Prefer a dedicated AssemblyConfig.cs at project root for discoverability."));
+                return file;
+            }
+        }
+
+        results.Add(new DoctorCheckResult("DR004", DoctorSeverity.Fail, "Architecture config", "No [assembly: Architecture(...)] configuration found", "Run rynor init or add AssemblyConfig.cs with [assembly: Architecture(...)]."));
+        return null;
+    }
+
+    static void CheckArchitectureConfigConsistency(string content, List<DoctorCheckResult> results)
+    {
+        if (!content.Contains("[assembly: Architecture(", StringComparison.Ordinal))
+        {
+            results.Add(new DoctorCheckResult("DR005", DoctorSeverity.Fail, "Architecture declaration", "Assembly config file exists but Architecture attribute is missing", "Add [assembly: Architecture(...)] in AssemblyConfig.cs."));
+            return;
+        }
+
+        bool hasProfile = content.Contains("Profile = ArchitectureProfile.", StringComparison.Ordinal);
+        bool generateEndpoints = content.Contains("GenerateEndpoints = true", StringComparison.Ordinal);
+        bool enableExperimentalEndpoints = content.Contains("EnableExperimentalEndpoints = true", StringComparison.Ordinal);
+
+        if (!hasProfile)
+        {
+            results.Add(new DoctorCheckResult("DR005", DoctorSeverity.Warn, "Architecture declaration", "Configuration does not declare a starter profile", "Use Profile = ArchitectureProfile.CqrsQuickStart/RepositoryQuickStart/FullStackQuickStart to reduce config drift."));
+        }
+        else
+        {
+            results.Add(new DoctorCheckResult("DR005", DoctorSeverity.Pass, "Architecture declaration", "Starter profile detected"));
+        }
+
+        if (generateEndpoints && !enableExperimentalEndpoints)
+        {
+            results.Add(new DoctorCheckResult("DR006", DoctorSeverity.Fail, "Endpoint opt-in", "GenerateEndpoints is enabled without EnableExperimentalEndpoints", "Set EnableExperimentalEndpoints = true or disable GenerateEndpoints."));
+        }
+        else if (generateEndpoints)
+        {
+            results.Add(new DoctorCheckResult("DR006", DoctorSeverity.Pass, "Endpoint opt-in", "Endpoint generation has explicit experimental opt-in"));
+        }
+    }
+
+    static void ValidateDependencies(
+        HashSet<string> packageReferences,
+        HashSet<string> frameworkReferences,
+        HashSet<string> projectReferences,
+        string architectureConfigContent,
+        List<DoctorCheckResult> results)
+    {
+        bool isCqrs = HasAny(architectureConfigContent,
+            "ArchitecturePattern.Cqrs",
+            "ArchitecturePattern.FullStack",
+            "ArchitectureProfile.CqrsQuickStart",
+            "ArchitectureProfile.FullStackQuickStart");
+
+        bool isRepository = HasAny(architectureConfigContent,
+            "ArchitecturePattern.Repository",
+            "ArchitecturePattern.FullStack",
+            "ArchitectureProfile.RepositoryQuickStart",
+            "ArchitectureProfile.FullStackQuickStart");
+
+        bool enableValidation = HasAny(architectureConfigContent,
+            "EnableValidation = true",
+            "ArchitectureProfile.CqrsQuickStart",
+            "ArchitectureProfile.FullStackQuickStart");
+
+        bool generateCaching = architectureConfigContent.Contains("GenerateCachingDecorators = true", StringComparison.Ordinal);
+        bool generateEndpoints = architectureConfigContent.Contains("GenerateEndpoints = true", StringComparison.Ordinal);
+        bool needsPersistence = isCqrs || isRepository || architectureConfigContent.Contains("GenerateEfConfigurations = true", StringComparison.Ordinal);
+
+        bool hasAbstractions = packageReferences.Contains("RynorArch.Abstractions") || projectReferences.Contains("RynorArch.Abstractions");
+        bool hasGenerator = packageReferences.Contains("RynorArch.Generator") || projectReferences.Contains("RynorArch.Generator");
+
+        AddDependencyResult(results, "DR007", "RynorArch.Abstractions", hasAbstractions, "Add RynorArch.Abstractions package (or project reference).");
+        AddDependencyResult(results, "DR008", "RynorArch.Generator", hasGenerator, "Add RynorArch.Generator as analyzer package (or project reference).", true);
+
+        if (isCqrs)
+        {
+            AddDependencyResult(results, "DR009", "MediatR", packageReferences.Contains("MediatR"), "Add <PackageReference Include=\"MediatR\" Version=\"12.*\" />.");
+        }
+
+        if (enableValidation)
+        {
+            AddDependencyResult(results, "DR010", "FluentValidation", packageReferences.Contains("FluentValidation"), "Add <PackageReference Include=\"FluentValidation\" Version=\"11.*\" />.");
+        }
+
+        if (needsPersistence)
+        {
+            AddDependencyResult(results, "DR011", "Microsoft.EntityFrameworkCore", HasPackagePrefix(packageReferences, "Microsoft.EntityFrameworkCore"), "Add <PackageReference Include=\"Microsoft.EntityFrameworkCore\" Version=\"9.*\" />.");
+        }
+
+        if (generateCaching)
+        {
+            AddDependencyResult(results, "DR012", "Microsoft.Extensions.Caching.*", HasPackagePrefix(packageReferences, "Microsoft.Extensions.Caching"), "Add a distributed cache package (for example Microsoft.Extensions.Caching.StackExchangeRedis).", warnOnly: true);
+        }
+
+        if (generateEndpoints)
+        {
+            AddDependencyResult(results, "DR013", "Microsoft.AspNetCore.App", frameworkReferences.Contains("Microsoft.AspNetCore.App"), "Add <FrameworkReference Include=\"Microsoft.AspNetCore.App\" />.");
+        }
+    }
+
+    static void CheckEntityPartialDeclarations(string targetPath, List<DoctorCheckResult> results)
+    {
+        int entityDeclarations = 0;
+        int nonPartialDeclarations = 0;
+        var regex = new Regex(@"\[Entity\][\s\S]{0,600}?class\s+[A-Za-z_][A-Za-z0-9_]*", RegexOptions.Compiled);
+
+        foreach (string file in EnumerateSourceFiles(targetPath))
+        {
+            string content = File.ReadAllText(file);
+            var matches = regex.Matches(content);
+            for (int i = 0; i < matches.Count; i++)
+            {
+                entityDeclarations++;
+                if (!matches[i].Value.Contains("partial class", StringComparison.OrdinalIgnoreCase))
+                {
+                    nonPartialDeclarations++;
+                }
+            }
+        }
+
+        if (entityDeclarations == 0)
+        {
+            results.Add(new DoctorCheckResult("DR014", DoctorSeverity.Warn, "Entity declarations", "No [Entity] declarations were found", "Run rynor scaffold to create an entity or add [Entity] to a partial class."));
+            return;
+        }
+
+        if (nonPartialDeclarations > 0)
+        {
+            results.Add(new DoctorCheckResult("DR014", DoctorSeverity.Fail, "Entity declarations", $"Found {nonPartialDeclarations} non-partial [Entity] declaration(s)", "Mark all [Entity] classes as partial to enable generation."));
+            return;
+        }
+
+        results.Add(new DoctorCheckResult("DR014", DoctorSeverity.Pass, "Entity declarations", $"Validated {entityDeclarations} [Entity] declaration(s) as partial"));
+    }
+
+    static void CheckGenerationReport(string targetPath, List<DoctorCheckResult> results)
+    {
+        string[] reports = Directory.GetFiles(targetPath, "RynorArch.GenerationReport.g.cs", SearchOption.AllDirectories);
+        for (int i = 0; i < reports.Length; i++)
+        {
+            if (reports[i].Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+            {
+                results.Add(new DoctorCheckResult("DR015", DoctorSeverity.Pass, "Generated artifacts", "Found RynorArch.GenerationReport.g.cs"));
+                return;
+            }
+        }
+
+        results.Add(new DoctorCheckResult("DR015", DoctorSeverity.Warn, "Generated artifacts", "Generation report not found under obj/", "Run dotnet build once, then rerun rynor doctor."));
+    }
+
+    static IEnumerable<string> EnumerateSourceFiles(string root)
+    {
+        foreach (string file in Directory.GetFiles(root, "*.cs", SearchOption.AllDirectories))
+        {
+            if (file.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+                || file.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+                || file.Contains(Path.DirectorySeparatorChar + "Generated" + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            yield return file;
+        }
+    }
+
+    static void AddDependencyResult(
+        List<DoctorCheckResult> results,
+        string id,
+        string dependencyName,
+        bool isPresent,
+        string fix,
+        bool warnOnly = false)
+    {
+        if (isPresent)
+        {
+            results.Add(new DoctorCheckResult(id, DoctorSeverity.Pass, $"Dependency {dependencyName}", "Present"));
+            return;
+        }
+
+        results.Add(new DoctorCheckResult(
+            id,
+            warnOnly ? DoctorSeverity.Warn : DoctorSeverity.Fail,
+            $"Dependency {dependencyName}",
+            "Missing",
+            fix));
+    }
+
+    static bool HasPackagePrefix(HashSet<string> packageReferences, string prefix)
+    {
+        foreach (string reference in packageReferences)
+        {
+            if (reference.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    static bool HasAny(string value, params string[] tokens)
+    {
+        for (int i = 0; i < tokens.Length; i++)
+        {
+            if (value.Contains(tokens[i], StringComparison.Ordinal))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    static bool HasSeverity(List<DoctorCheckResult> results, DoctorSeverity severity)
+    {
+        for (int i = 0; i < results.Count; i++)
+        {
+            if (results[i].Severity == severity)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    static int CountSeverity(List<DoctorCheckResult> results, DoctorSeverity severity)
+    {
+        int count = 0;
+        for (int i = 0; i < results.Count; i++)
+        {
+            if (results[i].Severity == severity)
+            {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    static void PrintDoctorSummary(List<DoctorCheckResult> results)
+    {
+        Console.WriteLine();
+        for (int i = 0; i < results.Count; i++)
+        {
+            var result = results[i];
+            Console.WriteLine($"[{result.Severity.ToString().ToUpperInvariant()}] {result.Id} {result.Check}: {result.Message}");
+            if (!string.IsNullOrWhiteSpace(result.Fix) && result.Severity != DoctorSeverity.Pass)
+            {
+                Console.WriteLine($"       Fix: {result.Fix}");
+            }
+        }
+
+        int pass = CountSeverity(results, DoctorSeverity.Pass);
+        int warn = CountSeverity(results, DoctorSeverity.Warn);
+        int fail = CountSeverity(results, DoctorSeverity.Fail);
+
+        Console.WriteLine();
+        Console.WriteLine($"[Summary] PASS={pass} WARN={warn} FAIL={fail}");
+
+        if (fail > 0)
+        {
+            Console.WriteLine("[Result] NOT READY - resolve FAIL checks, then rerun rynor doctor");
+            return;
+        }
+
+        if (warn > 0)
+        {
+            Console.WriteLine("[Result] READY WITH WARNINGS - recommended to resolve WARN checks");
+            return;
+        }
+
+        Console.WriteLine("[Result] READY - project is aligned with the recommended setup");
     }
 
     static CliScaffoldOptions PromptArchitectureOptions()

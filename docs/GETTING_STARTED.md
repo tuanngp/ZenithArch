@@ -77,3 +77,14 @@ The generated DI extension registers handlers/repositories (by pattern), validat
 - `RYNOR005`: entity marked `[Entity]` must be `partial`.
 - `RYNOR006`: missing `AssemblyConfig.cs` or missing `[assembly: Architecture(...)]`.
 - `RYNOR007`: missing package dependency for an enabled feature flag.
+
+## Getting started with AI agents
+
+Use this sequence when an AI agent is driving setup:
+
+1. Run `rynor init`.
+2. Run `rynor scaffold Trip MyApp.Domain`.
+3. Run `dotnet build`.
+4. Run `rynor doctor` and resolve all FAIL checks.
+
+See `docs/AI_AGENT_PLAYBOOK.md` for task contracts and verification rules.

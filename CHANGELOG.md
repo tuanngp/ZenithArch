@@ -12,6 +12,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - GitHub Actions CI and tag-based release workflows.
 - Troubleshooting, compatibility, upgrade, contribution, and security documentation.
 - New enterprise operation docs: endpoint hardening, caching operations, and profile migration guidance.
+- AI-agent playbook documenting deterministic task contracts and verification rules.
+- New CLI `doctor` command for readiness checks with actionable fix steps.
+- E2E smoke test project for CLI workflow validation and CI/release quality gates.
 
 ### Changed
 - Centralized package metadata and versioning in `Directory.Build.props`.

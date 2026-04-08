@@ -23,3 +23,13 @@
 | FullStackQuickStart | End-to-end modules wanting both CQRS and repository artifacts | FullStack + common productivity flags + generated DI |
 
 Profile defaults are only a starting point. Explicit flags in `Architecture(...)` always override profile values.
+
+## Agent readiness gates
+
+| Gate | Tool | Pass condition |
+| --- | --- | --- |
+| Config discovery | `rynor doctor` (`DR002`, `DR004`) | `.csproj` found and architecture config declared |
+| Architecture safety | `rynor doctor` (`DR005`, `DR006`) | profile/pattern coherent and endpoint opt-in valid |
+| Dependency alignment | `rynor doctor` (`DR007`-`DR013`) | required dependencies are present for active features |
+| Entity shape | `rynor doctor` (`DR014`) | all `[Entity]` declarations are `partial` |
+| Generation marker | `rynor doctor` (`DR015`) | generation report exists under `obj/` after build |

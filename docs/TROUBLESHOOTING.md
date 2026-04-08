@@ -132,3 +132,16 @@ See `docs/UPGRADING_PROFILES.md` for migration mapping examples.
 - Restore packages again.
 - Compare generated output before and after the upgrade.
 - Re-run `dotnet test RynorArch.slnx`.
+
+## CLI doctor troubleshooting
+
+Use `rynor doctor` as a readiness gate for automated workflows.
+
+- `DR002` Project file fail: run command in a project folder containing a `.csproj`.
+- `DR004` Architecture config fail: add `AssemblyConfig.cs` with `[assembly: Architecture(...)]`.
+- `DR006` Endpoint opt-in fail: set `EnableExperimentalEndpoints = true` when endpoints are enabled.
+- `DR009`-`DR013` dependency fail: add the package/framework hinted in output.
+- `DR014` entity fail: mark all `[Entity]` classes as `partial`.
+- `DR015` report warning: build once so generated report is emitted under `obj/`.
+
+Reference contracts and verification flow are in `docs/AI_AGENT_PLAYBOOK.md`.

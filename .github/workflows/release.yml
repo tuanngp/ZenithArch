@@ -28,6 +28,9 @@ jobs:
       - name: Test
         run: dotnet test RynorArch.slnx --configuration Release --no-build
 
+      - name: E2E smoke tests
+        run: dotnet test tests/RynorArch.E2E.Tests/RynorArch.E2E.Tests.csproj --configuration Release
+
       - name: Publish packages
         if: ${{ secrets.NUGET_API_KEY != '' }}
         run: ./publish.ps1 -Increment None -Push -ApiKey "${{ secrets.NUGET_API_KEY }}"
