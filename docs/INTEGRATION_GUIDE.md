@@ -29,6 +29,19 @@ Validation behavior:
 - Generated `Create*` and `Update*` validators are executed automatically through MediatR pipeline behavior.
 - Partial `OnValidate(...)` hooks in handlers remain available for additional domain-specific checks.
 
+Optional runtime hooks:
+- Generated handlers resolve `ISecurityContext` (if registered) and propagate `UserId`/`TenantId` metadata to execution observer hooks.
+- Generated handlers and validation behavior resolve `IRynorArchExecutionObserver` as `IEnumerable<T>`. Register zero, one, or many observers without changing generator config.
+
+```csharp
+using RynorArch.Abstractions.Interfaces;
+
+builder.Services.AddScoped<ISecurityContext, HttpSecurityContext>();
+builder.Services.AddSingleton<IRynorArchExecutionObserver, StructuredExecutionObserver>();
+```
+
+If no implementations are registered, generated handlers continue to work with no runtime changes.
+
 ## Repository setup
 
 ```csharp
@@ -98,5 +111,7 @@ When an agent is implementing changes, use this minimal gate:
 2. Run `dotnet build`.
 3. Run `rynor doctor`.
 4. Only continue if summary is `READY` or `READY WITH WARNINGS`.
+
+For runtime behavior verification, run the scenarios in `docs/RUNTIME_TESTING.md`.
 
 For full task contracts and output expectations, see `docs/AI_AGENT_PLAYBOOK.md`.

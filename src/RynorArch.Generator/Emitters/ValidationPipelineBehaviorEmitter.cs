@@ -16,6 +16,7 @@ internal static class ValidationPipelineBehaviorEmitter
         w.AppendLine("using FluentValidation;");
         w.AppendLine("using FluentValidation.Results;");
         w.AppendLine("using MediatR;");
+        w.AppendLine("using RynorArch.Abstractions.Interfaces;");
         w.AppendLine();
         w.AppendLine("namespace RynorArch.Generated.Infrastructure;");
         w.AppendLine();
@@ -24,10 +25,12 @@ internal static class ValidationPipelineBehaviorEmitter
         w.AppendLine("    where TRequest : notnull");
         w.OpenBrace();
         w.AppendLine("private readonly IEnumerable<IValidator<TRequest>> _validators;");
+        w.AppendLine("private readonly IEnumerable<IRynorArchExecutionObserver> _executionObservers;");
         w.AppendLine();
-        w.AppendLine("public RynorArchValidationBehavior(IEnumerable<IValidator<TRequest>> validators)");
+        w.AppendLine("public RynorArchValidationBehavior(IEnumerable<IValidator<TRequest>> validators, IEnumerable<IRynorArchExecutionObserver> executionObservers)");
         w.OpenBrace();
         w.AppendLine("_validators = validators;");
+        w.AppendLine("_executionObservers = executionObservers;");
         w.CloseBrace();
         w.AppendLine();
         w.AppendLine("public async Task<TResponse> Handle(TRequest request, RequestHandlerDelegate<TResponse> next, CancellationToken cancellationToken)");
@@ -52,10 +55,19 @@ internal static class ValidationPipelineBehaviorEmitter
         w.AppendLine();
         w.AppendLine("if (failures is not null)");
         w.OpenBrace();
+        w.AppendLine("NotifyValidationFailure(typeof(TRequest).Name, failures.Count);");
         w.AppendLine("throw new ValidationException(failures);");
         w.CloseBrace();
         w.AppendLine();
         w.AppendLine("return await next();");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("private void NotifyValidationFailure(string requestName, int failureCount)");
+        w.OpenBrace();
+        w.AppendLine("foreach (var observer in _executionObservers)");
+        w.OpenBrace();
+        w.AppendLine("observer.OnValidationFailed(requestName, failureCount);");
+        w.CloseBrace();
         w.CloseBrace();
         w.CloseBrace();
 

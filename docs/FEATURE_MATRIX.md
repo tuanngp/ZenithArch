@@ -33,3 +33,4 @@ Profile defaults are only a starting point. Explicit flags in `Architecture(...)
 | Dependency alignment | `rynor doctor` (`DR007`-`DR013`) | required dependencies are present for active features |
 | Entity shape | `rynor doctor` (`DR014`) | all `[Entity]` declarations are `partial` |
 | Generation marker | `rynor doctor` (`DR015`) | generation report exists under `obj/` after build |
+| Runtime semantics | `dotnet test tests/RynorArch.Integration.Tests` | CRUD, soft-delete, audit, validation, transaction, and cache behaviors pass |

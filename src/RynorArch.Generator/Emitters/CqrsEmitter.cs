@@ -26,6 +26,7 @@ internal static class CqrsEmitter
         w.AppendLine("using System.Linq;");
         w.AppendLine("using MediatR;");
         w.AppendLine("using Microsoft.EntityFrameworkCore;");
+        w.AppendLine("using RynorArch.Abstractions.Interfaces;");
         w.AppendLine("using RynorArch.Generated.Infrastructure;");
         w.AppendLine("using System.Threading;");
         w.AppendLine("using System.Threading.Tasks;");
@@ -118,6 +119,8 @@ internal static class CqrsEmitter
         w.AppendLine($"public sealed partial class Create{name}Handler : IRequestHandler<Create{name}Command, Guid>");
         w.OpenBrace();
         w.AppendLine($"private readonly {dbContextType} _db;");
+        w.AppendLine("private readonly ISecurityContext? _securityContext;");
+        w.AppendLine("private readonly IEnumerable<IRynorArchExecutionObserver> _executionObservers;");
         if (usesCacheInvalidation)
         {
             w.AppendLine($"private readonly IEnumerable<IGet{name}ByIdCacheInvalidator> _cacheInvalidators;");
@@ -125,14 +128,16 @@ internal static class CqrsEmitter
         w.AppendLine();
         if (usesCacheInvalidation)
         {
-            w.AppendLine($"public Create{name}Handler({dbContextType} db, IEnumerable<IGet{name}ByIdCacheInvalidator> cacheInvalidators)");
+            w.AppendLine($"public Create{name}Handler({dbContextType} db, IEnumerable<IGet{name}ByIdCacheInvalidator> cacheInvalidators, IEnumerable<ISecurityContext> securityContexts, IEnumerable<IRynorArchExecutionObserver> executionObservers)");
         }
         else
         {
-            w.AppendLine($"public Create{name}Handler({dbContextType} db)");
+            w.AppendLine($"public Create{name}Handler({dbContextType} db, IEnumerable<ISecurityContext> securityContexts, IEnumerable<IRynorArchExecutionObserver> executionObservers)");
         }
         w.OpenBrace();
         w.AppendLine("_db = db;");
+        w.AppendLine("_securityContext = securityContexts.FirstOrDefault();");
+        w.AppendLine("_executionObservers = executionObservers;");
         if (usesCacheInvalidation)
         {
             w.AppendLine("_cacheInvalidators = cacheInvalidators;");
@@ -149,6 +154,8 @@ internal static class CqrsEmitter
         // Handle method
         w.AppendLine($"public async Task<Guid> Handle(Create{name}Command command, CancellationToken cancellationToken)");
         w.OpenBrace();
+        w.AppendLine($"NotifyExecuting(\"Create{name}\", null);");
+        w.AppendLine();
         w.AppendLine("OnValidate(command);");
         w.AppendLine();
         w.AppendLine($"var entity = new {name}");
@@ -165,6 +172,12 @@ internal static class CqrsEmitter
         }
 
         w.CloseBrace(semicolon: true);
+        w.AppendLine();
+        w.AppendLine("if (entity is IAuditable auditable && !string.IsNullOrWhiteSpace(_securityContext?.UserId))");
+        w.OpenBrace();
+        w.AppendLine("auditable.CreatedBy ??= _securityContext!.UserId;");
+        w.AppendLine("auditable.LastModifiedBy ??= _securityContext!.UserId;");
+        w.CloseBrace();
         w.AppendLine();
         w.AppendLine("OnBeforeHandle(command, entity);");
         w.AppendLine();
@@ -187,9 +200,12 @@ internal static class CqrsEmitter
         }
         w.AppendLine();
         w.AppendLine("OnAfterHandle(command, entity);");
+        w.AppendLine($"NotifyCompleted(\"Create{name}\", entity.Id, success: true);");
         w.AppendLine();
         w.AppendLine("return entity.Id;");
         w.CloseBrace();
+
+        EmitObserverMethods(w, name);
 
         if (usesCacheInvalidation)
         {
@@ -210,6 +226,8 @@ internal static class CqrsEmitter
         w.AppendLine($"public sealed partial class Update{name}Handler : IRequestHandler<Update{name}Command, bool>");
         w.OpenBrace();
         w.AppendLine($"private readonly {dbContextType} _db;");
+        w.AppendLine("private readonly ISecurityContext? _securityContext;");
+        w.AppendLine("private readonly IEnumerable<IRynorArchExecutionObserver> _executionObservers;");
         if (usesCacheInvalidation)
         {
             w.AppendLine($"private readonly IEnumerable<IGet{name}ByIdCacheInvalidator> _cacheInvalidators;");
@@ -217,14 +235,16 @@ internal static class CqrsEmitter
         w.AppendLine();
         if (usesCacheInvalidation)
         {
-            w.AppendLine($"public Update{name}Handler({dbContextType} db, IEnumerable<IGet{name}ByIdCacheInvalidator> cacheInvalidators)");
+            w.AppendLine($"public Update{name}Handler({dbContextType} db, IEnumerable<IGet{name}ByIdCacheInvalidator> cacheInvalidators, IEnumerable<ISecurityContext> securityContexts, IEnumerable<IRynorArchExecutionObserver> executionObservers)");
         }
         else
         {
-            w.AppendLine($"public Update{name}Handler({dbContextType} db)");
+            w.AppendLine($"public Update{name}Handler({dbContextType} db, IEnumerable<ISecurityContext> securityContexts, IEnumerable<IRynorArchExecutionObserver> executionObservers)");
         }
         w.OpenBrace();
         w.AppendLine("_db = db;");
+        w.AppendLine("_securityContext = securityContexts.FirstOrDefault();");
+        w.AppendLine("_executionObservers = executionObservers;");
         if (usesCacheInvalidation)
         {
             w.AppendLine("_cacheInvalidators = cacheInvalidators;");
@@ -239,10 +259,16 @@ internal static class CqrsEmitter
 
         w.AppendLine($"public async Task<bool> Handle(Update{name}Command command, CancellationToken cancellationToken)");
         w.OpenBrace();
+        w.AppendLine($"NotifyExecuting(\"Update{name}\", command.Id);");
+        w.AppendLine();
         w.AppendLine("OnValidate(command);");
         w.AppendLine();
         w.AppendLine($"var entity = await RynorArchCrudRuntime.FindByIdAsync<{name}>(_db, command.Id, cancellationToken);");
-        w.AppendLine("if (entity is null) return false;");
+        w.AppendLine("if (entity is null)");
+        w.OpenBrace();
+        w.AppendLine($"NotifyCompleted(\"Update{name}\", command.Id, success: false);");
+        w.AppendLine("return false;");
+        w.CloseBrace();
         w.AppendLine();
 
         var props = entity.Properties.AsArray();
@@ -254,6 +280,11 @@ internal static class CqrsEmitter
             }
         }
 
+        w.AppendLine();
+        w.AppendLine("if (entity is IAuditable auditable && !string.IsNullOrWhiteSpace(_securityContext?.UserId))");
+        w.OpenBrace();
+        w.AppendLine("auditable.LastModifiedBy = _securityContext!.UserId;");
+        w.CloseBrace();
         w.AppendLine();
         w.AppendLine("OnBeforeHandle(command, entity);");
         w.AppendLine();
@@ -276,9 +307,12 @@ internal static class CqrsEmitter
         }
         w.AppendLine();
         w.AppendLine("OnAfterHandle(command, entity);");
+        w.AppendLine($"NotifyCompleted(\"Update{name}\", entity.Id, success: true);");
         w.AppendLine();
         w.AppendLine("return true;");
         w.CloseBrace();
+
+        EmitObserverMethods(w, name);
 
         if (usesCacheInvalidation)
         {
@@ -299,6 +333,8 @@ internal static class CqrsEmitter
         w.AppendLine($"public sealed partial class Delete{name}Handler : IRequestHandler<Delete{name}Command, bool>");
         w.OpenBrace();
         w.AppendLine($"private readonly {dbContextType} _db;");
+        w.AppendLine("private readonly ISecurityContext? _securityContext;");
+        w.AppendLine("private readonly IEnumerable<IRynorArchExecutionObserver> _executionObservers;");
         if (usesCacheInvalidation)
         {
             w.AppendLine($"private readonly IEnumerable<IGet{name}ByIdCacheInvalidator> _cacheInvalidators;");
@@ -306,14 +342,16 @@ internal static class CqrsEmitter
         w.AppendLine();
         if (usesCacheInvalidation)
         {
-            w.AppendLine($"public Delete{name}Handler({dbContextType} db, IEnumerable<IGet{name}ByIdCacheInvalidator> cacheInvalidators)");
+            w.AppendLine($"public Delete{name}Handler({dbContextType} db, IEnumerable<IGet{name}ByIdCacheInvalidator> cacheInvalidators, IEnumerable<ISecurityContext> securityContexts, IEnumerable<IRynorArchExecutionObserver> executionObservers)");
         }
         else
         {
-            w.AppendLine($"public Delete{name}Handler({dbContextType} db)");
+            w.AppendLine($"public Delete{name}Handler({dbContextType} db, IEnumerable<ISecurityContext> securityContexts, IEnumerable<IRynorArchExecutionObserver> executionObservers)");
         }
         w.OpenBrace();
         w.AppendLine("_db = db;");
+        w.AppendLine("_securityContext = securityContexts.FirstOrDefault();");
+        w.AppendLine("_executionObservers = executionObservers;");
         if (usesCacheInvalidation)
         {
             w.AppendLine("_cacheInvalidators = cacheInvalidators;");
@@ -327,8 +365,19 @@ internal static class CqrsEmitter
 
         w.AppendLine($"public async Task<bool> Handle(Delete{name}Command command, CancellationToken cancellationToken)");
         w.OpenBrace();
+        w.AppendLine($"NotifyExecuting(\"Delete{name}\", command.Id);");
+        w.AppendLine();
         w.AppendLine($"var entity = await RynorArchCrudRuntime.FindByIdAsync<{name}>(_db, command.Id, cancellationToken);");
-        w.AppendLine("if (entity is null) return false;");
+        w.AppendLine("if (entity is null)");
+        w.OpenBrace();
+        w.AppendLine($"NotifyCompleted(\"Delete{name}\", command.Id, success: false);");
+        w.AppendLine("return false;");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("if (entity is IAuditable auditable && !string.IsNullOrWhiteSpace(_securityContext?.UserId))");
+        w.OpenBrace();
+        w.AppendLine("auditable.LastModifiedBy = _securityContext!.UserId;");
+        w.CloseBrace();
         w.AppendLine();
         w.AppendLine("OnBeforeHandle(command, entity);");
         w.AppendLine();
@@ -351,9 +400,12 @@ internal static class CqrsEmitter
         }
         w.AppendLine();
         w.AppendLine("OnAfterHandle(command);");
+        w.AppendLine($"NotifyCompleted(\"Delete{name}\", command.Id, success: true);");
         w.AppendLine();
         w.AppendLine("return true;");
         w.CloseBrace();
+
+        EmitObserverMethods(w, name);
 
         if (usesCacheInvalidation)
         {
@@ -372,10 +424,14 @@ internal static class CqrsEmitter
         w.AppendLine($"public sealed partial class Get{name}ByIdHandler : IRequestHandler<Get{name}ByIdQuery, {name}?>");
         w.OpenBrace();
         w.AppendLine($"private readonly {dbContextType} _db;");
+        w.AppendLine("private readonly ISecurityContext? _securityContext;");
+        w.AppendLine("private readonly IEnumerable<IRynorArchExecutionObserver> _executionObservers;");
         w.AppendLine();
-        w.AppendLine($"public Get{name}ByIdHandler({dbContextType} db)");
+        w.AppendLine($"public Get{name}ByIdHandler({dbContextType} db, IEnumerable<ISecurityContext> securityContexts, IEnumerable<IRynorArchExecutionObserver> executionObservers)");
         w.OpenBrace();
         w.AppendLine("_db = db;");
+        w.AppendLine("_securityContext = securityContexts.FirstOrDefault();");
+        w.AppendLine("_executionObservers = executionObservers;");
         w.CloseBrace();
         w.AppendLine();
 
@@ -384,10 +440,14 @@ internal static class CqrsEmitter
 
         w.AppendLine($"public async Task<{name}?> Handle(Get{name}ByIdQuery query, CancellationToken cancellationToken)");
         w.OpenBrace();
+        w.AppendLine($"NotifyExecuting(\"Get{name}ById\", query.Id);");
         w.AppendLine($"var entity = await RynorArchCrudRuntime.FindByIdAsync<{name}>(_db, query.Id, cancellationToken);");
         w.AppendLine("OnAfterHandle(entity);");
+        w.AppendLine($"NotifyCompleted(\"Get{name}ById\", query.Id, entity is not null);");
         w.AppendLine("return entity;");
         w.CloseBrace();
+
+        EmitObserverMethods(w, name);
         w.CloseBrace();
         w.AppendLine();
     }
@@ -400,10 +460,14 @@ internal static class CqrsEmitter
         w.AppendLine($"public sealed partial class Get{name}ListHandler : IRequestHandler<Get{name}ListQuery, IReadOnlyList<{name}>>");
         w.OpenBrace();
         w.AppendLine($"private readonly {dbContextType} _db;");
+        w.AppendLine("private readonly ISecurityContext? _securityContext;");
+        w.AppendLine("private readonly IEnumerable<IRynorArchExecutionObserver> _executionObservers;");
         w.AppendLine();
-        w.AppendLine($"public Get{name}ListHandler({dbContextType} db)");
+        w.AppendLine($"public Get{name}ListHandler({dbContextType} db, IEnumerable<ISecurityContext> securityContexts, IEnumerable<IRynorArchExecutionObserver> executionObservers)");
         w.OpenBrace();
         w.AppendLine("_db = db;");
+        w.AppendLine("_securityContext = securityContexts.FirstOrDefault();");
+        w.AppendLine("_executionObservers = executionObservers;");
         w.CloseBrace();
         w.AppendLine();
 
@@ -412,6 +476,7 @@ internal static class CqrsEmitter
 
         w.AppendLine($"public async Task<IReadOnlyList<{name}>> Handle(Get{name}ListQuery query, CancellationToken cancellationToken)");
         w.OpenBrace();
+        w.AppendLine($"NotifyExecuting(\"Get{name}List\", null);");
         w.AppendLine($"IQueryable<{name}> queryable = RynorArchCrudRuntime.CreateQuery<{name}>(_db);");
         w.AppendLine();
 
@@ -424,8 +489,12 @@ internal static class CqrsEmitter
 
         w.AppendLine("OnBeforeQuery(query, ref queryable);");
         w.AppendLine();
-        w.AppendLine("return await RynorArchCrudRuntime.ListAsync(queryable, query.Skip, query.Take, cancellationToken);");
+        w.AppendLine("var results = await RynorArchCrudRuntime.ListAsync(queryable, query.Skip, query.Take, cancellationToken);");
+        w.AppendLine($"NotifyCompleted(\"Get{name}List\", null, success: true);");
+        w.AppendLine("return results;");
         w.CloseBrace();
+
+        EmitObserverMethods(w, name);
         w.CloseBrace();
     }
 
@@ -456,6 +525,26 @@ internal static class CqrsEmitter
         w.AppendLine("foreach (var invalidator in _cacheInvalidators)");
         w.OpenBrace();
         w.AppendLine("await invalidator.InvalidateAsync(id, cancellationToken);");
+        w.CloseBrace();
+        w.CloseBrace();
+    }
+
+    private static void EmitObserverMethods(SourceWriter w, string entityName)
+    {
+        w.AppendLine();
+        w.AppendLine("private void NotifyExecuting(string operation, Guid? entityId)");
+        w.OpenBrace();
+        w.AppendLine("foreach (var observer in _executionObservers)");
+        w.OpenBrace();
+        w.AppendLine($"observer.OnHandlerExecuting(operation, \"{entityName}\", entityId, _securityContext?.UserId, _securityContext?.TenantId);");
+        w.CloseBrace();
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("private void NotifyCompleted(string operation, Guid? entityId, bool success)");
+        w.OpenBrace();
+        w.AppendLine("foreach (var observer in _executionObservers)");
+        w.OpenBrace();
+        w.AppendLine($"observer.OnHandlerCompleted(operation, \"{entityName}\", entityId, success);");
         w.CloseBrace();
         w.CloseBrace();
     }

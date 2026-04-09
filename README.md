@@ -226,6 +226,7 @@ public partial class CreateTripValidator
 - Getting started: `docs/GETTING_STARTED.md`
 - AI-agent playbook: `docs/AI_AGENT_PLAYBOOK.md`
 - Integration: `docs/INTEGRATION_GUIDE.md`
+- Runtime testing: `docs/RUNTIME_TESTING.md`
 - Feature matrix: `docs/FEATURE_MATRIX.md`
 - Attribute reference: `docs/ATTRIBUTE_REFERENCE.md`
 - Endpoint hardening: `docs/ENDPOINT_HARDENING.md`

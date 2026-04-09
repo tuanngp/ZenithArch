@@ -204,6 +204,11 @@ public sealed class GeneratorOutputTests
         Assert.Contains("RynorArch.ValidationBehavior.g.cs", result.GeneratedSources.Keys);
         Assert.Contains("// rynor-artifact: CQRS", result.GeneratedSources["Trip.Cqrs.g.cs"]);
         Assert.Contains("// rynor-assumptions: uses configured DbContext type for handlers", result.GeneratedSources["Trip.Cqrs.g.cs"]);
+        Assert.Contains("using RynorArch.Abstractions.Interfaces;", result.GeneratedSources["Trip.Cqrs.g.cs"]);
+        Assert.Contains("private readonly ISecurityContext? _securityContext;", result.GeneratedSources["Trip.Cqrs.g.cs"]);
+        Assert.Contains("private readonly IEnumerable<IRynorArchExecutionObserver> _executionObservers;", result.GeneratedSources["Trip.Cqrs.g.cs"]);
+        Assert.Contains("NotifyExecuting(\"CreateTrip\", null);", result.GeneratedSources["Trip.Cqrs.g.cs"]);
+        Assert.Contains("observer.OnHandlerExecuting(operation, \"Trip\", entityId, _securityContext?.UserId, _securityContext?.TenantId);", result.GeneratedSources["Trip.Cqrs.g.cs"]);
         Assert.Contains("public static readonly string[] Artifacts = new[]", result.GeneratedSources["RynorArch.GenerationReport.g.cs"]);
         Assert.Equal(1, result.GeneratedHintNames.Count(name => name == "IUnitOfWork.g.cs"));
         Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error);
@@ -343,6 +348,9 @@ public sealed class GeneratorOutputTests
         Assert.Contains("if (_validators is ICollection<IValidator<TRequest>> validatorCollection && validatorCollection.Count == 0)", validationSource);
         Assert.Contains("List<ValidationFailure>? failures = null;", validationSource);
         Assert.Contains("failures ??= new List<ValidationFailure>();", validationSource);
+        Assert.Contains("private readonly IEnumerable<IRynorArchExecutionObserver> _executionObservers;", validationSource);
+        Assert.Contains("NotifyValidationFailure(typeof(TRequest).Name, failures.Count);", validationSource);
+        Assert.Contains("observer.OnValidationFailed(requestName, failureCount);", validationSource);
         Assert.Contains("services.AddScoped(typeof(IPipelineBehavior<,>), typeof(RynorArchValidationBehavior<,>));", result.GeneratedSources["RynorArchServiceCollectionExtensions.g.cs"]);
     }
 

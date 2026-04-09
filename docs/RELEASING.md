@@ -20,5 +20,10 @@ Use the repository script to bump the central version, test, pack, and optionall
 
 - Update `CHANGELOG.md`.
 - Confirm `README.md` examples still match the current package version and support matrix.
-- Run `dotnet test RynorArch.slnx`.
+- Run `dotnet restore RynorArch.slnx`.
+- Run `dotnet build RynorArch.slnx -c Release`.
+- Run `dotnet test RynorArch.slnx -c Release`.
+- Run `dotnet test tests/RynorArch.Integration.Tests/RynorArch.Integration.Tests.csproj -c Release`.
+- Run `dotnet run --project src/RynorArch.Cli/RynorArch.Cli.csproj -- doctor samples/RynorArch.Sample`.
+- Confirm runtime scenarios in `docs/RUNTIME_TESTING.md` are covered by green tests.
 - Verify the artifacts in `artifacts/` before publishing.

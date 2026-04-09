@@ -15,6 +15,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - AI-agent playbook documenting deterministic task contracts and verification rules.
 - New CLI `doctor` command for readiness checks with actionable fix steps.
 - E2E smoke test project for CLI workflow validation and CI/release quality gates.
+- Runtime integration test suite (`tests/RynorArch.Integration.Tests`) covering CRUD, soft-delete, audit stamping, validation gating, transaction rollback, and cache invalidation semantics on SQLite in-memory.
+- Runtime validation guide: `docs/RUNTIME_TESTING.md`.
 
 ### Changed
 - Centralized package metadata and versioning in `Directory.Build.props`.
