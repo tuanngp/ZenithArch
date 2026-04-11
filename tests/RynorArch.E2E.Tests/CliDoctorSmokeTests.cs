@@ -38,7 +38,7 @@ public sealed class CliDoctorSmokeTests
 
         var result = RunCli(repoRoot, $"doctor \"{samplePath}\"");
 
-        Assert.Equal(0, result.ExitCode);
+        Assert.True(result.ExitCode == 0, $"Expected exit code 0 but got {result.ExitCode}.{Environment.NewLine}{result.Output}");
         Assert.Contains("DR004", result.Output, StringComparison.Ordinal);
         Assert.Contains("[Result] READY", result.Output, StringComparison.Ordinal);
     }

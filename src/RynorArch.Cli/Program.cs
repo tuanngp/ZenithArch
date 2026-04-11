@@ -304,7 +304,11 @@ class Program
                     string? include = element.Attribute("Include")?.Value;
                     if (!string.IsNullOrWhiteSpace(include))
                     {
-                        string projectName = Path.GetFileNameWithoutExtension(include);
+                        string normalizedInclude = include
+                            .Replace('\\', Path.DirectorySeparatorChar)
+                            .Replace('/', Path.DirectorySeparatorChar);
+
+                        string projectName = Path.GetFileNameWithoutExtension(normalizedInclude);
                         if (!string.IsNullOrWhiteSpace(projectName))
                         {
                             projectReferences.Add(projectName);

@@ -9,6 +9,8 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    env:
+      NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
 
     steps:
       - name: Checkout
@@ -32,6 +34,6 @@ jobs:
         run: dotnet test tests/RynorArch.E2E.Tests/RynorArch.E2E.Tests.csproj --configuration Release
 
       - name: Publish packages
-        if: ${{ secrets.NUGET_API_KEY != '' }}
-        run: ./publish.ps1 -Increment None -Push -ApiKey "${{ secrets.NUGET_API_KEY }}"
+        if: ${{ env.NUGET_API_KEY != '' }}
+        run: ./publish.ps1 -Increment None -Push -ApiKey "${{ env.NUGET_API_KEY }}"
         shell: pwsh
