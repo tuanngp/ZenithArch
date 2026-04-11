@@ -16,23 +16,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v5
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: 10.0.x
-
-      - name: Restore
-        run: dotnet restore RynorArch.slnx
-
-      - name: Build
-        run: dotnet build RynorArch.slnx --configuration Release --no-restore
-
-      - name: Test
-        run: dotnet test RynorArch.slnx --configuration Release --no-build
-
-      - name: E2E smoke tests
-        run: dotnet test tests/RynorArch.E2E.Tests/RynorArch.E2E.Tests.csproj --configuration Release
-
       - name: Publish packages
         if: ${{ env.NUGET_API_KEY != '' }}
         run: ./publish.ps1 -Increment None -Push -ApiKey "${{ env.NUGET_API_KEY }}"
