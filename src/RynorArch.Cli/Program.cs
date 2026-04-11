@@ -372,6 +372,7 @@ class Program
         else if (generateEndpoints)
         {
             results.Add(new DoctorCheckResult("DR006", DoctorSeverity.Pass, "Endpoint opt-in", "Endpoint generation has explicit experimental opt-in"));
+            results.Add(new DoctorCheckResult("DR016", DoctorSeverity.Warn, "Endpoint hardening", "Generated endpoints are intentionally minimal", "Apply docs/ENDPOINT_HARDENING.md before production rollout."));
         }
     }
 

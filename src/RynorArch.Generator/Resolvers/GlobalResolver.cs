@@ -155,6 +155,10 @@ internal static class GlobalResolver
             context.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.EndpointBehaviorNotice,
                 location));
+
+            context.ReportDiagnostic(Diagnostic.Create(
+                DiagnosticDescriptors.EndpointHardeningChecklistRequired,
+                location));
         }
 
         if (config.GenerateCachingDecorators && config.IsCqrs)

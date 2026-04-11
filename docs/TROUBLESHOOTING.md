@@ -142,6 +142,17 @@ Fix options:
 - set `GenerateDependencyInjection = true`, or
 - manually register `IPipelineBehavior<,>` to `RynorArchValidationBehavior<,>`
 
+### `RYNOR016` Endpoint hardening checklist recommended
+
+`GenerateEndpoints` is enabled and endpoint generation succeeded.
+This informational diagnostic reminds you to apply production hardening before rollout.
+
+Check `docs/ENDPOINT_HARDENING.md` and verify at minimum:
+- authorization boundaries (`RequireAuthorization` and policy split)
+- consistent problem details / exception mapping
+- observability (structured logs, traces, metrics)
+- API lifecycle protections (versioning, idempotency where needed)
+
 ## Debugging generated output
 
 - Inspect `RynorArch.GenerationReport.g.cs` to see what artifacts were emitted.

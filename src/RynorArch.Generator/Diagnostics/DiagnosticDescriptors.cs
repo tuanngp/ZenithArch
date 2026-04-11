@@ -129,4 +129,12 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Warning,
         isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor EndpointHardeningChecklistRequired = new(
+        id: "RYNOR016",
+        title: "Endpoint hardening checklist recommended",
+        messageFormat: "GenerateEndpoints is enabled. Before production rollout, apply hardening for authorization, problem details, observability, and API lifecycle. See docs/ENDPOINT_HARDENING.md.",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Info,
+        isEnabledByDefault: true);
 }

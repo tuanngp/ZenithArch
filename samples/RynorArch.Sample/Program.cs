@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection;
 using RynorArch.DependencyInjection;
 using RynorArch.Endpoints;
@@ -10,7 +11,9 @@ using RynorArch.Sample.Domain;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseInMemoryDatabase("rynorarch-sample"));
+    options.UseInMemoryDatabase("rynorarch-sample")
+           .ConfigureWarnings(warnings => warnings.Ignore(InMemoryEventId.TransactionIgnoredWarning)));
+builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<AppDbContext>());
 builder.Services.AddDistributedMemoryCache();
 builder.Services.AddRynorArchDependencies<AppDbContext>();
 
@@ -38,6 +41,8 @@ static async Task SeedSampleDataAsync(IServiceProvider services)
     using var scope = services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
+    await db.Database.EnsureCreatedAsync();
+
     if (await db.Trips.AnyAsync())
     {
         return;
@@ -57,3 +62,5 @@ static async Task SeedSampleDataAsync(IServiceProvider services)
 
     await db.SaveChangesAsync();
 }
+
+public partial class Program;

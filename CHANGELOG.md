@@ -17,6 +17,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - E2E smoke test project for CLI workflow validation and CI/release quality gates.
 - Runtime integration test suite (`tests/RynorArch.Integration.Tests`) covering CRUD, soft-delete, audit stamping, validation gating, transaction rollback, and cache invalidation semantics on SQLite in-memory.
 - Runtime validation guide: `docs/RUNTIME_TESTING.md`.
+- Endpoint E2E semantics tests (`tests/RynorArch.E2E.Tests/EndpointSemanticsTests.cs`) covering `201/200/404/400/204` contracts for generated minimal APIs.
 
 ### Changed
 - Centralized package metadata and versioning in `Directory.Build.props`.
@@ -48,6 +49,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Hardened generated EF configuration string detection to support fully-qualified string type names.
 - Optimized generated validation behavior to avoid unnecessary allocations when no validators are registered and to lazily allocate validation failure buffers.
 - Made generated endpoint and DI outputs deterministic by sorting namespaces/entities, reducing incremental build churn and cache invalidation noise.
+- Added `RYNOR016` diagnostic to surface endpoint hardening checklist reminders when endpoint generation is enabled.
 
 ## [1.0.6]
 
