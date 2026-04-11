@@ -1,8 +1,10 @@
-# Releasing
+# Phát hành
 
-## Local release flow
+[Tiếng Việt](RELEASING.md) | [English](RELEASING.en.md)
 
-Use the repository script to bump the central version, test, pack, and optionally push packages:
+## Quy trình phát hành local
+
+Dùng script của repository để tăng version trung tâm, test, pack và tùy chọn push package:
 
 ```powershell
 ./publish.ps1 -Increment Patch
@@ -10,20 +12,20 @@ Use the repository script to bump the central version, test, pack, and optionall
 ./publish.ps1 -Increment Major -Push
 ```
 
-## Automated release flow
+## Quy trình phát hành tự động
 
-- CI validates restore, build, test, and pack on pushes and pull requests.
-- Tag pushes matching `v*` trigger the release workflow.
-- The release workflow pushes packages only when `NUGET_API_KEY` is configured in repository secrets.
+- CI xác minh restore, build, test và pack trên push/pull request.
+- Push tag khớp mẫu `v*` sẽ kích hoạt release workflow.
+- Release workflow chỉ push package khi `NUGET_API_KEY` đã được cấu hình trong repository secrets.
 
-## Release checklist
+## Checklist phát hành
 
-- Update `CHANGELOG.md`.
-- Confirm `README.md` examples still match the current package version and support matrix.
-- Run `dotnet restore RynorArch.slnx`.
-- Run `dotnet build RynorArch.slnx -c Release`.
-- Run `dotnet test RynorArch.slnx -c Release`.
-- Run `dotnet test tests/RynorArch.Integration.Tests/RynorArch.Integration.Tests.csproj -c Release`.
-- Run `dotnet run --project src/RynorArch.Cli/RynorArch.Cli.csproj -- doctor samples/RynorArch.Sample`.
-- Confirm runtime scenarios in `docs/RUNTIME_TESTING.md` are covered by green tests.
-- Verify the artifacts in `artifacts/` before publishing.
+- Cập nhật `CHANGELOG.md`.
+- Xác nhận ví dụ trong `README.md` khớp version package hiện tại và support matrix.
+- Chạy `dotnet restore RynorArch.slnx`.
+- Chạy `dotnet build RynorArch.slnx -c Release`.
+- Chạy `dotnet test RynorArch.slnx -c Release`.
+- Chạy `dotnet test tests/RynorArch.Integration.Tests/RynorArch.Integration.Tests.csproj -c Release`.
+- Chạy `dotnet run --project src/RynorArch.Cli/RynorArch.Cli.csproj -- doctor samples/RynorArch.Sample`.
+- Xác nhận các kịch bản runtime trong `docs/RUNTIME_TESTING.md` đều xanh.
+- Kiểm tra artifacts trong `artifacts/` trước khi publish.

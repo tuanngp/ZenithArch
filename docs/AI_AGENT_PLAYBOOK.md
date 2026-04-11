@@ -1,98 +1,100 @@
-zs# AI Agent Playbook
+# Cẩm nang AI Agent
 
-This playbook defines deterministic workflows for AI agents working with RynorArch projects.
+[Tiếng Việt](AI_AGENT_PLAYBOOK.md) | [English](AI_AGENT_PLAYBOOK.en.md)
 
-## Workflow Contract
+Tài liệu này định nghĩa workflow mang tính quyết định cho AI agents khi làm việc với dự án RynorArch.
 
-Use this contract for every agent task:
+## Hợp đồng workflow
 
-1. Input requirements: required files, required config, required dependencies.
-2. Expected output: generated artifacts or code paths that must exist.
-3. Success criteria: build/test/diagnostic checks that must pass.
-4. Failure handling: exact next action when checks fail.
+Mọi tác vụ agent cần tuân theo cấu trúc sau:
 
-## Task 1: Initialize Architecture Config
+1. Yêu cầu đầu vào: file bắt buộc, config bắt buộc, dependency bắt buộc.
+2. Đầu ra kỳ vọng: artifacts hoặc đường dẫn code phải tồn tại sau khi chạy.
+3. Tiêu chí thành công: build/test/diagnostic checks phải pass.
+4. Xử lý thất bại: hành động tiếp theo cụ thể khi check fail.
 
-### Input requirements
+## Tác vụ 1: Khởi tạo architecture config
 
-- A project root containing a `.csproj`.
-- `RynorArch.Abstractions` and `RynorArch.Generator` available via package or project references.
+### Yêu cầu đầu vào
 
-### Execution path
+- Thư mục dự án có `.csproj`.
+- Có `RynorArch.Abstractions` và `RynorArch.Generator` qua package hoặc project reference.
 
-1. Run `rynor init`.
-2. Choose an architecture profile.
-3. Confirm `AssemblyConfig.cs` exists.
+### Cách thực hiện
 
-### Expected output
+1. Chạy `rynor init`.
+2. Chọn architecture profile.
+3. Xác nhận tồn tại `AssemblyConfig.cs`.
+
+### Đầu ra kỳ vọng
 
 - `AssemblyConfig.cs`
 - `README_NEXT_STEPS.md`
 
-### Success criteria
+### Tiêu chí thành công
 
-- `rynor doctor` shows no FAIL for `DR002`, `DR004`, `DR007`, `DR008`.
+- `rynor doctor` không còn FAIL ở `DR002`, `DR004`, `DR007`, `DR008`.
 
-## Task 2: Scaffold First Entity
+## Tác vụ 2: Scaffold entity đầu tiên
 
-### Input requirements
+### Yêu cầu đầu vào
 
-- `AssemblyConfig.cs` already configured.
+- Đã có `AssemblyConfig.cs` hợp lệ.
 
-### Execution path
+### Cách thực hiện
 
-1. Run `rynor scaffold <EntityName> <Namespace>`.
-2. Build once with `dotnet build`.
+1. Chạy `rynor scaffold <EntityName> <Namespace>`.
+2. Build một lần bằng `dotnet build`.
 
-### Expected output
+### Đầu ra kỳ vọng
 
 - `Domain/<EntityName>.cs`
-- Optional CQRS extension partials under `Cqrs/<EntityName>/`
-- `RynorArch.GenerationReport.g.cs` under `obj/`
+- Tùy chọn CQRS extension partials ở `Cqrs/<EntityName>/`
+- `RynorArch.GenerationReport.g.cs` dưới `obj/`
 
-### Success criteria
+### Tiêu chí thành công
 
-- `rynor doctor` has PASS for `DR014` and `DR015`.
-- Build completes without generator errors.
+- `rynor doctor` PASS ở `DR014` và `DR015`.
+- Build hoàn tất không có generator errors.
 
-## Task 3: Integrate Runtime Wiring
+## Tác vụ 3: Tích hợp runtime wiring
 
-### Input requirements
+### Yêu cầu đầu vào
 
-- App startup has DI setup.
+- App startup đã có DI setup.
 
-### Execution path
+### Cách thực hiện
 
-1. Call `builder.Services.AddRynorArchDependencies();`.
-2. If UnitOfWork is enabled, use `builder.Services.AddRynorArchDependencies<AppDbContext>();`.
-3. If endpoint generation is enabled, call `app.MapRynorArchEndpoints();`.
+1. Gọi `builder.Services.AddRynorArchDependencies();`.
+2. Nếu bật UnitOfWork, dùng `builder.Services.AddRynorArchDependencies<AppDbContext>();`.
+3. Nếu bật endpoint generation, gọi `app.MapRynorArchEndpoints();`.
 
-### Success criteria
+### Tiêu chí thành công
 
-- Dependency checks `DR009` to `DR013` show no FAIL.
-- App startup succeeds.
+- Dependency checks từ `DR009` đến `DR013` không còn FAIL.
+- App startup chạy thành công.
 
-## Task 4: Readiness Gate
+## Tác vụ 4: Readiness gate
 
-### Execution path
+### Cách thực hiện
 
-1. Run `rynor doctor` from project root.
-2. Review summary line.
+1. Chạy `rynor doctor` tại project root.
+2. Đọc dòng tổng kết.
 
-### Decision rule
+### Quy tắc quyết định
 
-- `NOT READY`: at least one FAIL, must fix before proceeding.
-- `READY WITH WARNINGS`: can continue in dev, should resolve warnings before production rollout.
-- `READY`: no blocking checks.
+- `NOT READY`: còn ít nhất một FAIL, bắt buộc xử lý trước khi đi tiếp.
+- `READY WITH WARNINGS`: có thể tiếp tục ở môi trường dev, nên xử lý cảnh báo trước production.
+- `READY`: không còn check chặn.
 
-## Common Failure Map
+## Bản đồ lỗi thường gặp
 
-- Missing architecture config: fix via `rynor init`.
-- Endpoints without opt-in: set `EnableExperimentalEndpoints = true` or disable endpoint generation.
-- Non-partial entity: mark `[Entity]` classes as `partial`.
-- Missing generated report: run `dotnet build` once.
+- Thiếu architecture config: sửa bằng `rynor init`.
+- Bật endpoint nhưng thiếu opt-in: đặt `EnableExperimentalEndpoints = true` hoặc tắt endpoint generation.
+- Entity không phải partial: đánh dấu các class có `[Entity]` là `partial`.
+- Thiếu generation report: chạy `dotnet build` một lần.
 
-## Verification Commands
+## Lệnh xác minh
 
 ```bash
 dotnet build
@@ -100,7 +102,7 @@ rynor doctor
 dotnet test RynorArch.slnx -v minimal
 ```
 
-## Related Guides
+## Tài liệu liên quan
 
 - `docs/GETTING_STARTED.md`
 - `docs/INTEGRATION_GUIDE.md`

@@ -1,8 +1,18 @@
-# Integration Guide
+# Hướng dẫn tích hợp
 
-This document shows practical startup wiring for generated artifacts.
+[Tiếng Việt](INTEGRATION_GUIDE.md) | [English](INTEGRATION_GUIDE.en.md)
 
-## CQRS / FullStack setup
+Tài liệu này giúp bạn wiring startup đúng ngay từ đầu theo pattern đang dùng.
+
+## Chọn nhanh kiểu đăng ký DI
+
+| Trường hợp | Cách đăng ký |
+| --- | --- |
+| Dùng CQRS hoặc FullStack cơ bản | `AddRynorArchDependencies()` |
+| Dùng Repository/FullStack có `UseUnitOfWork = true` | `AddRynorArchDependencies<AppDbContext>()` |
+| Muốn tự cấu hình MediatR | `AddRynorArchDependencies(registerMediatR: false)` |
+
+## Thiết lập CQRS / FullStack
 
 ```csharp
 using MediatR;
@@ -20,18 +30,23 @@ var app = builder.Build();
 app.Run();
 ```
 
-Notes:
-- `AddRynorArchDependencies()` can register MediatR automatically by default.
-- If using custom MediatR setup, call `AddRynorArchDependencies(registerMediatR: false)`.
+Ghi chú:
+- `AddRynorArchDependencies()` có thể tự động đăng ký MediatR theo mặc định.
+- Nếu bạn đã có cấu hình MediatR riêng, dùng `AddRynorArchDependencies(registerMediatR: false)`.
+
+Kết quả mong đợi:
+
+- Generated handlers được resolve từ DI.
+- Validation/caching behavior (nếu bật) chạy trong pipeline.
 
 Validation behavior:
-- When `EnableValidation = true`, generated DI now registers `RynorArchValidationBehavior<,>`.
-- Generated `Create*` and `Update*` validators are executed automatically through MediatR pipeline behavior.
-- Partial `OnValidate(...)` hooks in handlers remain available for additional domain-specific checks.
+- Khi `EnableValidation = true`, generated DI sẽ đăng ký `RynorArchValidationBehavior<,>`.
+- Generated `Create*` và `Update*` validators chạy tự động trong MediatR pipeline behavior.
+- Hook partial `OnValidate(...)` trong handler vẫn dùng được cho domain check bổ sung.
 
 Optional runtime hooks:
-- Generated handlers resolve `ISecurityContext` (if registered) and propagate `UserId`/`TenantId` metadata to execution observer hooks.
-- Generated handlers and validation behavior resolve `IRynorArchExecutionObserver` as `IEnumerable<T>`. Register zero, one, or many observers without changing generator config.
+- Generated handlers resolve `ISecurityContext` (nếu có đăng ký) và truyền metadata `UserId`/`TenantId` cho observer hooks.
+- Generated handlers và validation behavior resolve `IRynorArchExecutionObserver` dưới dạng `IEnumerable<T>`, nên có thể đăng ký 0, 1 hoặc nhiều observer.
 
 ```csharp
 using RynorArch.Abstractions.Interfaces;
@@ -40,9 +55,9 @@ builder.Services.AddScoped<ISecurityContext, HttpSecurityContext>();
 builder.Services.AddSingleton<IRynorArchExecutionObserver, StructuredExecutionObserver>();
 ```
 
-If no implementations are registered, generated handlers continue to work with no runtime changes.
+Nếu không đăng ký implementation nào, generated handlers vẫn hoạt động bình thường.
 
-## Repository setup
+## Thiết lập Repository
 
 ```csharp
 using Microsoft.EntityFrameworkCore;
@@ -56,13 +71,18 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 builder.Services.AddRynorArchDependencies<AppDbContext>();
 ```
 
-Notes:
-- Prefer `AddRynorArchDependencies<TDbContext>()` when `UseUnitOfWork = true` so generated `IUnitOfWork` is auto-wired.
-- The non-generic overload remains valid when you do not use UnitOfWork.
+Ghi chú:
+- Khi `UseUnitOfWork = true`, ưu tiên `AddRynorArchDependencies<TDbContext>()` để auto-wire generated `IUnitOfWork`.
+- Overload không generic vẫn hợp lệ nếu bạn không dùng UnitOfWork.
+
+Kết quả mong đợi:
+
+- Repository interfaces và implementations được resolve từ DI.
+- UnitOfWork adapter được đăng ký tự động khi dùng overload generic.
 
 ## Endpoint generation
 
-If enabled:
+Khi bật endpoint generation:
 
 ```csharp
 using RynorArch.Endpoints;
@@ -70,48 +90,60 @@ using RynorArch.Endpoints;
 app.MapRynorArchEndpoints();
 ```
 
-Remember endpoint generation requires both:
+Bắt buộc có đủ 2 cờ:
 - `GenerateEndpoints = true`
 - `EnableExperimentalEndpoints = true`
 
-Before production rollout, apply the checklist in `docs/ENDPOINT_HARDENING.md`.
+Trước khi rollout production, bắt buộc rà checklist tại `docs/ENDPOINT_HARDENING.md`.
 
 Generated write semantics:
-- `POST` returns `201 Created` with a body containing `{ id = <guid> }`.
-- `PUT` returns `404` when the target resource does not exist, otherwise `204`.
-- `DELETE` returns `404` when the target resource does not exist, otherwise `204`.
+- `POST` trả `201 Created` với body `{ id = <guid> }`.
+- `PUT` trả `404` nếu resource không tồn tại, ngược lại `204`.
+- `DELETE` trả `404` nếu resource không tồn tại, ngược lại `204`.
 
 ## Caching decorators
 
-When `GenerateCachingDecorators = true`:
-- register a distributed cache provider (for example Redis or memory-backed distributed cache)
-- call `AddRynorArchDependencies()` so generated cache behaviors and invalidators are wired
-- follow `docs/CACHING_OPERATIONS.md` for TTL, key design, and rollout guardrails
+Khi `GenerateCachingDecorators = true`:
+- đăng ký distributed cache provider (ví dụ Redis hoặc memory-backed distributed cache)
+- gọi `AddRynorArchDependencies()` để wire generated cache behaviors và invalidators
+- theo checklist rollout trong `docs/CACHING_OPERATIONS.md`
 
 ## Save mode
 
-If `CqrsSaveMode = CqrsSaveMode.PerRequestTransaction`:
-- keep generated DI wiring enabled, or
-- manually register `IPipelineBehavior<,>` to `RynorArchSaveChangesBehavior<,>`
+Nếu `CqrsSaveMode = CqrsSaveMode.PerRequestTransaction`:
+- giữ generated DI wiring, hoặc
+- đăng ký thủ công `IPipelineBehavior<,>` vào `RynorArchSaveChangesBehavior<,>`
 
-## Domain events for aggregate roots
+Khi nào nên dùng `PerRequestTransaction`:
 
-When `[AggregateRoot]` is present, generated CQRS write handlers now raise generated domain events before persistence:
-- `Create*Handler` raises `{Entity}CreatedEvent`
-- `Update*Handler` raises `{Entity}UpdatedEvent`
-- `Delete*Handler` raises `{Entity}DeletedEvent`
+- Một request có nhiều thao tác ghi và cần commit/rollback đồng nhất.
+- Bạn muốn đảm bảo tính nhất quán mạnh hơn so với save ngay từng handler.
 
-The event types are generated under `{EntityNamespace}.DomainEvents`.
+## Domain events cho aggregate root
 
-## AI-agent integration pattern
+Khi entity có `[AggregateRoot]`, generated CQRS write handlers raise domain events trước khi persistence:
+- `Create*Handler` raise `{Entity}CreatedEvent`
+- `Update*Handler` raise `{Entity}UpdatedEvent`
+- `Delete*Handler` raise `{Entity}DeletedEvent`
 
-When an agent is implementing changes, use this minimal gate:
+Các event type được sinh dưới namespace `{EntityNamespace}.DomainEvents`.
 
-1. Apply configuration and code changes.
-2. Run `dotnet build`.
-3. Run `rynor doctor`.
-4. Only continue if summary is `READY` or `READY WITH WARNINGS`.
+## Checklist xác minh sau tích hợp
 
-For runtime behavior verification, run the scenarios in `docs/RUNTIME_TESTING.md`.
+1. Chạy `dotnet build` và bảo đảm không lỗi generator.
+2. Chạy `rynor doctor` và xử lý toàn bộ FAIL checks.
+3. Nếu bật endpoint, gọi thử POST/PUT/DELETE và xác nhận mã trạng thái đúng.
+4. Nếu bật caching, chạy một kịch bản read-after-write để xác nhận invalidation.
 
-For full task contracts and output expectations, see `docs/AI_AGENT_PLAYBOOK.md`.
+## Mẫu tích hợp cho AI agent
+
+Khi agent triển khai thay đổi, dùng gate tối thiểu sau:
+
+1. Áp dụng cấu hình và code changes.
+2. Chạy `dotnet build`.
+3. Chạy `rynor doctor`.
+4. Chỉ tiếp tục nếu kết quả là `READY` hoặc `READY WITH WARNINGS`.
+
+Để xác minh runtime behavior, chạy các kịch bản trong `docs/RUNTIME_TESTING.md`.
+
+Chi tiết contract và output kỳ vọng nằm ở `docs/AI_AGENT_PLAYBOOK.md`.

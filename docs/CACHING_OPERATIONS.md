@@ -1,34 +1,36 @@
-# Caching Operations Guide
+# Hướng dẫn vận hành Caching
 
-This guide covers runtime expectations when `GenerateCachingDecorators = true`.
+[Tiếng Việt](CACHING_OPERATIONS.md) | [English](CACHING_OPERATIONS.en.md)
 
-## Runtime prerequisites
+Tài liệu này mô tả kỳ vọng runtime khi bật `GenerateCachingDecorators = true`.
 
-- Register a distributed cache provider (`AddDistributedMemoryCache` for dev or Redis in production).
-- Ensure generated DI wiring is enabled via `AddRynorArchDependencies()`.
-- Verify cache keys are stable across deployments.
+## Điều kiện tiên quyết runtime
 
-## Default generated behavior
+- Đăng ký distributed cache provider (`AddDistributedMemoryCache` cho môi trường dev hoặc Redis cho production).
+- Bảo đảm generated DI wiring được bật qua `AddRynorArchDependencies()`.
+- Xác nhận cache key ổn định giữa các lần triển khai.
 
-- Read query responses are cached by generated query cache behaviors.
-- Per-entity invalidation interfaces are generated.
-- Create/update/delete handlers call generated invalidators when DI wiring is active.
+## Hành vi sinh mã mặc định
 
-## Production guardrails
+- Kết quả query đọc được cache qua generated query cache behaviors.
+- Hệ thống sinh per-entity invalidation interfaces.
+- Create/update/delete handlers gọi invalidator đã sinh khi DI wiring hoạt động.
 
-- Set explicit TTL policy per entity/query (hot reads vs cold reads).
-- Add jitter to TTL for high-traffic keys to reduce synchronized expirations.
-- Use namespaced keys (`service:entity:id`) to prevent collisions.
-- Monitor cache hit ratio, evictions, and backend latency.
+## Guardrails cho production
 
-## Common rollout pattern
+- Đặt chính sách TTL rõ ràng theo entity/query (hot reads và cold reads).
+- Thêm jitter vào TTL cho key lưu lượng cao để tránh hết hạn đồng loạt.
+- Dùng key có namespace (`service:entity:id`) để tránh va chạm.
+- Theo dõi cache hit ratio, eviction và độ trễ backend.
 
-1. Start with distributed memory cache in lower environments.
-2. Promote to Redis with the same key schema.
-3. Add dashboards and alerts before enabling in high-traffic modules.
+## Mẫu rollout phổ biến
 
-## Troubleshooting quick checks
+1. Bắt đầu với distributed memory cache ở môi trường thấp.
+2. Nâng lên Redis nhưng giữ nguyên key schema.
+3. Có dashboard và alert trước khi bật ở module lưu lượng cao.
 
-- Verify `Get{Entity}ByIdQueryCacheBehavior.g.cs` was generated.
-- Ensure DI extension registers both invalidator and cache pipeline behavior.
-- Confirm write handlers execute invalidation paths in integration tests.
+## Kiểm tra nhanh khi troubleshooting
+
+- Xác nhận đã sinh `Get{Entity}ByIdQueryCacheBehavior.g.cs`.
+- Xác nhận DI extension đã đăng ký cả invalidator và cache pipeline behavior.
+- Xác nhận write handlers đi qua đường invalidation trong integration tests.

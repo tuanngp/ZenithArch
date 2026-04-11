@@ -1,36 +1,38 @@
-# Feature Matrix
+# Ma trận tính năng
 
-| Feature | Cqrs | Repository | FullStack | Notes |
+[Tiếng Việt](FEATURE_MATRIX.md) | [English](FEATURE_MATRIX.en.md)
+
+| Tính năng | Cqrs | Repository | FullStack | Ghi chú |
 | --- | --- | --- | --- | --- |
-| UseSpecification | Yes | Yes | Yes | Generates specification artifacts from `[QueryFilter]` |
-| UseUnitOfWork | No | Yes | Yes | Ignored in pure CQRS |
-| EnableValidation | Yes | No | Yes | Generates FluentValidation validators for commands |
-| GenerateDependencyInjection | Yes | Yes | Yes | Emits `AddRynorArchDependencies()` |
-| GenerateEndpoints | Yes | No | Yes | Requires `EnableExperimentalEndpoints = true` |
-| GenerateDtos | Yes | Yes | Yes | DTO records and mapping extensions |
-| GenerateEfConfigurations | Yes | Yes | Yes | Entity type configuration partials |
-| GenerateCachingDecorators | Yes | No | Yes | Adds query cache behaviors + invalidators |
-| GeneratePagination | Yes | Yes | Yes | Pagination extension artifacts |
-| CqrsSaveMode | Yes | No | Yes | `PerHandler` or `PerRequestTransaction` |
-| DbContextType | Yes | N/A | Yes | Optional override for generated CQRS handler constructor type |
+| UseSpecification | Có | Có | Có | Sinh specification từ thuộc tính có `[QueryFilter]` |
+| UseUnitOfWork | Không | Có | Có | Bị bỏ qua trong CQRS thuần |
+| EnableValidation | Có | Không | Có | Sinh FluentValidation validator cho command |
+| GenerateDependencyInjection | Có | Có | Có | Sinh `AddRynorArchDependencies()` |
+| GenerateEndpoints | Có | Không | Có | Cần `EnableExperimentalEndpoints = true` |
+| GenerateDtos | Có | Có | Có | DTO records và mapping extensions |
+| GenerateEfConfigurations | Có | Có | Có | EF configuration partials |
+| GenerateCachingDecorators | Có | Không | Có | Query cache behaviors và invalidator |
+| GeneratePagination | Có | Có | Có | Artifacts phân trang |
+| CqrsSaveMode | Có | Không | Có | `PerHandler` hoặc `PerRequestTransaction` |
+| DbContextType | Có | N/A | Có | Override kiểu DbContext cho CQRS handler |
 
-## Starter profiles
+## Starter profile
 
-| Profile | Intended setup | Defaults summary |
+| Profile | Mục tiêu sử dụng | Mặc định chính |
 | --- | --- | --- |
-| CqrsQuickStart | API/service modules using command-query handlers | CQRS + validation + specification + generated DI |
-| RepositoryQuickStart | Layered modules preferring repository boundary | Repository + specification + unit of work + generated DI |
-| FullStackQuickStart | End-to-end modules wanting both CQRS and repository artifacts | FullStack + common productivity flags + generated DI |
+| CqrsQuickStart | Module API/service dùng command-query handlers | CQRS + validation + specification + generated DI |
+| RepositoryQuickStart | Module phân lớp ưu tiên repository boundary | Repository + specification + unit of work + generated DI |
+| FullStackQuickStart | Module cần đồng thời CQRS và repository artifacts | FullStack + các cờ năng suất phổ biến + generated DI |
 
-Profile defaults are only a starting point. Explicit flags in `Architecture(...)` always override profile values.
+Mặc định profile chỉ là điểm bắt đầu. Flag tường minh trong `Architecture(...)` luôn được ưu tiên.
 
-## Agent readiness gates
+## Cổng kiểm tra readiness cho agent
 
-| Gate | Tool | Pass condition |
+| Cổng | Công cụ | Điều kiện pass |
 | --- | --- | --- |
-| Config discovery | `rynor doctor` (`DR002`, `DR004`) | `.csproj` found and architecture config declared |
-| Architecture safety | `rynor doctor` (`DR005`, `DR006`) | profile/pattern coherent and endpoint opt-in valid |
-| Dependency alignment | `rynor doctor` (`DR007`-`DR013`) | required dependencies are present for active features |
-| Entity shape | `rynor doctor` (`DR014`) | all `[Entity]` declarations are `partial` |
-| Generation marker | `rynor doctor` (`DR015`) | generation report exists under `obj/` after build |
-| Runtime semantics | `dotnet test tests/RynorArch.Integration.Tests` | CRUD, soft-delete, audit, validation, transaction, and cache behaviors pass |
+| Khám phá cấu hình | `rynor doctor` (`DR002`, `DR004`) | Tìm thấy `.csproj` và có architecture config |
+| An toàn kiến trúc | `rynor doctor` (`DR005`, `DR006`) | Pattern/profile hợp lệ và endpoint opt-in đúng |
+| Đồng bộ phụ thuộc | `rynor doctor` (`DR007`-`DR013`) | Đủ package/framework theo feature đang bật |
+| Hình dạng entity | `rynor doctor` (`DR014`) | Tất cả class có `[Entity]` đều là `partial` |
+| Dấu mốc generation | `rynor doctor` (`DR015`) | Có report sinh mã dưới `obj/` sau khi build |
+| Ngữ nghĩa runtime | `dotnet test tests/RynorArch.Integration.Tests` | CRUD, soft-delete, audit, validation, transaction và cache pass |

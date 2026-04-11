@@ -1,25 +1,35 @@
-# Getting Started
+# Bắt đầu nhanh
 
-This guide is optimized for the shortest path to a working setup.
+[Tiếng Việt](GETTING_STARTED.md) | [English](GETTING_STARTED.en.md)
 
-## 1. Install packages
+Mục tiêu của tài liệu này: giúp bạn đi từ dự án trống đến trạng thái chạy được với RynorArch trong ít bước nhất.
+
+## Trước khi bắt đầu
+
+- Dùng .NET SDK 10.0.x (khuyến nghị).
+- Đang đứng ở thư mục có `.csproj`.
+- Đã cài CLI `rynor` nếu muốn theo lộ trình CLI-first.
+
+## Bước 1: Cài package
 
 ```xml
 <PackageReference Include="RynorArch.Abstractions" Version="1.0.6" />
 <PackageReference Include="RynorArch.Generator" Version="1.0.6" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 ```
 
-## 2. Create architecture config
+Kết quả mong đợi: project đã có đủ package lõi để generator hoạt động.
 
-### Option A: CLI (fastest)
+## Bước 2: Tạo cấu hình kiến trúc
+
+### Cách A: Dùng CLI (nhanh nhất, khuyến nghị)
 
 ```bash
 rynor init
 ```
 
-### Option B: Manual
+### Cách B: Tạo thủ công
 
-Create `AssemblyConfig.cs`:
+Tạo file `AssemblyConfig.cs`:
 
 ```csharp
 using RynorArch.Abstractions.Attributes;
@@ -32,7 +42,9 @@ using RynorArch.Abstractions.Enums;
 )]
 ```
 
-## 3. Add an entity
+Kết quả mong đợi: có `AssemblyConfig.cs` chứa `[assembly: Architecture(...)]`.
+
+## Bước 3: Tạo entity đầu tiên
 
 ```csharp
 using RynorArch.Abstractions.Attributes;
@@ -48,43 +60,68 @@ public partial class Trip : EntityBase
 }
 ```
 
-## 4. Build
+Điểm bắt buộc: class phải là `partial`, nếu không bạn sẽ gặp `RYNOR005`.
+
+## Bước 4: Build để sinh mã
 
 ```bash
 dotnet build
 ```
 
-Inspect generated output in `obj/` and `RynorArch.GenerationReport.g.cs`.
+Kiểm tra output sinh mã trong `obj/` và `RynorArch.GenerationReport.g.cs`.
 
-## 5. Wire runtime
+Kết quả mong đợi:
 
-In your app startup:
+- Không có lỗi generator.
+- Có generation report và các `.g.cs` tương ứng.
+
+## Bước 5: Đăng ký runtime
+
+Trong startup của ứng dụng:
 
 ```csharp
 builder.Services.AddRynorArchDependencies();
 ```
 
-If `UseUnitOfWork = true` (Repository/FullStack), prefer:
+Nếu dùng `UseUnitOfWork = true` (Repository/FullStack), ưu tiên:
 
 ```csharp
 builder.Services.AddRynorArchDependencies<AppDbContext>();
 ```
 
-The generated DI extension registers handlers/repositories (by pattern), validators, and cache behaviors (if enabled).
+Generated DI extension sẽ đăng ký handlers/repositories (theo pattern), validators và cache behaviors (nếu bật).
 
-## Common first-run issues
+## Bước 6: Chạy readiness check
 
-- `RYNOR005`: entity marked `[Entity]` must be `partial`.
-- `RYNOR006`: missing `AssemblyConfig.cs` or missing `[assembly: Architecture(...)]`.
-- `RYNOR007`: missing package dependency for an enabled feature flag.
+```bash
+rynor doctor
+```
 
-## Getting started with AI agents
+Mục tiêu: không còn FAIL checks trước khi đi tiếp.
 
-Use this sequence when an AI agent is driving setup:
+## Lỗi thường gặp nhất và cách xử lý nhanh
 
-1. Run `rynor init`.
-2. Run `rynor scaffold Trip MyApp.Domain`.
-3. Run `dotnet build`.
-4. Run `rynor doctor` and resolve all FAIL checks.
+- `RYNOR005`: class có `[Entity]` phải là `partial`.
+- `RYNOR006`: thiếu `AssemblyConfig.cs` hoặc thiếu `[assembly: Architecture(...)]`.
+- `RYNOR007`: thiếu package phụ thuộc của feature đang bật.
 
-See `docs/AI_AGENT_PLAYBOOK.md` for task contracts and verification rules.
+Mẹo: sau khi sửa lỗi cấu hình/phụ thuộc, luôn chạy lại `dotnet build` rồi `rynor doctor`.
+
+## Kết thúc tài liệu này, bạn nên có
+
+1. Một `AssemblyConfig.cs` hợp lệ.
+2. Ít nhất một entity có `[Entity]` và `partial`.
+3. Generated output dưới `obj/`.
+4. Startup đã gọi `AddRynorArchDependencies(...)`.
+5. `rynor doctor` không còn FAIL.
+
+## Lộ trình cho AI agent
+
+Nếu dùng AI agent để setup, nên chạy theo thứ tự:
+
+1. `rynor init`
+2. `rynor scaffold Trip MyApp.Domain`
+3. `dotnet build`
+4. `rynor doctor` và xử lý toàn bộ FAIL checks
+
+Xem thêm tại `docs/AI_AGENT_PLAYBOOK.md`.

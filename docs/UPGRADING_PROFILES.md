@@ -1,22 +1,24 @@
-# Upgrading To Profile-First Configuration
+# Nâng cấp sang cấu hình Profile-First
 
-Legacy configurations with many explicit flags still work, but profile-first setup is easier to maintain.
+[Tiếng Việt](UPGRADING_PROFILES.md) | [English](UPGRADING_PROFILES.en.md)
 
-## Why migrate
+Cấu hình legacy với nhiều cờ tường minh vẫn chạy, nhưng profile-first dễ bảo trì hơn.
 
-- Fewer repetitive flags across services.
-- Lower chance of config drift between modules.
-- Simpler onboarding and code review.
+## Vì sao nên migration
 
-## Mapping guide
+- Giảm lặp lại cờ cấu hình giữa các service.
+- Giảm rủi ro config drift giữa các module.
+- Đơn giản hơn cho onboarding và review.
 
-- CQRS-heavy modules: `ArchitectureProfile.CqrsQuickStart`
-- Repository-heavy modules: `ArchitectureProfile.RepositoryQuickStart`
-- End-to-end modules: `ArchitectureProfile.FullStackQuickStart`
+## Bản đồ mapping
 
-## Example migration
+- Module thiên CQRS: `ArchitectureProfile.CqrsQuickStart`
+- Module thiên Repository: `ArchitectureProfile.RepositoryQuickStart`
+- Module end-to-end: `ArchitectureProfile.FullStackQuickStart`
 
-Before:
+## Ví dụ migration
+
+Trước:
 
 ```csharp
 [assembly: Architecture(
@@ -32,7 +34,7 @@ Before:
 )]
 ```
 
-After:
+Sau:
 
 ```csharp
 [assembly: Architecture(
@@ -43,12 +45,12 @@ After:
 )]
 ```
 
-Use explicit flags only for intentional overrides from profile defaults.
+Chỉ giữ explicit flags cho các khác biệt có chủ đích so với profile mặc định.
 
-## Migration checklist
+## Checklist migration
 
-1. Set the closest `Profile` for each module.
-2. Remove flags that match the profile default behavior.
-3. Keep only flags that intentionally diverge.
-4. Rebuild and compare `RynorArch.GenerationReport.g.cs`.
-5. Run integration tests for one pilot module before broad rollout.
+1. Chọn `Profile` gần nhất cho từng module.
+2. Gỡ các flag trùng với mặc định của profile.
+3. Chỉ giữ flag khác biệt có chủ đích.
+4. Rebuild và so sánh `RynorArch.GenerationReport.g.cs`.
+5. Chạy integration tests trên một module thí điểm trước khi rollout rộng.

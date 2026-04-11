@@ -1,25 +1,27 @@
-# Compatibility
+# Tương thích
 
-## Officially validated development environment
+[Tiếng Việt](COMPATIBILITY.md) | [English](COMPATIBILITY.en.md)
+
+## Môi trường phát triển đã xác thực
 
 - .NET SDK: `10.0.x`
-- RynorArch generator target: `netstandard2.0`
-- RynorArch CLI target runtimes: `net8.0`, `net9.0`, `net10.0`
+- Generator target của RynorArch: `netstandard2.0`
+- Runtime target cho CLI: `net8.0`, `net9.0`, `net10.0`
 
-## Consumer project expectations
+## Kỳ vọng với dự án sử dụng
 
-- Add `RynorArch.Abstractions` as a normal package reference.
-- Add `RynorArch.Generator` as an analyzer-only package reference.
-- Declare `[assembly: Architecture(...)]` explicitly; generation is blocked when this is missing.
-- Prefer `ArchitectureProfile.*QuickStart` to reduce first-run flag setup.
-- Expect a generated shared infrastructure layer for CRUD/EF interaction when using `Cqrs`, `Repository`, or `FullStack`.
-- If using CQRS, optionally set `DbContextType = typeof(...)` to bind handlers to a specific DbContext type.
-- Endpoint generation requires explicit experimental opt-in (`GenerateEndpoints = true` and `EnableExperimentalEndpoints = true`).
-- Call `AddRynorArchDependencies()` in startup to wire generated handlers/repositories/validators/cache behaviors.
+- Thêm `RynorArch.Abstractions` như package reference thông thường.
+- Thêm `RynorArch.Generator` ở chế độ analyzer-only.
+- Bắt buộc khai báo tường minh `[assembly: Architecture(...)]`; nếu thiếu thì không sinh mã.
+- Nên ưu tiên `ArchitectureProfile.*QuickStart` để giảm số cờ cấu hình ban đầu.
+- Khi dùng `Cqrs`, `Repository`, hoặc `FullStack`, hệ thống sẽ sinh lớp hạ tầng dùng chung cho CRUD/EF.
+- Nếu dùng CQRS, có thể đặt `DbContextType = typeof(...)` để ràng buộc handler với DbContext cụ thể.
+- Endpoint generation yêu cầu opt-in experimental rõ ràng (`GenerateEndpoints = true` và `EnableExperimentalEndpoints = true`).
+- Gọi `AddRynorArchDependencies()` trong startup để wire handlers/repositories/validators/cache behaviors đã sinh.
 
-## Feature dependencies
+## Phụ thuộc theo tính năng
 
-| Feature | Required dependency |
+| Tính năng | Phụ thuộc bắt buộc |
 | --- | --- |
 | CQRS / FullStack handlers | `MediatR` |
 | Validation generation | `FluentValidation` |
@@ -27,9 +29,9 @@
 | Endpoint generation | ASP.NET Core shared framework |
 | Caching decorators | `Microsoft.Extensions.Caching.*` |
 
-## Recommended adoption pattern
+## Khuyến nghị triển khai
 
-- Start with a single module or bounded context.
-- Pin the package version in production apps.
-- Review generated output during upgrades.
-- If your code referenced generated repository internals directly, plan a migration because repository implementations are now thin wrappers over a generic base.
+- Bắt đầu từ một module hoặc bounded context.
+- Pin version package ở môi trường production.
+- Mỗi lần nâng cấp nên rà lại output sinh mã.
+- Nếu code hiện tại đang phụ thuộc vào chi tiết nội bộ của generated repository, cần kế hoạch migration vì implementation hiện tại là wrapper mỏng trên generic base.

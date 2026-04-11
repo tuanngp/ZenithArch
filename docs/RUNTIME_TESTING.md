@@ -1,44 +1,46 @@
-# Runtime Testing Guide
+# Hướng dẫn kiểm thử Runtime
 
-This guide validates generated runtime behavior end-to-end, not just generated source shape.
+[Tiếng Việt](RUNTIME_TESTING.md) | [English](RUNTIME_TESTING.en.md)
 
-## Why this exists
+Tài liệu này xác minh runtime behavior theo luồng end-to-end, không chỉ kiểm tra hình dạng source được sinh.
 
-`RynorArch.Generator.Tests` validates diagnostics and generated output contracts.
-`RynorArch.Integration.Tests` validates runtime behavior against a relational provider.
+## Vì sao tài liệu này tồn tại
 
-Both are required before release.
+`RynorArch.Generator.Tests` kiểm tra diagnostics và generated output contracts.
+`RynorArch.Integration.Tests` kiểm tra runtime behavior với relational provider.
 
-## Test project
+Cả hai đều cần thiết trước khi release.
 
-Runtime integration tests live in:
+## Dự án test
+
+Runtime integration tests nằm tại:
 
 - `tests/RynorArch.Integration.Tests`
 
-The test host uses:
+Test host sử dụng:
 
 - SQLite in-memory (`Microsoft.EntityFrameworkCore.Sqlite`)
-- Generated CQRS handlers and MediatR pipeline behaviors from `samples/RynorArch.Sample`
-- Generated caching invalidators and validation behavior
+- Generated CQRS handlers và MediatR pipeline behaviors từ `samples/RynorArch.Sample`
+- Generated caching invalidators và validation behavior
 
-## Covered scenarios
+## Các kịch bản đã bao phủ
 
-The runtime suite currently verifies:
+Bộ runtime test hiện xác minh:
 
-- CRUD roundtrip through generated commands and handlers
+- CRUD roundtrip qua generated commands và handlers
 - Soft-delete query exclusion (`ISoftDelete`)
 - Audit timestamp stamping (`IAuditable`)
-- Validation failure prevents persistence
-- Per-request transaction rollback on handler failure
-- Cache population and invalidation for `GetById` query pipeline
+- Validation failure chặn persistence
+- Transaction rollback theo request khi handler fail
+- Cache population và invalidation cho `GetById` query pipeline
 
-## Run locally
+## Chạy local
 
 ```powershell
 dotnet test tests/RynorArch.Integration.Tests/RynorArch.Integration.Tests.csproj -c Release
 ```
 
-To run the full release gate:
+Để chạy full release gate:
 
 ```powershell
 dotnet restore RynorArch.slnx
@@ -47,14 +49,14 @@ dotnet test RynorArch.slnx -c Release
 dotnet run --project src/RynorArch.Cli/RynorArch.Cli.csproj -- doctor samples/RynorArch.Sample
 ```
 
-## Writing new runtime tests
+## Viết thêm runtime tests
 
-1. Reuse `IntegrationTestHost` to boot a SQLite-backed service collection.
-2. Send generated commands through `IMediator`.
-3. Assert both API-level return semantics and persisted state in `AppDbContext`.
-4. Prefer behavior assertions over source-text assertions.
+1. Tái sử dụng `IntegrationTestHost` để khởi tạo service collection chạy trên SQLite.
+2. Gửi generated commands qua `IMediator`.
+3. Assert cả semantics ở mức API và trạng thái persistence trong `AppDbContext`.
+4. Ưu tiên assert theo behavior thay vì so sánh text source.
 
-## Notes
+## Ghi chú
 
-- Keep endpoint generation marked experimental unless explicitly promoted.
-- If `DbContextType` is not configured, generated handlers depend on `DbContext`; integration host currently maps `DbContext` to `AppDbContext` explicitly for deterministic DI behavior.
+- Giữ endpoint generation ở trạng thái experimental trừ khi có quyết định nâng cấp chính thức.
+- Nếu không cấu hình `DbContextType`, generated handlers sẽ phụ thuộc `DbContext`; integration host hiện ánh xạ tường minh `DbContext` sang `AppDbContext` để DI ổn định.

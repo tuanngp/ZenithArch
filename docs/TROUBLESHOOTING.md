@@ -1,41 +1,60 @@
-# Troubleshooting
+# Xử lý sự cố
 
-## Common diagnostics
+[Tiếng Việt](TROUBLESHOOTING.md) | [English](TROUBLESHOOTING.en.md)
 
-### `RYNOR001` No entities found
+## Quy trình xử lý nhanh (60 giây)
 
-No class with `[Entity]` was discovered in the current compilation.
+1. Chạy `dotnet build` để lấy lỗi compile/generator mới nhất.
+2. Chạy `rynor doctor` để xác định lỗi cấu hình/phụ thuộc.
+3. Ưu tiên sửa FAIL checks trước WARN checks.
+4. Chạy lại `dotnet build` và `rynor doctor` để xác nhận đã sạch lỗi.
 
-Check:
-- the project references `RynorArch.Abstractions`
-- the entity class is part of the current project
-- the entity is marked with `[Entity]`
+## Bảng tra nhanh theo triệu chứng
 
-### `RYNOR002` AggregateRoot requires Entity
+| Triệu chứng | Chẩn đoán thường gặp | Sửa nhanh |
+| --- | --- | --- |
+| Không thấy file sinh trong `obj/` | `RYNOR006` | Thêm `[assembly: Architecture(...)]` trong `AssemblyConfig.cs` |
+| Entity không được sinh handler/repository | `RYNOR005` | Đổi class thành `partial` và build lại |
+| Build báo thiếu dependency | `RYNOR007` | Bổ sung package/framework theo gợi ý diagnostic |
+| Bật endpoint nhưng không sinh route | `RYNOR012` | Bật cả `GenerateEndpoints = true` và `EnableExperimentalEndpoints = true` |
+| Bật validation nhưng request sai vẫn chạy | `RYNOR015` hoặc wiring thiếu | Bật `GenerateDependencyInjection` hoặc đăng ký `RynorArchValidationBehavior<,>` thủ công |
 
-`[AggregateRoot]` only works on classes that also have `[Entity]`.
+## Chẩn đoán thường gặp
 
-### `RYNOR003` Architecture pattern conflict
+### `RYNOR001` Không tìm thấy entity
 
-The selected feature flags do not match the chosen architecture pattern.
+Không có class nào dùng `[Entity]` trong compilation hiện tại.
 
-Examples:
-- `UseUnitOfWork = true` with `Cqrs`
-- `EnableValidation = true` with `Repository`
+Kiểm tra:
+- project đã tham chiếu `RynorArch.Abstractions`
+- entity class nằm trong đúng project đang build
+- entity đã được đánh dấu `[Entity]`
 
-### `RYNOR004` Unsupported QueryFilter type
+### `RYNOR002` AggregateRoot yêu cầu Entity
 
-`[QueryFilter]` is intended for string, numeric, boolean, `DateTime`, `Guid`, enums, and nullable variants of those types.
+`[AggregateRoot]` chỉ hợp lệ trên class có `[Entity]`.
 
-If you need complex filtering, remove `[QueryFilter]` and implement the logic manually in a partial handler or specification.
+### `RYNOR003` Xung đột architecture pattern
 
-### `RYNOR005` Entity must be partial
+Feature flags đang chọn không tương thích với architecture pattern.
 
-Generated extensions and partial hooks require `partial` entities.
+Ví dụ:
+- `UseUnitOfWork = true` với `Cqrs`
+- `EnableValidation = true` với `Repository`
 
-### `RYNOR006` Missing architecture configuration
+### `RYNOR004` Kiểu dữ liệu QueryFilter không hỗ trợ
 
-Add an explicit assembly-level configuration such as:
+`[QueryFilter]` hỗ trợ string, numeric, bool, `DateTime`, `Guid`, enum và nullable của các kiểu này.
+
+Nếu cần lọc phức tạp, hãy bỏ `[QueryFilter]` và tự triển khai trong partial handler hoặc specification.
+
+### `RYNOR005` Entity phải là partial
+
+Generated extensions và partial hooks yêu cầu entity được khai báo `partial`.
+
+### `RYNOR006` Thiếu architecture configuration
+
+Thêm cấu hình ở mức assembly, ví dụ:
 
 ```csharp
 using RynorArch.Abstractions.Attributes;
@@ -44,142 +63,142 @@ using RynorArch.Abstractions.Enums;
 [assembly: Architecture(Pattern = ArchitecturePattern.Cqrs)]
 ```
 
-RynorArch does not generate sources without explicit architecture configuration.
+RynorArch sẽ không sinh mã nếu thiếu cấu hình kiến trúc tường minh.
 
-### `RYNOR007` Missing required dependency
+### `RYNOR007` Thiếu dependency bắt buộc
 
-One or more enabled features require packages/framework references that are not available to the compilation.
-The diagnostic now includes an exact `PackageReference` or `FrameworkReference` hint.
+Một hoặc nhiều feature đang bật yêu cầu package/framework chưa có trong compilation.
+Diagnostic sẽ gợi ý chính xác `PackageReference` hoặc `FrameworkReference` cần bổ sung.
 
-Common examples:
-- CQRS without `MediatR`
-- Validation enabled without `FluentValidation`
-- Persistence features without `Microsoft.EntityFrameworkCore`
-- Endpoints enabled without `Microsoft.AspNetCore.App`
-- Caching decorators enabled without `Microsoft.Extensions.Caching.*`
+Ví dụ thường gặp:
+- Bật CQRS nhưng thiếu `MediatR`
+- Bật validation nhưng thiếu `FluentValidation`
+- Bật persistence nhưng thiếu `Microsoft.EntityFrameworkCore`
+- Bật endpoint nhưng thiếu `Microsoft.AspNetCore.App`
+- Bật caching decorators nhưng thiếu `Microsoft.Extensions.Caching.*`
 
-### `RYNOR008` Configured DbContext type is invalid
+### `RYNOR008` DbContextType không hợp lệ
 
-`DbContextType` was configured but the type cannot be resolved or does not derive from `Microsoft.EntityFrameworkCore.DbContext`.
+`DbContextType` đã cấu hình nhưng kiểu không resolve được hoặc không kế thừa `Microsoft.EntityFrameworkCore.DbContext`.
 
-Fix options:
-- set `DbContextType = typeof(YourDbContext)` to a valid type in the compilation
-- remove `DbContextType` to fall back to `Microsoft.EntityFrameworkCore.DbContext`
+Cách xử lý:
+- đặt `DbContextType = typeof(YourDbContext)` với kiểu hợp lệ trong compilation
+- hoặc bỏ `DbContextType` để fallback về `Microsoft.EntityFrameworkCore.DbContext`
 
-### `RYNOR009` Generated endpoint behavior notice
+### `RYNOR009` Thông báo endpoint behavior tối giản
 
-Endpoint generation is active and compilation succeeded, but the generated endpoints are intentionally minimal.
-Harden them for enterprise APIs (authorization, richer error contracts, and resource-not-found semantics).
-Follow the hardening checklist in `docs/ENDPOINT_HARDENING.md`.
+Endpoint generation đã bật và compile thành công, nhưng endpoint sinh ra được giữ tối giản có chủ đích.
+Hãy áp dụng hardening trước khi dùng cho API doanh nghiệp.
+Checklist: `docs/ENDPOINT_HARDENING.md`.
 
-### `RYNOR010` Generated cache behavior notice
+### `RYNOR010` Thông báo cache behavior
 
-Generated cache pipeline behaviors include per-entity invalidation contracts.
-Ensure invalidators are registered in DI (generated DI helper does this when enabled).
-Operational rollout guidance is in `docs/CACHING_OPERATIONS.md`.
+Generated cache pipeline behaviors có per-entity invalidation contracts.
+Hãy bảo đảm invalidator được đăng ký trong DI (generated DI helper sẽ làm việc này khi bật).
+Hướng dẫn rollout vận hành: `docs/CACHING_OPERATIONS.md`.
 
-### Validation is enabled but invalid commands still pass
+### Bật validation nhưng command sai vẫn pass
 
-If `EnableValidation = true`, generated DI should register `RynorArchValidationBehavior<,>`.
+Khi `EnableValidation = true`, generated DI phải đăng ký `RynorArchValidationBehavior<,>`.
 
-Check:
-- `AddRynorArchDependencies()` is called at startup, or equivalent manual registrations are present.
-- MediatR is configured for the same assembly containing generated handlers.
-- Generated validator files (`*.Validation.g.cs`) exist under `obj/`.
+Kiểm tra:
+- đã gọi `AddRynorArchDependencies()` ở startup hoặc có đăng ký thủ công tương đương
+- MediatR được cấu hình đúng assembly chứa generated handlers
+- có generated validator files (`*.Validation.g.cs`) trong `obj/`
 
-If `GenerateDependencyInjection = false`, manually register `IPipelineBehavior<,>` to `RynorArchValidationBehavior<,>`.
+Nếu `GenerateDependencyInjection = false`, cần đăng ký thủ công `IPipelineBehavior<,>` vào `RynorArchValidationBehavior<,>`.
 
-### Generated endpoints return unexpected write status codes
+### Endpoint sinh ra trả mã ghi dữ liệu không đúng kỳ vọng
 
-Current generated behavior:
-- `POST` returns `201 Created` with `{ id = <guid> }` payload.
-- `PUT`/`DELETE` return `404` when the resource is missing and `204` when successful.
+Generated behavior hiện tại:
+- `POST` trả `201 Created` với payload `{ id = <guid> }`
+- `PUT`/`DELETE` trả `404` nếu resource thiếu, và `204` nếu thành công
 
-If you still observe unconditional `204`, rebuild and verify the generated `RynorArchEndpointExtensions.g.cs` in `obj/`.
+Nếu vẫn thấy luôn `204`, hãy rebuild và kiểm tra `RynorArchEndpointExtensions.g.cs` trong `obj/`.
 
-### `RYNOR011` Feature flag ignored by selected pattern
+### `RYNOR011` Feature flag bị bỏ qua theo pattern đã chọn
 
-A feature flag was enabled, but the selected architecture pattern does not support generating that artifact.
-Align pattern and flags in `[assembly: Architecture(...)]` to silence this warning.
+Một feature flag được bật nhưng pattern hiện tại không hỗ trợ sinh artifact tương ứng.
+Hãy căn chỉnh pattern và flags trong `[assembly: Architecture(...)]`.
 
-### `RYNOR012` Endpoint generation requires experimental opt-in
+### `RYNOR012` Endpoint generation cần experimental opt-in
 
-`GenerateEndpoints` is enabled but `EnableExperimentalEndpoints` is not.
+`GenerateEndpoints` đã bật nhưng `EnableExperimentalEndpoints` chưa bật.
 
-Fix by opting in explicitly:
+Sửa bằng cách bật tường minh:
 
 ```csharp
 [assembly: Architecture(
-	Pattern = ArchitecturePattern.Cqrs,
-	GenerateEndpoints = true,
-	EnableExperimentalEndpoints = true
+    Pattern = ArchitecturePattern.Cqrs,
+    GenerateEndpoints = true,
+    EnableExperimentalEndpoints = true
 )]
 ```
 
-### `RYNOR013` CQRS save mode needs generated DI wiring
+### `RYNOR013` CQRS save mode cần generated DI wiring
 
-`CqrsSaveMode.PerRequestTransaction` is enabled while `GenerateDependencyInjection` is false.
+`CqrsSaveMode.PerRequestTransaction` đang bật trong khi `GenerateDependencyInjection` = false.
 
-Fix options:
-- set `GenerateDependencyInjection = true`, or
-- manually register `IPipelineBehavior<,>` to `RynorArchSaveChangesBehavior<,>`
+Cách xử lý:
+- đặt `GenerateDependencyInjection = true`, hoặc
+- đăng ký thủ công `IPipelineBehavior<,>` vào `RynorArchSaveChangesBehavior<,>`
 
-### `RYNOR014` Consider starter profile migration
+### `RYNOR014` Khuyến nghị migration sang starter profile
 
-Your module still uses a legacy explicit-flag style configuration.
+Module hiện còn dùng cấu hình explicit-flag kiểu cũ.
 
-Fix options:
-- set `Profile = ArchitectureProfile.CqrsQuickStart` / `RepositoryQuickStart` / `FullStackQuickStart`
-- keep only explicit flags that intentionally override profile defaults
+Cách xử lý:
+- đặt `Profile = ArchitectureProfile.CqrsQuickStart` / `RepositoryQuickStart` / `FullStackQuickStart`
+- chỉ giữ explicit flags là các override có chủ đích
 
-See `docs/UPGRADING_PROFILES.md` for migration mapping examples.
+Mapping chi tiết: `docs/UPGRADING_PROFILES.md`.
 
-### `RYNOR015` Validation needs generated DI wiring
+### `RYNOR015` Validation cần generated DI wiring
 
-`EnableValidation` is enabled while `GenerateDependencyInjection` is false.
+`EnableValidation` đang bật trong khi `GenerateDependencyInjection` = false.
 
-Fix options:
-- set `GenerateDependencyInjection = true`, or
-- manually register `IPipelineBehavior<,>` to `RynorArchValidationBehavior<,>`
+Cách xử lý:
+- đặt `GenerateDependencyInjection = true`, hoặc
+- đăng ký thủ công `IPipelineBehavior<,>` vào `RynorArchValidationBehavior<,>`
 
-### `RYNOR016` Endpoint hardening checklist recommended
+### `RYNOR016` Khuyến nghị checklist hardening endpoint
 
-`GenerateEndpoints` is enabled and endpoint generation succeeded.
-This informational diagnostic reminds you to apply production hardening before rollout.
+`GenerateEndpoints` đã bật và endpoint generation thành công.
+Đây là diagnostic thông tin để nhắc kiểm tra hardening trước khi rollout production.
 
-Check `docs/ENDPOINT_HARDENING.md` and verify at minimum:
-- authorization boundaries (`RequireAuthorization` and policy split)
-- consistent problem details / exception mapping
+Tối thiểu cần kiểm tra:
+- ranh giới phân quyền (`RequireAuthorization` và tách policy)
+- problem details và exception mapping nhất quán
 - observability (structured logs, traces, metrics)
-- API lifecycle protections (versioning, idempotency where needed)
+- bảo vệ vòng đời API (versioning, idempotency khi cần)
 
-## Debugging generated output
+## Debug generated output
 
-- Inspect `RynorArch.GenerationReport.g.cs` to see what artifacts were emitted.
-- Check file headers for `rynor-artifact`, `rynor-entity`, and `rynor-assumptions` metadata.
-- Use diagnostics as the primary signal before debugging emitted code bodies.
+- Mở `RynorArch.GenerationReport.g.cs` để xem artifacts đã sinh.
+- Kiểm tra header metadata `rynor-artifact`, `rynor-entity`, `rynor-assumptions`.
+- Dùng diagnostics làm tín hiệu chính trước khi debug body code sinh.
 
-## Generated files in source control
+## Quản lý file sinh trong source control
 
-- Keep generated files out of source control by default.
-- Commit generated files only if your team has a deliberate review or diffing workflow that depends on them.
+- Mặc định không commit generated files.
+- Chỉ commit nếu team có chủ đích review hoặc diff generated output.
 
-## Build issues after upgrades
+## Lỗi build sau nâng cấp
 
-- Clear `bin/` and `obj/` folders.
-- Restore packages again.
-- Compare generated output before and after the upgrade.
-- Re-run `dotnet test RynorArch.slnx`.
+- Xóa thư mục `bin/` và `obj/`.
+- Restore package lại.
+- So sánh output sinh mã trước/sau nâng cấp.
+- Chạy lại `dotnet test RynorArch.slnx`.
 
-## CLI doctor troubleshooting
+## Troubleshooting với CLI doctor
 
-Use `rynor doctor` as a readiness gate for automated workflows.
+Dùng `rynor doctor` như một readiness gate cho workflow tự động.
 
-- `DR002` Project file fail: run command in a project folder containing a `.csproj`.
-- `DR004` Architecture config fail: add `AssemblyConfig.cs` with `[assembly: Architecture(...)]`.
-- `DR006` Endpoint opt-in fail: set `EnableExperimentalEndpoints = true` when endpoints are enabled.
-- `DR009`-`DR013` dependency fail: add the package/framework hinted in output.
-- `DR014` entity fail: mark all `[Entity]` classes as `partial`.
-- `DR015` report warning: build once so generated report is emitted under `obj/`.
+- `DR002`: chạy lệnh trong thư mục chứa `.csproj`.
+- `DR004`: thêm `AssemblyConfig.cs` với `[assembly: Architecture(...)]`.
+- `DR006`: nếu bật endpoint generation thì phải bật `EnableExperimentalEndpoints = true`.
+- `DR009`-`DR013`: thêm package/framework được gợi ý trong output.
+- `DR014`: bảo đảm mọi class có `[Entity]` đều là `partial`.
+- `DR015`: build ít nhất một lần để generation report xuất hiện dưới `obj/`.
 
-Reference contracts and verification flow are in `docs/AI_AGENT_PLAYBOOK.md`.
+Contract và luồng xác minh tham chiếu: `docs/AI_AGENT_PLAYBOOK.md`.

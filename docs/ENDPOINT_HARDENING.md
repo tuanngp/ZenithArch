@@ -1,44 +1,46 @@
-# Endpoint Hardening Guide
+# Hướng dẫn hardening Endpoint
 
-Generated endpoints are intentionally minimal. Use this checklist before production rollout.
+[Tiếng Việt](ENDPOINT_HARDENING.md) | [English](ENDPOINT_HARDENING.en.md)
 
-## 1. Add authorization boundaries
+Generated endpoint của RynorArch được thiết kế tối giản có chủ đích. Hãy áp dụng checklist dưới đây trước khi đưa vào production.
 
-- Apply `RequireAuthorization()` per route group or endpoint.
-- Split read and write policies (for example `Trips.Read`, `Trips.Write`).
-- Enforce tenant constraints in handlers, not only in endpoint filters.
+## 1. Thiết lập ranh giới phân quyền
 
-## 2. Return consistent problem details
+- Áp dụng `RequireAuthorization()` theo route group hoặc từng endpoint.
+- Tách policy cho luồng đọc và ghi (ví dụ `Trips.Read`, `Trips.Write`).
+- Ràng buộc tenant nên được kiểm tra trong handler, không chỉ ở endpoint filters.
 
-- Configure `UseExceptionHandler()` and `AddProblemDetails()` globally.
-- Map domain and validation exceptions to RFC 7807 responses.
-- Keep a stable error contract for client teams.
+## 2. Chuẩn hóa problem details
 
-## 3. Make not-found and conflict semantics explicit
+- Cấu hình `UseExceptionHandler()` và `AddProblemDetails()` ở mức toàn cục.
+- Ánh xạ domain exception và validation exception về RFC 7807 response.
+- Giữ error contract ổn định cho phía client.
 
-- Preserve `404` for missing resources.
-- Return `409` for optimistic concurrency or invariant conflicts.
-- Return `422` when validation rules fail after request binding.
+## 3. Rõ ràng semantics not-found và conflict
 
-## 4. Validate request contracts at the edge
+- Duy trì `404` cho tài nguyên không tồn tại.
+- Trả `409` cho optimistic concurrency hoặc vi phạm invariant.
+- Trả `422` khi validation fail sau bước request binding.
 
-- Keep FluentValidation in handlers and add endpoint-level payload checks where needed.
-- Reject oversized payloads and unsupported content types.
-- Prefer explicit DTO contracts over exposing EF entities directly.
+## 4. Xác thực request contract tại rìa hệ thống
 
-## 5. Add observability
+- Tiếp tục dùng FluentValidation trong handler, đồng thời thêm check payload ở endpoint nếu cần.
+- Từ chối payload quá lớn và content-type không hỗ trợ.
+- Ưu tiên DTO contract tường minh thay vì lộ trực tiếp EF entity.
 
-- Add structured logs for route, entity id, tenant id, and correlation id.
-- Emit traces around each endpoint and handler execution.
-- Track metrics for p95 latency and non-2xx rates per route.
+## 5. Bổ sung observability
 
-## 6. Harden API lifecycle
+- Ghi structured log gồm route, entity id, tenant id, correlation id.
+- Phát trace quanh mỗi lần chạy endpoint và handler.
+- Theo dõi p95 latency và tỉ lệ non-2xx theo từng route.
 
-- Add API versioning strategy before external consumers onboard.
-- Use idempotency keys for create/update flows that can be retried.
-- Add integration tests for all generated route paths.
+## 6. Hardening vòng đời API
 
-## Recommended startup pattern
+- Định nghĩa chiến lược versioning trước khi mở cho consumer bên ngoài.
+- Dùng idempotency key cho các luồng create/update có khả năng retry.
+- Thêm integration tests cho toàn bộ generated routes.
+
+## Mẫu startup khuyến nghị
 
 ```csharp
 builder.Services.AddProblemDetails();

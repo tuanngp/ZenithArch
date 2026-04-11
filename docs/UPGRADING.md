@@ -1,80 +1,82 @@
-# Upgrading
+# Nâng cấp
 
-## Upgrade workflow
+[Tiếng Việt](UPGRADING.md) | [English](UPGRADING.en.md)
 
-1. Update package versions in a branch.
-2. Run `dotnet test RynorArch.slnx`.
-3. Compare generated output for a representative sample project.
-4. Read `CHANGELOG.md` for behavior changes and diagnostics updates.
-5. Roll out to additional modules only after the first upgraded module is stable.
+## Quy trình nâng cấp
 
-## Profile-first migration (recommended)
+1. Cập nhật version package trên một branch riêng.
+2. Chạy `dotnet test RynorArch.slnx`.
+3. So sánh output sinh mã trên một dự án mẫu đại diện.
+4. Đọc `CHANGELOG.md` để nắm thay đổi về hành vi và diagnostics.
+5. Chỉ rollout sang các module khác khi module nâng cấp đầu tiên đã ổn định.
 
-Profile-first configuration is now the preferred setup style for new and upgraded modules.
-See `docs/UPGRADING_PROFILES.md` for explicit before/after mappings.
+## Migration profile-first (khuyến nghị)
 
-When you migrate:
+Cấu hình profile-first là hướng ưu tiên cho module mới và module nâng cấp.
+Xem mapping trước/sau tại `docs/UPGRADING_PROFILES.md`.
 
-1. Choose the closest starter profile.
-2. Remove explicit flags that duplicate profile defaults.
-3. Keep only intentional overrides.
+Khi migration:
 
-## Hybrid refactor migration notes
+1. Chọn starter profile gần nhất.
+2. Gỡ explicit flags trùng với mặc định của profile.
+3. Giữ lại các flag override có chủ đích.
 
-The current generator reduces per-entity source size by moving shared CRUD and EF Core interaction into a generated generic infrastructure layer.
+## Ghi chú migration sau hybrid refactor
 
-This means:
+Generator hiện giảm kích thước source theo entity bằng cách chuyển phần CRUD/EF dùng chung vào lớp hạ tầng generic được sinh.
 
-- generated repositories are now thin wrappers over `CrudRepository<TEntity>`
-- CQRS handlers still exist per entity, but their persistence logic delegates to shared helpers
-- the generated infrastructure is emitted once per compilation as a shared support file
+Điều này có nghĩa:
 
-## Breaking change impact
+- generated repositories là wrapper mỏng trên `CrudRepository<TEntity>`
+- CQRS handlers vẫn sinh theo từng entity, nhưng persistence logic chuyển sang shared helpers
+- lớp hạ tầng dùng chung được sinh một lần mỗi compilation
 
-You may need code changes if you previously:
+## Ảnh hưởng thay đổi breaking
 
-- depended on the exact body or members of generated repository implementations
-- subclassed or copied generated repository implementations
-- assumed every entity would get a full standalone CRUD implementation in generated output
+Bạn có thể cần sửa code nếu trước đây:
 
-## Migration approach
+- phụ thuộc vào nội dung/members cụ thể của generated repository implementation
+- kế thừa hoặc sao chép generated repository implementation
+- giả định mỗi entity luôn có một standalone CRUD implementation đầy đủ
 
-1. Replace any dependency on generated repository internals with the repository interface or the public generated handler types.
-2. Re-run the build and inspect the new generated infrastructure file plus the thinner repository output.
-3. Validate soft-delete, auditable, specification, and CQRS save-mode behavior in one representative module before wider rollout.
+## Hướng migration
 
-## Deep optimization notes
+1. Thay mọi phụ thuộc vào generated repository internals bằng repository interface hoặc generated handler public types.
+2. Rebuild và kiểm tra shared infrastructure file mới cùng output repository mỏng hơn.
+3. Xác minh soft-delete, auditable, specification và CQRS save-mode trên một module đại diện trước khi rollout rộng.
 
-The latest optimization pass is intended to be mostly internal and should preserve the public generated type shape from the hybrid refactor.
+## Ghi chú tối ưu sâu
 
-Key changes:
+Nhánh tối ưu mới chủ yếu là thay đổi nội bộ và cố gắng giữ nguyên public generated type shape từ hybrid refactor.
 
-- shared CRUD runtime now caches per-entity traits for repeated query paths
-- specification application is split internally into list/count branches with the same public API as before
-- `IUnitOfWork` is emitted once per compilation instead of once per entity
-- CQRS list filtering and generated specification filtering now use shared generation rules to reduce drift
+Các thay đổi chính:
 
-Most consumers should not need migration changes beyond rebuilding and validating representative generated output.
+- shared CRUD runtime cache per-entity traits cho các query path lặp lại
+- specification apply nội bộ tách thành list/count branch nhưng giữ API public như cũ
+- `IUnitOfWork` sinh một lần mỗi compilation thay vì theo từng entity
+- CQRS list filtering và specification filtering dùng chung generation rules để giảm lệch hành vi
 
-## Versioning policy
+Phần lớn hệ thống sử dụng không cần migration ngoài rebuild và kiểm tra output đại diện.
 
-- Patch: diagnostics, metadata, docs, or generated output fixes that should not require consumer rewrites.
-- Minor: new optional generator features or additive output.
-- Major: breaking generated API shape, changed conventions, or removed feature flags.
+## Chính sách version
 
-## Consumer safety tips
+- Patch: sửa diagnostics/metadata/docs/generated output mà thường không cần rewrite phía consumer.
+- Minor: thêm tính năng generator tùy chọn hoặc output mở rộng không phá vỡ.
+- Major: thay đổi generated API shape, convention lớn hoặc loại bỏ feature flags.
 
-- Do not auto-upgrade generator packages in production applications.
-- Keep at least one sample project pinned to the current production version for comparison.
-- Treat generator output changes as potentially breaking even when compile succeeds.
+## Khuyến nghị an toàn cho phía consumer
 
-## Developer experience checks during upgrade
+- Không auto-upgrade generator package trong ứng dụng production.
+- Giữ ít nhất một sample project pin ở version production hiện tại để so sánh.
+- Xem mọi thay đổi generated output là có khả năng breaking kể cả khi compile vẫn pass.
 
-After upgrading, validate observability and diagnostics in addition to compile success:
+## Checklist trải nghiệm dev khi nâng cấp
 
-1. Confirm `RynorArch.GenerationReport.g.cs` is emitted and lists expected entities/artifacts.
-2. Check generated headers for `rynor-artifact` metadata to ensure traceability is intact.
-3. Review `RYNOR007`-`RYNOR013` diagnostics and resolve all errors before rollout.
-4. If CQRS is enabled, validate `DbContextType` (if set) resolves to a real `DbContext` (`RYNOR008`).
-5. If endpoint generation is enabled, confirm explicit experimental opt-in is present (`RYNOR012`).
-6. If using repository `UseUnitOfWork`, switch startup wiring to `AddRynorArchDependencies<TDbContext>()` for low-touch registration of the generated `IUnitOfWork` adapter.
+Sau khi nâng cấp, ngoài compile success, cần kiểm tra observability và diagnostics:
+
+1. Xác nhận `RynorArch.GenerationReport.g.cs` được sinh và liệt kê đúng entities/artifacts.
+2. Kiểm tra header metadata `rynor-artifact` trong file sinh để bảo đảm traceability.
+3. Rà `RYNOR007`-`RYNOR013` và xử lý toàn bộ lỗi trước rollout.
+4. Nếu bật CQRS, xác minh `DbContextType` (nếu set) resolve được về `DbContext` hợp lệ (`RYNOR008`).
+5. Nếu bật endpoint generation, xác minh đã có explicit experimental opt-in (`RYNOR012`).
+6. Nếu dùng `UseUnitOfWork` trong Repository, chuyển startup wiring sang `AddRynorArchDependencies<TDbContext>()` để auto-register generated `IUnitOfWork` adapter.
