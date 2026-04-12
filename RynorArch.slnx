@@ -8,6 +8,7 @@
     <Project Path="src/RynorArch.Generator/RynorArch.Generator.csproj" />
   </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/RynorArch.Abstractions.Tests/RynorArch.Abstractions.Tests.csproj" />
     <Project Path="tests/RynorArch.E2E.Tests/RynorArch.E2E.Tests.csproj" />
     <Project Path="tests/RynorArch.Generator.Tests/RynorArch.Generator.Tests.csproj" />
     <Project Path="tests/RynorArch.Integration.Tests/RynorArch.Integration.Tests.csproj" />
