@@ -1,62 +1,34 @@
 # RynorArch
 
-[Vietnamese](https://github.com/tuanngp/RynorArch/blob/main/README.vi.md) | [English](https://github.com/tuanngp/RynorArch/blob/main/README.md)
+Compile-time architecture automation for .NET with Roslyn incremental source generation.
 
-## Overview
-
-RynorArch is a compile-time .NET architecture automation framework powered by Roslyn Incremental Source Generators. It removes repetitive boilerplate while enforcing consistent clean architecture boundaries.
-
-## Why RynorArch
-
-- Compile-time generation with deterministic `.g.cs` output
-- No runtime reflection in the primary execution path
-- Explicit assembly-level architecture contract with fail-fast diagnostics
-- Hybrid generation model: per-entity contracts + shared runtime infrastructure emitted once per compilation
-- Native AOT-friendly design direction
+[![NuGet RynorArch.Abstractions](https://img.shields.io/nuget/v/RynorArch.Abstractions.svg)](https://www.nuget.org/packages/RynorArch.Abstractions)
+[![NuGet RynorArch.Generator](https://img.shields.io/nuget/v/RynorArch.Generator.svg)](https://www.nuget.org/packages/RynorArch.Generator)
+[![NuGet RynorArch.Cli](https://img.shields.io/nuget/v/RynorArch.Cli.svg)](https://www.nuget.org/packages/RynorArch.Cli)
 
 ## Installation
 
-```xml
-<PackageReference Include="RynorArch.Abstractions" Version="1.0.7" />
-<PackageReference Include="RynorArch.Generator" Version="1.0.7" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+```bash
+dotnet add package RynorArch.Abstractions
+dotnet add package RynorArch.Generator
 ```
 
-Optional CLI setup:
+For source generator usage, configure analyzer-style reference:
+
+```xml
+<ItemGroup>
+  <PackageReference Include="RynorArch.Abstractions" Version="1.0.8" />
+  <PackageReference Include="RynorArch.Generator" Version="1.0.8" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+</ItemGroup>
+```
+
+Optional CLI installation:
 
 ```bash
-dotnet tool install --global RynorArch.Cli --version 1.0.7
-dotnet tool update --global RynorArch.Cli --version 1.0.7
+dotnet tool install --global RynorArch.Cli --version 1.0.8
 ```
 
-## Feature Dependencies
-
-| Feature | Required dependency |
-| --- | --- |
-| CQRS / FullStack handlers | MediatR |
-| Validation generation | FluentValidation |
-| Persistence | Microsoft.EntityFrameworkCore |
-| Endpoint generation | Microsoft.AspNetCore.App |
-| Caching decorators | Microsoft.Extensions.Caching.* |
-
-## Quick Start
-
-### Path A (CLI-first)
-
-1. Add package references.
-2. Run `rynor init`.
-3. Run `rynor scaffold Trip MyApp.Domain`.
-4. Run `dotnet build`.
-5. Register generated runtime: `builder.Services.AddRynorArchDependencies();`.
-
-### Path B (manual generator-first)
-
-1. Add package references.
-2. Create `AssemblyConfig.cs` with `[assembly: Architecture(...)]`.
-3. Mark entity classes with `[Entity]` and `partial`.
-4. Build and inspect generated output in `obj/`.
-5. Register generated runtime in startup.
-
-## Architecture Configuration
+## Quickstart
 
 ```csharp
 using RynorArch.Abstractions.Attributes;
@@ -66,88 +38,141 @@ using RynorArch.Abstractions.Enums;
     Profile = ArchitectureProfile.CqrsQuickStart,
     Pattern = ArchitecturePattern.Cqrs,
     GenerateDependencyInjection = true,
-    DbContextType = typeof(MyApp.Infrastructure.Data.AppDbContext)
+    DbContextType = typeof(AppDbContext)
 )]
+
+namespace Demo.Domain;
+
+[Entity]
+public partial class Trip
+{
+    public Guid Id { get; set; }
+
+    [Required]
+    [MinLength(3)]
+    [MaxLength(120)]
+    public string Name { get; set; } = string.Empty;
+}
 ```
 
-### Supported Patterns
+Build once:
 
-- `ArchitecturePattern.Cqrs`
-- `ArchitecturePattern.Repository`
-- `ArchitecturePattern.FullStack`
+```bash
+dotnet build
+```
 
-### Starter Profiles
+Then register generated DI extensions:
 
-- `ArchitectureProfile.CqrsQuickStart`
-- `ArchitectureProfile.RepositoryQuickStart`
-- `ArchitectureProfile.FullStackQuickStart`
+```csharp
+builder.Services.AddRynorArchDependencies();
+```
 
-## Complete Supported Feature Catalog
+## Full API Reference
 
-### ArchitectureAttribute flags
+### RynorArch.Abstractions.Attributes
 
-- `UseSpecification`
-- `UseUnitOfWork`
-- `EnableValidation`
-- `GenerateDependencyInjection`
-- `GenerateEndpoints` + `EnableExperimentalEndpoints`
-- `GenerateDtos`
-- `GenerateEfConfigurations`
-- `GenerateCachingDecorators`
-- `GeneratePagination`
-- `DbContextType`
-- `CqrsSaveMode` (`PerHandler` or `PerRequestTransaction`)
+- `ArchitectureAttribute`: Assembly-level generation contract (pattern, profile, feature flags).
+  - Example: `[assembly: Architecture(Pattern = ArchitecturePattern.Cqrs, GenerateDependencyInjection = true)]`
+- `EntityAttribute`: Marks a class as a generation candidate entity.
+  - Example: `[Entity] public partial class Trip { }`
+- `AggregateRootAttribute`: Marks an entity as an aggregate root for domain-event-enabled generation.
+  - Example: `[Entity, AggregateRoot] public partial class Order : EntityBase { }`
+- `MapToAttribute`: Declares DTO/view model mapping targets.
+  - Example: `[MapTo(typeof(TripDto))] public partial class Trip : EntityBase { }`
+- `QueryFilterAttribute`: Marks properties as generated filter criteria.
+  - Example: `[QueryFilter] public string? Name { get; set; }`
+- `RequiredAttribute`: Marks a property as required for generated validators.
+  - Example: `[Required] public string Name { get; set; } = string.Empty;`
+- `MinLengthAttribute`: Declares minimum length validation.
+  - Example: `[MinLength(3)] public string Name { get; set; } = string.Empty;`
+- `MaxLengthAttribute`: Declares maximum length validation.
+  - Example: `[MaxLength(120)] public string Name { get; set; } = string.Empty;`
+- `EmailAttribute`: Marks a property for email-format validation.
+  - Example: `[Email] public string ContactEmail { get; set; } = string.Empty;`
 
-### Domain and attribute support
+### RynorArch.Abstractions.Enums
 
-- `[Entity]`
-- `[AggregateRoot]`
-- `[QueryFilter]`
-- `[MapTo(typeof(...))]`
-- Validation attributes: `[Required]`, `[MinLength]`, `[MaxLength]`, `[Email]`
+- `ArchitecturePattern`: Selects CQRS, Repository, or FullStack generation topology.
+  - Example: `Pattern = ArchitecturePattern.FullStack`
+- `ArchitectureProfile`: Applies starter flag presets.
+  - Example: `Profile = ArchitectureProfile.RepositoryQuickStart`
+- `CqrsSaveMode`: Controls write persistence timing.
+  - Example: `CqrsSaveMode = CqrsSaveMode.PerRequestTransaction`
 
-### Runtime extensibility support
+### RynorArch.Abstractions.Interfaces
 
-- Partial handlers/repositories/validators
-- Lifecycle hooks (`OnValidate`, `OnBeforeHandle`, `OnAfterHandle`, `OnBeforeQuery`)
-- Optional observer integration: `IRynorArchExecutionObserver`
-- Optional security context integration: `ISecurityContext`
+- `IAggregateRoot`: Aggregate marker with domain-event buffer contract.
+  - Example: `public partial class Order : EntityBase, IAggregateRoot { }`
+- `IDomainEvent`: Domain event contract with occurrence timestamp.
+  - Example: `public sealed record TripCreated(Guid TripId) : DomainEvent;`
+- `IAuditable`: Audit metadata contract.
+  - Example: `public DateTime CreatedAt { get; set; }`
+- `ISoftDelete`: Soft-delete contract.
+  - Example: `public bool IsDeleted { get; set; }`
+- `ISpecification<T>`: Query specification contract.
+  - Example: `public Expression<Func<Trip, bool>>? Criteria { get; }`
+- `ISecurityContext`: User/tenant context abstraction.
+  - Example: `public string? UserId => _http.User.Identity?.Name;`
+- `IRynorArchExecutionObserver`: Runtime observer hooks for telemetry.
+  - Example: `public void OnValidationFailed(string requestName, int failureCount) { ... }`
 
-### Runtime behaviors covered
+### RynorArch.Abstractions.Base
 
-- CQRS CRUD semantics
-- Soft delete (`ISoftDelete`)
-- Audit stamping (`IAuditable`)
-- Validation pipeline behavior
-- Per-request transaction save mode
-- Query caching + invalidation
-- Experimental endpoint generation with defined write semantics
+- `EntityBase`: Aggregate base type with `Id`, domain event buffering, and clear operations.
+  - Example: `public partial class Trip : EntityBase { }`
+- `DomainEvent`: Base immutable domain event record.
+  - Example: `public sealed record TripUpdated(Guid TripId) : DomainEvent;`
 
-### CLI support
+## Configuration
 
-- `rynor init`
-- `rynor scaffold <EntityName> [Namespace]`
-- `rynor doctor [ProjectPath]`
+### ArchitectureAttribute options
 
-## Compatibility
+| Option | Type | Default | Valid values |
+| --- | --- | --- | --- |
+| `Profile` | `ArchitectureProfile` | `Custom` | `Custom`, `CqrsQuickStart`, `RepositoryQuickStart`, `FullStackQuickStart` |
+| `Pattern` | `ArchitecturePattern` | `Cqrs` | `Cqrs`, `Repository`, `FullStack` |
+| `UseSpecification` | `bool` | `false` | `true` / `false` |
+| `UseUnitOfWork` | `bool` | `false` | `true` / `false` |
+| `EnableValidation` | `bool` | `false` | `true` / `false` |
+| `GenerateDependencyInjection` | `bool` | `false` | `true` / `false` |
+| `GenerateEndpoints` | `bool` | `false` | `true` / `false` |
+| `EnableExperimentalEndpoints` | `bool` | `false` | `true` / `false` |
+| `GenerateDtos` | `bool` | `false` | `true` / `false` |
+| `GenerateEfConfigurations` | `bool` | `false` | `true` / `false` |
+| `GenerateCachingDecorators` | `bool` | `false` | `true` / `false` |
+| `GeneratePagination` | `bool` | `false` | `true` / `false` |
+| `DbContextType` | `Type?` | `null` | Any `DbContext` type |
+| `CqrsSaveMode` | `CqrsSaveMode` | `PerHandler` | `PerHandler`, `PerRequestTransaction` |
 
-- Validated SDK: `.NET SDK 10.0.x`
-- Generator target: `netstandard2.0`
-- CLI runtimes: `net8.0`, `net9.0`, `net10.0`
+### Feature dependency expectations
 
-## Documentation
+- CQRS or FullStack generation: `MediatR`
+- Validation generation: `FluentValidation`
+- Persistence generation: `Microsoft.EntityFrameworkCore`
+- Endpoint generation: `Microsoft.AspNetCore.App`
+- Caching decorators: `Microsoft.Extensions.Caching.*`
 
-- [Getting Started](https://github.com/tuanngp/RynorArch/blob/main/docs/GETTING_STARTED.en.md)
-- [Feature Matrix](https://github.com/tuanngp/RynorArch/blob/main/docs/FEATURE_MATRIX.en.md)
-- [Integration Guide](https://github.com/tuanngp/RynorArch/blob/main/docs/INTEGRATION_GUIDE.en.md)
-- [AI Agent Playbook](https://github.com/tuanngp/RynorArch/blob/main/docs/AI_AGENT_PLAYBOOK.en.md)
-- [Attribute Reference](https://github.com/tuanngp/RynorArch/blob/main/docs/ATTRIBUTE_REFERENCE.en.md)
-- [Compatibility](https://github.com/tuanngp/RynorArch/blob/main/docs/COMPATIBILITY.en.md)
-- [Endpoint Hardening](https://github.com/tuanngp/RynorArch/blob/main/docs/ENDPOINT_HARDENING.en.md)
-- [Caching Operations](https://github.com/tuanngp/RynorArch/blob/main/docs/CACHING_OPERATIONS.en.md)
-- [Runtime Testing](https://github.com/tuanngp/RynorArch/blob/main/docs/RUNTIME_TESTING.en.md)
-- [Troubleshooting](https://github.com/tuanngp/RynorArch/blob/main/docs/TROUBLESHOOTING.en.md)
-- [Upgrading](https://github.com/tuanngp/RynorArch/blob/main/docs/UPGRADING.en.md)
-- [Upgrading Profiles](https://github.com/tuanngp/RynorArch/blob/main/docs/UPGRADING_PROFILES.en.md)
-- [Releasing](https://github.com/tuanngp/RynorArch/blob/main/docs/RELEASING.en.md)
-- [Changelog](https://github.com/tuanngp/RynorArch/blob/main/CHANGELOG.md)
+## Versioning Policy
+
+RynorArch follows SemVer (`MAJOR.MINOR.PATCH`).
+
+- Breaking public API changes require a major version bump.
+- New backward-compatible capabilities use a minor version bump.
+- Backward-compatible fixes and process improvements use a patch bump.
+
+Full change history: [CHANGELOG.md](https://github.com/tuanngp/RynorArch/blob/main/CHANGELOG.md)
+
+## Contributing
+
+Issues and pull requests are welcome.
+
+1. Open an issue with repro steps and expected behavior.
+2. Fork and create a feature branch.
+3. Add tests for behavior changes.
+4. Submit a pull request with changelog updates.
+
+Contribution guidelines: [CONTRIBUTING.md](https://github.com/tuanngp/RynorArch/blob/main/CONTRIBUTING.md)
+
+## License
+
+MIT. See [LICENSE](https://github.com/tuanngp/RynorArch/blob/main/LICENSE).

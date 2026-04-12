@@ -5,19 +5,29 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <VersionPrefix>1.0.7</VersionPrefix>
-    <PackageVersion>$(VersionPrefix)</PackageVersion>
+    <VersionPrefix>1.0.8</VersionPrefix>
+    <Version>$(VersionPrefix)</Version>
+    <PackageVersion>$(Version)</PackageVersion>
     <Authors>Nguyen Gia Phuong Tuan</Authors>
+    <Company>RynorArch Contributors</Company>
     <PackageProjectUrl>https://github.com/tuanngp/RynorArch</PackageProjectUrl>
     <RepositoryUrl>https://github.com/tuanngp/RynorArch</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageReleaseNotes>RynorArch $(PackageVersion): quality updates for generator output, diagnostics, and documentation. Full changelog: https://github.com/tuanngp/RynorArch/blob/main/CHANGELOG.md . Upgrade guide: https://github.com/tuanngp/RynorArch/blob/main/docs/UPGRADING.en.md .</PackageReleaseNotes>
+    <PackageIcon>icon.png</PackageIcon>
+    <PackageReleaseNotes>RynorArch $(PackageVersion): migration baseline for standardized NuGet process, SemVer governance, XML API docs, characterization tests, and CI tag-based publishing. Full changelog: https://github.com/tuanngp/RynorArch/blob/main/CHANGELOG.md</PackageReleaseNotes>
     <PackageTags>source-generator;roslyn;clean-architecture;cqrs;ddd;ef-core;mediatr;dotnet;nuget</PackageTags>
     <Deterministic>true</Deterministic>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
+    <IncludeSymbols Condition="'$(IsPackable)' == 'true'">true</IncludeSymbols>
+    <SymbolPackageFormat Condition="'$(IsPackable)' == 'true'">snupkg</SymbolPackageFormat>
     <IsPackable Condition="'$(IsPackable)' == ''">false</IsPackable>
   </PropertyGroup>
+
+  <ItemGroup Condition="'$(IsPackable)' == 'true'">
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
+  </ItemGroup>
 </Project>

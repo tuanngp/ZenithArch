@@ -7,5 +7,8 @@ namespace RynorArch.Abstractions.Base;
 /// </summary>
 public abstract record DomainEvent : IDomainEvent
 {
+    /// <summary>
+    /// Gets the UTC timestamp when the event instance was created.
+    /// </summary>
     public DateTime OccurredOn { get; } = DateTime.UtcNow;
 }

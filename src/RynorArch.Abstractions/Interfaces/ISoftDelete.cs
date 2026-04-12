@@ -5,5 +5,8 @@ namespace RynorArch.Abstractions.Interfaces;
 /// </summary>
 public interface ISoftDelete
 {
+    /// <summary>
+    /// Gets or sets a value indicating whether the entity is logically deleted.
+    /// </summary>
     bool IsDeleted { get; set; }
 }

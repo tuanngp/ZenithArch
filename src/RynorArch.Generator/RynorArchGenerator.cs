@@ -30,6 +30,16 @@ public sealed class RynorArchGenerator : IIncrementalGenerator
     private const string AggregateRootAttributeFqn = "RynorArch.Abstractions.Attributes.AggregateRootAttribute";
     private const string QueryFilterAttributeFqn = "RynorArch.Abstractions.Attributes.QueryFilterAttribute";
 
+    /// <summary>
+    /// Configures incremental pipelines for entity discovery, configuration resolution,
+    /// diagnostics, and source emission.
+    /// </summary>
+    /// <param name="context">The Roslyn incremental generator initialization context.</param>
+    /// <example>
+    /// <code>// Invoked by Roslyn during compilation.
+    /// // No direct user call is required.
+    /// </code>
+    /// </example>
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         // Step 1: Find all [Entity] classes using the most efficient Roslyn API.

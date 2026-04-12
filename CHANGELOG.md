@@ -1,11 +1,36 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+All notable changes to this project are documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+SemVer baseline decision:
+- Published versions before 1.0.8 are treated as legacy migration history.
+- Formal SemVer governance starts at 1.0.8 and is enforced for all future releases.
+- Existing published versions remain immutable and will not be altered or removed.
+
 ## [Unreleased]
+
+### Added
+- NuGet migration baseline: centralized SemVer governance beginning at 1.0.8.
+- XML documentation enforcement for public Abstractions API with CS1591 regression guard.
+- XML documentation enforcement for public Generator API models with CS1591 regression guard.
+- Characterization and public API tests for Abstractions behavior.
+- Local-feed NuGet package integration test project to validate packed artifacts before release.
+
+### Changed
+- Package metadata hardening: package icon, release notes normalization, deterministic symbol package settings.
+- README standardized to a consumer-first package format with API and configuration coverage.
+- CI release gates updated so publish runs only on version tags and fails if NuGet API key is missing.
+
+### Fixed
+- Changelog structure aligned to Keep a Changelog with dated historical entries.
+
+### Security
+- No security fixes in this cycle.
+
+## [1.0.7] - 2026-04-11
 
 ### Added
 - Automated generator regression tests for diagnostics and generated outputs.
@@ -44,14 +69,114 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Added profile migration recommendation diagnostic (`RYNOR014`) and linked behavior notices to hardening docs.
 - Added generated `RynorArchValidationBehavior<,>` and DI wiring so `EnableValidation` now enforces command validators automatically at runtime.
 - Added `RYNOR015` warning to flag `EnableValidation` with `GenerateDependencyInjection = false` when validation pipeline wiring must be registered manually.
-- Corrected generated endpoint write semantics: `POST` now returns `{ id = ... }`, while `PUT`/`DELETE` now return `404` when target entities are missing.
+- Corrected generated endpoint write semantics: `POST` now returns `{ id = ... }`, while `PUT` and `DELETE` now return `404` when target entities are missing.
 - Updated generated CQRS write handlers for aggregate roots to raise generated domain events (`Created`, `Updated`, `Deleted`) before persistence.
 - Hardened generated EF configuration string detection to support fully-qualified string type names.
 - Optimized generated validation behavior to avoid unnecessary allocations when no validators are registered and to lazily allocate validation failure buffers.
 - Made generated endpoint and DI outputs deterministic by sorting namespaces/entities, reducing incremental build churn and cache invalidation noise.
 - Added `RYNOR016` diagnostic to surface endpoint hardening checklist reminders when endpoint generation is enabled.
 
-## [1.0.6]
+### Fixed
+- Resolved endpoint semantics mismatch for write operations by returning expected HTTP contracts.
+- Reduced incremental generation churn by enforcing stable ordering in generated outputs.
+
+### Security
+- No security fixes in this release.
+
+## [1.0.6] - 2026-04-05
 
 ### Added
 - Initial published package set for `RynorArch.Abstractions`, `RynorArch.Generator`, and `RynorArch.Cli`.
+
+### Changed
+- Legacy release from pre-standardized NuGet workflow period.
+
+### Fixed
+- Legacy release details not fully retained.
+
+### Security
+- No known security fixes documented.
+
+## [1.0.5] - 2026-04-05
+
+### Added
+- Legacy patch release (historical details unavailable).
+
+### Changed
+- Package set publication alignment during early rollout.
+
+### Fixed
+- Legacy patch corrections (details unavailable).
+
+### Security
+- No known security fixes documented.
+
+## [1.0.4] - 2026-04-05
+
+### Added
+- Legacy patch release (historical details unavailable).
+
+### Changed
+- Package set publication alignment during early rollout.
+
+### Fixed
+- Legacy patch corrections (details unavailable).
+
+### Security
+- No known security fixes documented.
+
+## [1.0.3] - 2026-04-05
+
+### Added
+- Legacy patch release (historical details unavailable).
+
+### Changed
+- Package set publication alignment during early rollout.
+
+### Fixed
+- Legacy patch corrections (details unavailable).
+
+### Security
+- No known security fixes documented.
+
+## [1.0.2] - 2026-04-05
+
+### Added
+- Legacy patch release introducing multi-package publication for Abstractions and CLI alongside Generator.
+
+### Changed
+- Package version track divergence began (Generator already had 1.0.0 and 1.0.1).
+
+### Fixed
+- Legacy packaging fixes (details unavailable).
+
+### Security
+- No known security fixes documented.
+
+## [1.0.1] - 2026-04-05
+
+### Added
+- Legacy patch release for `RynorArch.Generator` (historical details unavailable).
+
+### Changed
+- Generator-only package iteration before full package set alignment.
+
+### Fixed
+- Legacy generator patch corrections (details unavailable).
+
+### Security
+- No known security fixes documented.
+
+## [1.0.0] - 2026-04-05
+
+### Added
+- Initial documented release of `RynorArch.Generator` on NuGet.org.
+
+### Changed
+- Pre-standardization release from legacy process.
+
+### Fixed
+- Legacy release details unavailable.
+
+### Security
+- No known security fixes documented.

@@ -5,5 +5,8 @@ namespace RynorArch.Abstractions.Interfaces;
 /// </summary>
 public interface IDomainEvent
 {
+    /// <summary>
+    /// Gets the UTC timestamp when the event was raised.
+    /// </summary>
     DateTime OccurredOn { get; }
 }

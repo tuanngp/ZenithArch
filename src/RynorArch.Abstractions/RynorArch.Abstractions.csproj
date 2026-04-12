@@ -5,9 +5,12 @@
     <IsPackable>true</IsPackable>
     <Description>Public API attributes and base types for RynorArch compile-time architecture automation.</Description>
     <PackageId>RynorArch.Abstractions</PackageId>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <WarningsAsErrors>$(WarningsAsErrors);CS1591</WarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="..\..\assets\icon.png" Pack="true" PackagePath="\" Visible="false" />
     <None Include="..\..\README.md" Pack="true" PackagePath="\" />
   </ItemGroup>
 
