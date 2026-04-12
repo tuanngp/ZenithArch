@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.CSharp;
@@ -49,17 +50,20 @@ internal static class EntityTransformer
             ? string.Empty
             : typeSymbol.ContainingNamespace.ToDisplayString();
 
+        var typeAttributes = typeSymbol.GetAttributes();
+
         // Check for AggregateRoot
-        bool isAggregateRoot = HasAttribute(typeSymbol, AggregateRootAttributeFqn);
+        bool isAggregateRoot = HasAttribute(typeAttributes, AggregateRootAttributeFqn);
 
         // Extract MapTo target
         string? mapToTypeName = null;
         string? mapToTypeNamespace = null;
-        ExtractMapToTarget(typeSymbol, ref mapToTypeName, ref mapToTypeNamespace);
+        ExtractMapToTarget(typeAttributes, ref mapToTypeName, ref mapToTypeNamespace);
 
         // Check for Interfaces (SoftDelete, Auditable)
-        bool isSoftDelete = HasInterface(typeSymbol, SoftDeleteInterfaceFqn);
-        bool isAuditable = HasInterface(typeSymbol, AuditableInterfaceFqn);
+        var interfaces = typeSymbol.AllInterfaces;
+        bool isSoftDelete = HasInterface(interfaces, SoftDeleteInterfaceFqn);
+        bool isAuditable = HasInterface(interfaces, AuditableInterfaceFqn);
 
         // Extract properties — no LINQ, explicit loop
         var members = typeSymbol.GetMembers();
@@ -81,10 +85,12 @@ internal static class EntityTransformer
             if (propSymbol.Name == "Id")
                 continue;
 
-            var propModel = ExtractProperty(propSymbol);
+            var propertyAttributes = propSymbol.GetAttributes();
+
+            var propModel = ExtractProperty(propSymbol, propertyAttributes);
             properties.Add(propModel);
 
-            if (HasAttribute(propSymbol, QueryFilterAttributeFqn)
+            if (HasAttribute(propertyAttributes, QueryFilterAttributeFqn)
                 && IsSupportedQueryFilterType(propSymbol.Type))
             {
                 filterProperties.Add(propModel);
@@ -137,16 +143,110 @@ internal static class EntityTransformer
             int cqrsSaveMode = 0;
             int profile = 0;
 
-            var namedArgs = attr.NamedArguments;
+            int? explicitPattern = null;
+            bool? explicitUseSpecification = null;
+            bool? explicitUseUnitOfWork = null;
+            bool? explicitEnableValidation = null;
+            bool? explicitGenerateDependencyInjection = null;
+            bool? explicitGenerateEndpoints = null;
+            bool? explicitEnableExperimentalEndpoints = null;
+            bool? explicitGenerateDtos = null;
+            bool? explicitGenerateEfConfigurations = null;
+            bool? explicitGenerateCachingDecorators = null;
+            bool? explicitGeneratePagination = null;
+            string? explicitDbContextTypeName = null;
+            int? explicitCqrsSaveMode = null;
 
-            // First pass: resolve profile to establish low-touch defaults.
+            var namedArgs = attr.NamedArguments;
             for (int j = 0; j < namedArgs.Length; j++)
             {
                 var arg = namedArgs[j];
-                if (arg.Key == "Profile" && arg.Value.Value is int configuredProfile)
+                switch (arg.Key)
                 {
-                    profile = configuredProfile;
-                    break;
+                    case "Profile":
+                        if (arg.Value.Value is int configuredProfile)
+                        {
+                            profile = configuredProfile;
+                        }
+                        break;
+                    case "Pattern":
+                        if (arg.Value.Value is int configuredPattern)
+                        {
+                            explicitPattern = configuredPattern;
+                        }
+                        break;
+                    case "UseSpecification":
+                        if (arg.Value.Value is bool configuredUseSpecification)
+                        {
+                            explicitUseSpecification = configuredUseSpecification;
+                        }
+                        break;
+                    case "UseUnitOfWork":
+                        if (arg.Value.Value is bool configuredUseUnitOfWork)
+                        {
+                            explicitUseUnitOfWork = configuredUseUnitOfWork;
+                        }
+                        break;
+                    case "EnableValidation":
+                        if (arg.Value.Value is bool configuredEnableValidation)
+                        {
+                            explicitEnableValidation = configuredEnableValidation;
+                        }
+                        break;
+                    case "GenerateDependencyInjection":
+                        if (arg.Value.Value is bool configuredGenerateDependencyInjection)
+                        {
+                            explicitGenerateDependencyInjection = configuredGenerateDependencyInjection;
+                        }
+                        break;
+                    case "GenerateEndpoints":
+                        if (arg.Value.Value is bool configuredGenerateEndpoints)
+                        {
+                            explicitGenerateEndpoints = configuredGenerateEndpoints;
+                        }
+                        break;
+                    case "GenerateDtos":
+                        if (arg.Value.Value is bool configuredGenerateDtos)
+                        {
+                            explicitGenerateDtos = configuredGenerateDtos;
+                        }
+                        break;
+                    case "GenerateEfConfigurations":
+                        if (arg.Value.Value is bool configuredGenerateEfConfigurations)
+                        {
+                            explicitGenerateEfConfigurations = configuredGenerateEfConfigurations;
+                        }
+                        break;
+                    case "GenerateCachingDecorators":
+                        if (arg.Value.Value is bool configuredGenerateCachingDecorators)
+                        {
+                            explicitGenerateCachingDecorators = configuredGenerateCachingDecorators;
+                        }
+                        break;
+                    case "GeneratePagination":
+                        if (arg.Value.Value is bool configuredGeneratePagination)
+                        {
+                            explicitGeneratePagination = configuredGeneratePagination;
+                        }
+                        break;
+                    case "EnableExperimentalEndpoints":
+                        if (arg.Value.Value is bool configuredEnableExperimentalEndpoints)
+                        {
+                            explicitEnableExperimentalEndpoints = configuredEnableExperimentalEndpoints;
+                        }
+                        break;
+                    case "CqrsSaveMode":
+                        if (arg.Value.Value is int configuredSaveMode)
+                        {
+                            explicitCqrsSaveMode = configuredSaveMode;
+                        }
+                        break;
+                    case "DbContextType":
+                        if (arg.Value.Value is INamedTypeSymbol dbContextSymbol)
+                        {
+                            explicitDbContextTypeName = dbContextSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                        }
+                        break;
                 }
             }
 
@@ -165,60 +265,70 @@ internal static class EntityTransformer
                 ref generatePagination,
                 ref cqrsSaveMode);
 
-            // Second pass: explicit flags always override profile defaults.
-            for (int j = 0; j < namedArgs.Length; j++)
+            // Explicit flags always override profile defaults.
+            if (explicitPattern.HasValue)
             {
-                var arg = namedArgs[j];
-                switch (arg.Key)
-                {
-                    case "Profile":
-                        break;
-                    case "Pattern":
-                        pattern = (int)arg.Value.Value!;
-                        break;
-                    case "UseSpecification":
-                        useSpecification = (bool)arg.Value.Value!;
-                        break;
-                    case "UseUnitOfWork":
-                        useUnitOfWork = (bool)arg.Value.Value!;
-                        break;
-                    case "EnableValidation":
-                        enableValidation = (bool)arg.Value.Value!;
-                        break;
-                    case "GenerateDependencyInjection":
-                        generateDependencyInjection = (bool)arg.Value.Value!;
-                        break;
-                    case "GenerateEndpoints":
-                        generateEndpoints = (bool)arg.Value.Value!;
-                        break;
-                    case "GenerateDtos":
-                        generateDtos = (bool)arg.Value.Value!;
-                        break;
-                    case "GenerateEfConfigurations":
-                        generateEfConfigurations = (bool)arg.Value.Value!;
-                        break;
-                    case "GenerateCachingDecorators":
-                        generateCachingDecorators = (bool)arg.Value.Value!;
-                        break;
-                    case "GeneratePagination":
-                        generatePagination = (bool)arg.Value.Value!;
-                        break;
-                    case "EnableExperimentalEndpoints":
-                        enableExperimentalEndpoints = (bool)arg.Value.Value!;
-                        break;
-                    case "CqrsSaveMode":
-                        if (arg.Value.Value is int configuredSaveMode)
-                        {
-                            cqrsSaveMode = configuredSaveMode;
-                        }
-                        break;
-                    case "DbContextType":
-                        if (arg.Value.Value is INamedTypeSymbol dbContextSymbol)
-                        {
-                            cqrsDbContextTypeName = dbContextSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
-                        }
-                        break;
-                }
+                pattern = explicitPattern.Value;
+            }
+
+            if (explicitUseSpecification.HasValue)
+            {
+                useSpecification = explicitUseSpecification.Value;
+            }
+
+            if (explicitUseUnitOfWork.HasValue)
+            {
+                useUnitOfWork = explicitUseUnitOfWork.Value;
+            }
+
+            if (explicitEnableValidation.HasValue)
+            {
+                enableValidation = explicitEnableValidation.Value;
+            }
+
+            if (explicitGenerateDependencyInjection.HasValue)
+            {
+                generateDependencyInjection = explicitGenerateDependencyInjection.Value;
+            }
+
+            if (explicitGenerateEndpoints.HasValue)
+            {
+                generateEndpoints = explicitGenerateEndpoints.Value;
+            }
+
+            if (explicitEnableExperimentalEndpoints.HasValue)
+            {
+                enableExperimentalEndpoints = explicitEnableExperimentalEndpoints.Value;
+            }
+
+            if (explicitGenerateDtos.HasValue)
+            {
+                generateDtos = explicitGenerateDtos.Value;
+            }
+
+            if (explicitGenerateEfConfigurations.HasValue)
+            {
+                generateEfConfigurations = explicitGenerateEfConfigurations.Value;
+            }
+
+            if (explicitGenerateCachingDecorators.HasValue)
+            {
+                generateCachingDecorators = explicitGenerateCachingDecorators.Value;
+            }
+
+            if (explicitGeneratePagination.HasValue)
+            {
+                generatePagination = explicitGeneratePagination.Value;
+            }
+
+            if (explicitCqrsSaveMode.HasValue)
+            {
+                cqrsSaveMode = explicitCqrsSaveMode.Value;
+            }
+
+            if (explicitDbContextTypeName is not null)
+            {
+                cqrsDbContextTypeName = explicitDbContextTypeName;
             }
 
             return new ArchitectureConfig(
@@ -377,7 +487,7 @@ internal static class EntityTransformer
         return false;
     }
 
-    private static PropertyModel ExtractProperty(IPropertySymbol propSymbol)
+    private static PropertyModel ExtractProperty(IPropertySymbol propSymbol, ImmutableArray<AttributeData> attributes)
     {
         var type = propSymbol.Type;
         bool isNullable = type.NullableAnnotation == NullableAnnotation.Annotated;
@@ -407,7 +517,7 @@ internal static class EntityTransformer
 
         string typeName = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
-        ValidationRules? validation = ExtractValidation(propSymbol);
+    ValidationRules? validation = ExtractValidation(attributes);
 
         return new PropertyModel(
             name: propSymbol.Name,
@@ -418,10 +528,9 @@ internal static class EntityTransformer
             validation: validation);
     }
 
-    private static ValidationRules? ExtractValidation(IPropertySymbol propSymbol)
+    private static ValidationRules? ExtractValidation(ImmutableArray<AttributeData> attributes)
     {
         ValidationRules? rules = null;
-        var attributes = propSymbol.GetAttributes();
 
         for (int i = 0; i < attributes.Length; i++)
         {
@@ -448,18 +557,26 @@ internal static class EntityTransformer
     {
         if (type.TypeArguments.Length == 0) return false;
 
-        string name = type.OriginalDefinition.ToDisplayString();
-        return name == "System.Collections.Generic.IEnumerable<T>"
-            || name == "System.Collections.Generic.ICollection<T>"
-            || name == "System.Collections.Generic.IList<T>"
-            || name == "System.Collections.Generic.List<T>"
-            || name == "System.Collections.Generic.IReadOnlyList<T>"
-            || name == "System.Collections.Generic.IReadOnlyCollection<T>";
+        var originalDefinition = type.OriginalDefinition;
+        if (!string.Equals(originalDefinition.ContainingNamespace.ToDisplayString(), "System.Collections.Generic", System.StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        string name = originalDefinition.MetadataName;
+        return name == "IEnumerable`1"
+            || name == "ICollection`1"
+            || name == "IList`1"
+            || name == "List`1"
+            || name == "IReadOnlyList`1"
+            || name == "IReadOnlyCollection`1";
     }
 
     private static bool HasAttribute(ISymbol symbol, string attributeFqn)
+        => HasAttribute(symbol.GetAttributes(), attributeFqn);
+
+    private static bool HasAttribute(ImmutableArray<AttributeData> attributes, string attributeFqn)
     {
-        var attributes = symbol.GetAttributes();
         for (int i = 0; i < attributes.Length; i++)
         {
             if (attributes[i].AttributeClass is { } attrClass
@@ -486,9 +603,8 @@ internal static class EntityTransformer
             : null;
     }
 
-    private static void ExtractMapToTarget(INamedTypeSymbol typeSymbol, ref string? typeName, ref string? typeNamespace)
+    private static void ExtractMapToTarget(ImmutableArray<AttributeData> attributes, ref string? typeName, ref string? typeNamespace)
     {
-        var attributes = typeSymbol.GetAttributes();
         for (int i = 0; i < attributes.Length; i++)
         {
             var attr = attributes[i];
@@ -510,8 +626,10 @@ internal static class EntityTransformer
     }
 
     private static bool HasInterface(INamedTypeSymbol typeSymbol, string interfaceFqn)
+        => HasInterface(typeSymbol.AllInterfaces, interfaceFqn);
+
+    private static bool HasInterface(ImmutableArray<INamedTypeSymbol> interfaces, string interfaceFqn)
     {
-        var interfaces = typeSymbol.AllInterfaces;
         for (int i = 0; i < interfaces.Length; i++)
         {
             if (string.Equals(interfaces[i].ToDisplayString(), interfaceFqn, System.StringComparison.Ordinal))

@@ -218,3 +218,7 @@ samples/**/Generated/
 
 # Local .NET tool-path installs used by release validation scripts
 .tools/
+
+# BenchmarkDotNet outputs
+BenchmarkDotNet.Artifacts/
+**/BenchmarkDotNet.Artifacts/

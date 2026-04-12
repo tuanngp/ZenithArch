@@ -62,7 +62,14 @@ internal static class GlobalResolver
             return;
         }
 
-        if (config.IsCqrs && !HasType(compilation, "MediatR.IMediator"))
+        bool hasMediator = HasType(compilation, "MediatR.IMediator");
+        bool hasFluentValidation = HasType(compilation, "FluentValidation.AbstractValidator`1");
+        var dbContextSymbol = compilation.GetTypeByMetadataName("Microsoft.EntityFrameworkCore.DbContext");
+        bool hasDbContext = dbContextSymbol is not null;
+        bool hasEndpointRouteBuilder = HasType(compilation, "Microsoft.AspNetCore.Routing.IEndpointRouteBuilder");
+        bool hasDistributedCache = HasType(compilation, "Microsoft.Extensions.Caching.Distributed.IDistributedCache");
+
+        if (config.IsCqrs && !hasMediator)
         {
             ReportMissingDependency(
                 context,
@@ -72,7 +79,7 @@ internal static class GlobalResolver
                 "<PackageReference Include=\"MediatR\" Version=\"14.*\" />");
         }
 
-        if (config.EnableValidation && !HasType(compilation, "FluentValidation.AbstractValidator`1"))
+        if (config.EnableValidation && !hasFluentValidation)
         {
             ReportMissingDependency(
                 context,
@@ -83,7 +90,7 @@ internal static class GlobalResolver
         }
 
         if ((config.IsCqrs || config.IsRepository || config.GenerateEfConfigurations) &&
-            !HasType(compilation, "Microsoft.EntityFrameworkCore.DbContext"))
+            !hasDbContext)
         {
             ReportMissingDependency(
                 context,
@@ -94,8 +101,8 @@ internal static class GlobalResolver
         }
 
         if (config.IsCqrs
-            && HasType(compilation, "Microsoft.EntityFrameworkCore.DbContext")
-            && !ValidateConfiguredDbContextType(compilation, config.CqrsDbContextTypeName))
+            && hasDbContext
+            && !ValidateConfiguredDbContextType(compilation, config.CqrsDbContextTypeName, dbContextSymbol!))
         {
             context.ReportDiagnostic(Diagnostic.Create(
                 DiagnosticDescriptors.InvalidConfiguredDbContextType,
@@ -109,7 +116,7 @@ internal static class GlobalResolver
                 DiagnosticDescriptors.ExperimentalEndpointFlagRequired,
                 location));
         }
-        else if (config.GenerateEndpoints && !HasType(compilation, "Microsoft.AspNetCore.Routing.IEndpointRouteBuilder"))
+        else if (config.GenerateEndpoints && !hasEndpointRouteBuilder)
         {
             ReportMissingDependency(
                 context,
@@ -126,7 +133,7 @@ internal static class GlobalResolver
                 "GenerateEndpoints is set to true but selected pattern does not generate CQRS request/handler types."));
         }
 
-        if (config.GenerateCachingDecorators && !HasType(compilation, "Microsoft.Extensions.Caching.Distributed.IDistributedCache"))
+        if (config.GenerateCachingDecorators && !hasDistributedCache)
         {
             ReportMissingDependency(
                 context,
@@ -195,14 +202,8 @@ internal static class GlobalResolver
     private static bool HasType(Compilation compilation, string metadataName) =>
         compilation.GetTypeByMetadataName(metadataName) is not null;
 
-    private static bool ValidateConfiguredDbContextType(Compilation compilation, string configuredTypeName)
+    private static bool ValidateConfiguredDbContextType(Compilation compilation, string configuredTypeName, INamedTypeSymbol dbContextSymbol)
     {
-        var dbContextSymbol = compilation.GetTypeByMetadataName("Microsoft.EntityFrameworkCore.DbContext");
-        if (dbContextSymbol is null)
-        {
-            return false;
-        }
-
         var resolved = compilation.GetTypeByMetadataName(ToMetadataName(configuredTypeName));
         if (resolved is null)
         {
