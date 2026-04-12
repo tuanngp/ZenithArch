@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <VersionPrefix>1.0.6</VersionPrefix>
+    <VersionPrefix>1.0.7</VersionPrefix>
     <PackageVersion>$(VersionPrefix)</PackageVersion>
     <Authors>Nguyen Gia Phuong Tuan</Authors>
     <PackageProjectUrl>https://github.com/tuanngp/RynorArch</PackageProjectUrl>
@@ -14,7 +14,7 @@
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-    <PackageReleaseNotes>See CHANGELOG.md for release details.</PackageReleaseNotes>
+    <PackageReleaseNotes>RynorArch $(PackageVersion): quality updates for generator output, diagnostics, and documentation. Full changelog: https://github.com/tuanngp/RynorArch/blob/main/CHANGELOG.md . Upgrade guide: https://github.com/tuanngp/RynorArch/blob/main/docs/UPGRADING.en.md .</PackageReleaseNotes>
     <PackageTags>source-generator;roslyn;clean-architecture;cqrs;ddd;ef-core;mediatr;dotnet;nuget</PackageTags>
     <Deterministic>true</Deterministic>
     <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>

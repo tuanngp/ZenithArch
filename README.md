@@ -1,75 +1,62 @@
 # RynorArch
 
-[Tiếng Việt](README.md) | [English](README.en.md)
+[Vietnamese](https://github.com/tuanngp/RynorArch/blob/main/README.vi.md) | [English](https://github.com/tuanngp/RynorArch/blob/main/README.md)
 
-## RynorArch là gì?
+## Overview
 
-RynorArch là framework tự động hóa kiến trúc .NET ở compile-time bằng Roslyn Incremental Source Generator. Bạn mô tả kiến trúc một lần qua `[assembly: Architecture(...)]`, generator sẽ sinh phần CRUD/CQRS/DI/validation theo pattern đã chọn.
+RynorArch is a compile-time .NET architecture automation framework powered by Roslyn Incremental Source Generators. It removes repetitive boilerplate while enforcing consistent clean architecture boundaries.
 
-Mục tiêu chính:
+## Why RynorArch
 
-- Giảm boilerplate lặp đi lặp lại.
-- Giữ ranh giới kiến trúc rõ ràng và nhất quán.
-- Có output sinh mã dễ kiểm tra trong `obj/`.
-- Fail-fast khi cấu hình thiếu hoặc sai.
+- Compile-time generation with deterministic `.g.cs` output
+- No runtime reflection in the primary execution path
+- Explicit assembly-level architecture contract with fail-fast diagnostics
+- Hybrid generation model: per-entity contracts + shared runtime infrastructure emitted once per compilation
+- Native AOT-friendly design direction
 
-## Bắt đầu trong 5 phút
-
-### 1) Cài package
+## Installation
 
 ```xml
-<PackageReference Include="RynorArch.Abstractions" Version="1.0.6" />
-<PackageReference Include="RynorArch.Generator" Version="1.0.6" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+<PackageReference Include="RynorArch.Abstractions" Version="1.0.7" />
+<PackageReference Include="RynorArch.Generator" Version="1.0.7" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 ```
 
-### 2) Sinh cấu hình nhanh bằng CLI
+Optional CLI setup:
 
 ```bash
-rynor init
+dotnet tool install --global RynorArch.Cli --version 1.0.7
+dotnet tool update --global RynorArch.Cli --version 1.0.7
 ```
 
-### 3) Scaffold entity đầu tiên
+## Feature Dependencies
 
-```bash
-rynor scaffold Trip MyApp.Domain
-```
-
-### 4) Build để generator chạy
-
-```bash
-dotnet build
-```
-
-### 5) Wire runtime trong startup
-
-```csharp
-builder.Services.AddRynorArchDependencies();
-```
-
-Kết quả mong đợi sau 5 bước:
-
-- Có `AssemblyConfig.cs`.
-- Có entity/partials vừa scaffold.
-- Có file sinh trong `obj/` và `RynorArch.GenerationReport.g.cs`.
-- Ứng dụng chạy được với DI đã đăng ký.
-
-## Chọn pattern trong 30 giây
-
-| Nếu bạn cần | Chọn pattern |
+| Feature | Required dependency |
 | --- | --- |
-| Tách command/query rõ ràng, xử lý qua MediatR | `Cqrs` |
-| Ưu tiên repository boundary và unit of work | `Repository` |
-| Muốn dùng đồng thời CQRS và Repository | `FullStack` |
+| CQRS / FullStack handlers | MediatR |
+| Validation generation | FluentValidation |
+| Persistence | Microsoft.EntityFrameworkCore |
+| Endpoint generation | Microsoft.AspNetCore.App |
+| Caching decorators | Microsoft.Extensions.Caching.* |
 
-Starter profile tương ứng:
+## Quick Start
 
-- `ArchitectureProfile.CqrsQuickStart`
-- `ArchitectureProfile.RepositoryQuickStart`
-- `ArchitectureProfile.FullStackQuickStart`
+### Path A (CLI-first)
 
-Lưu ý: flag tường minh trong `Architecture(...)` luôn ghi đè profile mặc định.
+1. Add package references.
+2. Run `rynor init`.
+3. Run `rynor scaffold Trip MyApp.Domain`.
+4. Run `dotnet build`.
+5. Register generated runtime: `builder.Services.AddRynorArchDependencies();`.
 
-## Cấu hình mẫu an toàn cho dự án mới
+### Path B (manual generator-first)
+
+1. Add package references.
+2. Create `AssemblyConfig.cs` with `[assembly: Architecture(...)]`.
+3. Mark entity classes with `[Entity]` and `partial`.
+4. Build and inspect generated output in `obj/`.
+5. Register generated runtime in startup.
+
+## Architecture Configuration
 
 ```csharp
 using RynorArch.Abstractions.Attributes;
@@ -78,81 +65,89 @@ using RynorArch.Abstractions.Enums;
 [assembly: Architecture(
     Profile = ArchitectureProfile.CqrsQuickStart,
     Pattern = ArchitecturePattern.Cqrs,
-    GenerateDependencyInjection = true
+    GenerateDependencyInjection = true,
+    DbContextType = typeof(MyApp.Infrastructure.Data.AppDbContext)
 )]
 ```
 
-Khi đã có DbContext cụ thể, bạn có thể bổ sung `DbContextType = typeof(...)`.
+### Supported Patterns
 
-## Tính năng được hỗ trợ
+- `ArchitecturePattern.Cqrs`
+- `ArchitecturePattern.Repository`
+- `ArchitecturePattern.FullStack`
 
-### Cấu hình và sinh mã
+### Starter Profiles
 
-- `UseSpecification`: sinh specification từ property có `[QueryFilter]`.
-- `UseUnitOfWork`: sinh `IUnitOfWork` (Repository/FullStack).
-- `EnableValidation`: sinh FluentValidation validator cho command ghi.
-- `GenerateDependencyInjection`: sinh `AddRynorArchDependencies(...)`.
-- `GenerateDtos`: sinh DTO record + mapping extension.
-- `GenerateEfConfigurations`: sinh `IEntityTypeConfiguration<T>`.
-- `GeneratePagination`: sinh artifacts phân trang/sắp xếp.
+- `ArchitectureProfile.CqrsQuickStart`
+- `ArchitectureProfile.RepositoryQuickStart`
+- `ArchitectureProfile.FullStackQuickStart`
 
-### Runtime behavior
+## Complete Supported Feature Catalog
 
-- `CqrsSaveMode`: `PerHandler` hoặc `PerRequestTransaction`.
-- `GenerateCachingDecorators`: sinh cache behaviors + invalidation contracts.
-- Endpoint generation (experimental): cần cả `GenerateEndpoints = true` và `EnableExperimentalEndpoints = true`.
-- Endpoint write semantics mặc định: POST `201`, PUT/DELETE `404` hoặc `204`.
+### ArchitectureAttribute flags
 
-### Domain và extensibility
+- `UseSpecification`
+- `UseUnitOfWork`
+- `EnableValidation`
+- `GenerateDependencyInjection`
+- `GenerateEndpoints` + `EnableExperimentalEndpoints`
+- `GenerateDtos`
+- `GenerateEfConfigurations`
+- `GenerateCachingDecorators`
+- `GeneratePagination`
+- `DbContextType`
+- `CqrsSaveMode` (`PerHandler` or `PerRequestTransaction`)
 
-- Attribute hỗ trợ: `[Entity]`, `[AggregateRoot]`, `[QueryFilter]`, `[MapTo(typeof(...))]`.
-- Validation attributes: `[Required]`, `[MinLength]`, `[MaxLength]`, `[Email]`.
-- Partial hooks: `OnValidate`, `OnBeforeHandle`, `OnAfterHandle`, `OnBeforeQuery`.
-- Optional hooks: `IRynorArchExecutionObserver`, `ISecurityContext`.
+### Domain and attribute support
 
-### CLI và readiness gate
+- `[Entity]`
+- `[AggregateRoot]`
+- `[QueryFilter]`
+- `[MapTo(typeof(...))]`
+- Validation attributes: `[Required]`, `[MinLength]`, `[MaxLength]`, `[Email]`
+
+### Runtime extensibility support
+
+- Partial handlers/repositories/validators
+- Lifecycle hooks (`OnValidate`, `OnBeforeHandle`, `OnAfterHandle`, `OnBeforeQuery`)
+- Optional observer integration: `IRynorArchExecutionObserver`
+- Optional security context integration: `ISecurityContext`
+
+### Runtime behaviors covered
+
+- CQRS CRUD semantics
+- Soft delete (`ISoftDelete`)
+- Audit stamping (`IAuditable`)
+- Validation pipeline behavior
+- Per-request transaction save mode
+- Query caching + invalidation
+- Experimental endpoint generation with defined write semantics
+
+### CLI support
 
 - `rynor init`
 - `rynor scaffold <EntityName> [Namespace]`
 - `rynor doctor [ProjectPath]`
 
-`rynor doctor` trả về `NOT READY`, `READY WITH WARNINGS`, hoặc `READY` để bạn quyết định có thể đi tiếp hay không.
+## Compatibility
 
-## Phụ thuộc theo tính năng
-
-| Tính năng | Phụ thuộc bắt buộc |
-| --- | --- |
-| Handler CQRS / FullStack | MediatR |
-| Sinh validation | FluentValidation |
-| Persistence | Microsoft.EntityFrameworkCore |
-| Sinh endpoint | Microsoft.AspNetCore.App |
-| Caching decorators | Microsoft.Extensions.Caching.* |
-
-## Checklist trước khi commit
-
-1. Chạy `dotnet build` và bảo đảm không có lỗi generator.
-2. Chạy `rynor doctor` và xử lý toàn bộ FAIL checks.
-3. Nếu có endpoint/caching/transaction mode, chạy integration tests phù hợp.
-4. Kiểm tra `RynorArch.GenerationReport.g.cs` có đúng entities và artifacts kỳ vọng.
-
-## Tương thích
-
-- SDK đã xác thực: `.NET SDK 10.0.x`
+- Validated SDK: `.NET SDK 10.0.x`
 - Generator target: `netstandard2.0`
-- CLI runtime targets: `net8.0`, `net9.0`, `net10.0`
+- CLI runtimes: `net8.0`, `net9.0`, `net10.0`
 
-## Tài liệu theo mục tiêu
+## Documentation
 
-- Muốn setup nhanh từ đầu: [Bắt đầu nhanh](docs/GETTING_STARTED.md)
-- Muốn tích hợp runtime vào startup: [Hướng dẫn tích hợp](docs/INTEGRATION_GUIDE.md)
-- Muốn xem toàn bộ cờ tính năng: [Ma trận tính năng](docs/FEATURE_MATRIX.md)
-- Muốn tra attribute: [Tham chiếu attribute](docs/ATTRIBUTE_REFERENCE.md)
-- Muốn xử lý lỗi nhanh: [Xử lý sự cố](docs/TROUBLESHOOTING.md)
-- Muốn rollout endpoint an toàn: [Hardening endpoint](docs/ENDPOINT_HARDENING.md)
-- Muốn vận hành cache: [Vận hành caching](docs/CACHING_OPERATIONS.md)
-- Muốn test runtime end-to-end: [Kiểm thử runtime](docs/RUNTIME_TESTING.md)
-- Muốn nâng cấp version: [Nâng cấp](docs/UPGRADING.md)
-- Muốn migration profile-first: [Nâng cấp profile](docs/UPGRADING_PROFILES.md)
-- Muốn phát hành package: [Quy trình release](docs/RELEASING.md)
-- Muốn workflow cho AI agent: [Cẩm nang AI agent](docs/AI_AGENT_PLAYBOOK.md)
-- Theo dõi thay đổi version: [Changelog](CHANGELOG.md)
+- [Getting Started](https://github.com/tuanngp/RynorArch/blob/main/docs/GETTING_STARTED.en.md)
+- [Feature Matrix](https://github.com/tuanngp/RynorArch/blob/main/docs/FEATURE_MATRIX.en.md)
+- [Integration Guide](https://github.com/tuanngp/RynorArch/blob/main/docs/INTEGRATION_GUIDE.en.md)
+- [AI Agent Playbook](https://github.com/tuanngp/RynorArch/blob/main/docs/AI_AGENT_PLAYBOOK.en.md)
+- [Attribute Reference](https://github.com/tuanngp/RynorArch/blob/main/docs/ATTRIBUTE_REFERENCE.en.md)
+- [Compatibility](https://github.com/tuanngp/RynorArch/blob/main/docs/COMPATIBILITY.en.md)
+- [Endpoint Hardening](https://github.com/tuanngp/RynorArch/blob/main/docs/ENDPOINT_HARDENING.en.md)
+- [Caching Operations](https://github.com/tuanngp/RynorArch/blob/main/docs/CACHING_OPERATIONS.en.md)
+- [Runtime Testing](https://github.com/tuanngp/RynorArch/blob/main/docs/RUNTIME_TESTING.en.md)
+- [Troubleshooting](https://github.com/tuanngp/RynorArch/blob/main/docs/TROUBLESHOOTING.en.md)
+- [Upgrading](https://github.com/tuanngp/RynorArch/blob/main/docs/UPGRADING.en.md)
+- [Upgrading Profiles](https://github.com/tuanngp/RynorArch/blob/main/docs/UPGRADING_PROFILES.en.md)
+- [Releasing](https://github.com/tuanngp/RynorArch/blob/main/docs/RELEASING.en.md)
+- [Changelog](https://github.com/tuanngp/RynorArch/blob/main/CHANGELOG.md)

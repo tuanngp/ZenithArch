@@ -1,6 +1,6 @@
 # RynorArch
 
-[Tiếng Việt](README.md) | [English](README.en.md)
+[Vietnamese](https://github.com/tuanngp/RynorArch/blob/main/README.vi.md) | [English](https://github.com/tuanngp/RynorArch/blob/main/README.md)
 
 ## Overview
 
@@ -17,8 +17,15 @@ RynorArch is a compile-time .NET architecture automation framework powered by Ro
 ## Installation
 
 ```xml
-<PackageReference Include="RynorArch.Abstractions" Version="1.0.6" />
-<PackageReference Include="RynorArch.Generator" Version="1.0.6" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+<PackageReference Include="RynorArch.Abstractions" Version="1.0.7" />
+<PackageReference Include="RynorArch.Generator" Version="1.0.7" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+```
+
+Optional CLI setup:
+
+```bash
+dotnet tool install --global RynorArch.Cli --version 1.0.7
+dotnet tool update --global RynorArch.Cli --version 1.0.7
 ```
 
 ## Feature Dependencies
@@ -130,17 +137,17 @@ using RynorArch.Abstractions.Enums;
 
 ## Documentation
 
-- [Getting Started](docs/GETTING_STARTED.en.md)
-- [Feature Matrix](docs/FEATURE_MATRIX.en.md)
-- [Integration Guide](docs/INTEGRATION_GUIDE.en.md)
-- [AI Agent Playbook](docs/AI_AGENT_PLAYBOOK.en.md)
-- [Attribute Reference](docs/ATTRIBUTE_REFERENCE.en.md)
-- [Compatibility](docs/COMPATIBILITY.en.md)
-- [Endpoint Hardening](docs/ENDPOINT_HARDENING.en.md)
-- [Caching Operations](docs/CACHING_OPERATIONS.en.md)
-- [Runtime Testing](docs/RUNTIME_TESTING.en.md)
-- [Troubleshooting](docs/TROUBLESHOOTING.en.md)
-- [Upgrading](docs/UPGRADING.en.md)
-- [Upgrading Profiles](docs/UPGRADING_PROFILES.en.md)
-- [Releasing](docs/RELEASING.en.md)
-- [Changelog](CHANGELOG.md)
+- [Getting Started](https://github.com/tuanngp/RynorArch/blob/main/docs/GETTING_STARTED.en.md)
+- [Feature Matrix](https://github.com/tuanngp/RynorArch/blob/main/docs/FEATURE_MATRIX.en.md)
+- [Integration Guide](https://github.com/tuanngp/RynorArch/blob/main/docs/INTEGRATION_GUIDE.en.md)
+- [AI Agent Playbook](https://github.com/tuanngp/RynorArch/blob/main/docs/AI_AGENT_PLAYBOOK.en.md)
+- [Attribute Reference](https://github.com/tuanngp/RynorArch/blob/main/docs/ATTRIBUTE_REFERENCE.en.md)
+- [Compatibility](https://github.com/tuanngp/RynorArch/blob/main/docs/COMPATIBILITY.en.md)
+- [Endpoint Hardening](https://github.com/tuanngp/RynorArch/blob/main/docs/ENDPOINT_HARDENING.en.md)
+- [Caching Operations](https://github.com/tuanngp/RynorArch/blob/main/docs/CACHING_OPERATIONS.en.md)
+- [Runtime Testing](https://github.com/tuanngp/RynorArch/blob/main/docs/RUNTIME_TESTING.en.md)
+- [Troubleshooting](https://github.com/tuanngp/RynorArch/blob/main/docs/TROUBLESHOOTING.en.md)
+- [Upgrading](https://github.com/tuanngp/RynorArch/blob/main/docs/UPGRADING.en.md)
+- [Upgrading Profiles](https://github.com/tuanngp/RynorArch/blob/main/docs/UPGRADING_PROFILES.en.md)
+- [Releasing](https://github.com/tuanngp/RynorArch/blob/main/docs/RELEASING.en.md)
+- [Changelog](https://github.com/tuanngp/RynorArch/blob/main/CHANGELOG.md)
