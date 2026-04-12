@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using RynorArch.Generator.Diagnostics;
 using RynorArch.Generator.Emitters;
+using RynorArch.Generator.Helpers;
 using RynorArch.Generator.Models;
 
 namespace RynorArch.Generator.Resolvers;
@@ -104,17 +105,19 @@ internal static class GlobalResolver
             && hasDbContext
             && !ValidateConfiguredDbContextType(compilation, config.CqrsDbContextTypeName, dbContextSymbol!))
         {
-            context.ReportDiagnostic(Diagnostic.Create(
+            DiagnosticReporter.Report(
+                context,
                 DiagnosticDescriptors.InvalidConfiguredDbContextType,
                 location,
-                config.CqrsDbContextTypeName));
+                config.CqrsDbContextTypeName);
         }
 
         if (config.GenerateEndpoints && !config.EnableExperimentalEndpoints)
         {
-            context.ReportDiagnostic(Diagnostic.Create(
+            DiagnosticReporter.Report(
+                context,
                 DiagnosticDescriptors.ExperimentalEndpointFlagRequired,
-                location));
+                location);
         }
         else if (config.GenerateEndpoints && !hasEndpointRouteBuilder)
         {
@@ -127,10 +130,11 @@ internal static class GlobalResolver
         }
         else if (config.GenerateEndpoints && !config.IsCqrs)
         {
-            context.ReportDiagnostic(Diagnostic.Create(
+            DiagnosticReporter.Report(
+                context,
                 DiagnosticDescriptors.FeatureFlagIgnored,
                 location,
-                "GenerateEndpoints is set to true but selected pattern does not generate CQRS request/handler types."));
+                "GenerateEndpoints is set to true but selected pattern does not generate CQRS request/handler types.");
         }
 
         if (config.GenerateCachingDecorators && !hasDistributedCache)
@@ -145,42 +149,48 @@ internal static class GlobalResolver
 
         if (config.IsPerRequestTransactionSaveMode && !config.GenerateDependencyInjection)
         {
-            context.ReportDiagnostic(Diagnostic.Create(
+            DiagnosticReporter.Report(
+                context,
                 DiagnosticDescriptors.SaveModeRequiresGeneratedDi,
-                location));
+                location);
         }
 
         if (config.EnableValidation && !config.GenerateDependencyInjection)
         {
-            context.ReportDiagnostic(Diagnostic.Create(
+            DiagnosticReporter.Report(
+                context,
                 DiagnosticDescriptors.ValidationRequiresGeneratedDi,
-                location));
+                location);
         }
 
         if (config.GenerateEndpoints && config.EnableExperimentalEndpoints && config.IsCqrs)
         {
-            context.ReportDiagnostic(Diagnostic.Create(
+            DiagnosticReporter.Report(
+                context,
                 DiagnosticDescriptors.EndpointBehaviorNotice,
-                location));
+                location);
 
-            context.ReportDiagnostic(Diagnostic.Create(
+            DiagnosticReporter.Report(
+                context,
                 DiagnosticDescriptors.EndpointHardeningChecklistRequired,
-                location));
+                location);
         }
 
         if (config.GenerateCachingDecorators && config.IsCqrs)
         {
-            context.ReportDiagnostic(Diagnostic.Create(
+            DiagnosticReporter.Report(
+                context,
                 DiagnosticDescriptors.CachingBehaviorNotice,
-                location));
+                location);
         }
 
         if (ShouldSuggestProfileMigration(config))
         {
-            context.ReportDiagnostic(Diagnostic.Create(
+            DiagnosticReporter.Report(
+                context,
                 DiagnosticDescriptors.LegacyConfigurationProfileHint,
                 location,
-                GetSuggestedProfile(config)));
+                GetSuggestedProfile(config));
         }
     }
 
@@ -191,12 +201,13 @@ internal static class GlobalResolver
         string packageName,
         string referenceHint)
     {
-        context.ReportDiagnostic(Diagnostic.Create(
+        DiagnosticReporter.Report(
+            context,
             DiagnosticDescriptors.MissingRequiredDependency,
             location,
             feature,
             packageName,
-            referenceHint));
+            referenceHint);
     }
 
     private static bool HasType(Compilation compilation, string metadataName) =>

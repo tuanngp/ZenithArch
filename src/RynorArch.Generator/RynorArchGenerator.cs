@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using RynorArch.Generator.Diagnostics;
+using RynorArch.Generator.Helpers;
 using RynorArch.Generator.Models;
 using RynorArch.Generator.Pipeline;
 using RynorArch.Generator.Resolvers;
@@ -125,25 +126,28 @@ public sealed class RynorArchGenerator : IIncrementalGenerator
         {
             if (pair.EntityDeclarations.Length == 0)
             {
-                spc.ReportDiagnostic(Diagnostic.Create(
+                DiagnosticReporter.Report(
+                    spc,
                     DiagnosticDescriptors.NoEntitiesFound,
-                    Location.None));
+                    Location.None);
             }
 
             if (!pair.HasConfiguration)
             {
-                spc.ReportDiagnostic(Diagnostic.Create(
+                DiagnosticReporter.Report(
+                    spc,
                     DiagnosticDescriptors.MissingArchitectureConfiguration,
-                    Location.None));
+                    Location.None);
             }
         });
 
         context.RegisterSourceOutput(nonPartialEntityDiagnostics, static (spc, entry) =>
         {
-            spc.ReportDiagnostic(Diagnostic.Create(
+            DiagnosticReporter.Report(
+                spc,
                 DiagnosticDescriptors.EntityMustBePartial,
                 entry!.Value.Location,
-                entry.Value.ClassName));
+                entry.Value.ClassName);
         });
 
         IncrementalValuesProvider<(string PropertyName, string EntityName, Location Location)?> unsupportedQueryFilters = context.SyntaxProvider
@@ -167,11 +171,12 @@ public sealed class RynorArchGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(unsupportedQueryFilters, static (spc, entry) =>
         {
-            spc.ReportDiagnostic(Diagnostic.Create(
+            DiagnosticReporter.Report(
+                spc,
                 DiagnosticDescriptors.UnsupportedFilterType,
                 entry!.Value.Location,
                 entry!.Value.PropertyName,
-                entry.Value.EntityName));
+                entry.Value.EntityName);
         });
 
         // Step 6: AggregateRoot validation — check [AggregateRoot] without [Entity].
@@ -202,10 +207,11 @@ public sealed class RynorArchGenerator : IIncrementalGenerator
 
         context.RegisterSourceOutput(aggregateRootWithoutEntity, static (spc, entry) =>
         {
-            spc.ReportDiagnostic(Diagnostic.Create(
+            DiagnosticReporter.Report(
+                spc,
                 DiagnosticDescriptors.AggregateRootWithoutEntity,
                 entry!.Value.Location,
-                entry.Value.ClassName));
+                entry.Value.ClassName);
         });
     }
 
