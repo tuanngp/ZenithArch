@@ -26,8 +26,35 @@ jobs:
       - name: Build
         run: dotnet build RynorArch.slnx --configuration Release --no-restore
 
+      - name: Validate Abstractions target frameworks
+        run: |
+          for tfm in netstandard2.0 netstandard2.1 net6.0 net8.0 net9.0; do
+            echo "Building RynorArch.Abstractions for $tfm"
+            dotnet build src/RynorArch.Abstractions/RynorArch.Abstractions.csproj --configuration Release --no-restore --framework "$tfm"
+          done
+
       - name: Test
         run: dotnet test RynorArch.slnx --configuration Release --no-build
+
+      - name: Abstractions coverage gate (80% line)
+        run: |
+          echo "Enforcing Abstractions line coverage threshold: 80%"
+          dotnet test tests/RynorArch.Abstractions.Tests/RynorArch.Abstractions.Tests.csproj \
+            --configuration Release \
+            /p:CollectCoverage=true \
+            /p:CoverletOutput=./TestResults/Coverage/ \
+            /p:CoverletOutputFormat=cobertura \
+            /p:Include="[RynorArch.Abstractions]*" \
+            /p:Threshold=80 \
+            /p:ThresholdType=line \
+            /p:ThresholdStat=total
+
+      - name: Upload Abstractions coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: abstractions-coverage
+          path: tests/RynorArch.Abstractions.Tests/TestResults/Coverage/**
 
       - name: Vulnerability audit
         run: dotnet list RynorArch.slnx package --vulnerable --include-transitive

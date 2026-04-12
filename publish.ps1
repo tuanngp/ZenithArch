@@ -20,6 +20,10 @@ Bumps the minor version (e.g. 1.0.1 -> 1.1.0), automatically reads `$env:NUGET_A
 .EXAMPLE
 .\publish.ps1 -Increment Major -Push -ApiKey "YOUR_API_KEY"
 Bumps the major version, builds, and pushes using the provided ApiKey.
+
+.EXAMPLE
+.\publish.ps1 -Increment None -SkipApiCompat
+Builds and packs without running the Abstractions ApiCompat baseline validation.
 #>
 param (
     [Parameter(Mandatory=$false)]
@@ -30,7 +34,10 @@ param (
     [string]$ApiKey,
 
     [Parameter(Mandatory=$false)]
-    [switch]$Push
+    [switch]$Push,
+
+    [Parameter(Mandatory=$false)]
+    [switch]$SkipApiCompat
 )
 
 $ErrorActionPreference = "Stop"
@@ -89,6 +96,12 @@ $projectFiles = Get-ChildItem -Path (Join-Path $PSScriptRoot "src") -Filter "*.c
 foreach ($projectFile in $projectFiles) {
     Write-Host "Packing $($projectFile.Name)..." -ForegroundColor Gray
     dotnet pack $projectFile.FullName -c Release -o $artifactsDir --no-build
+    if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+}
+
+if (-not $SkipApiCompat) {
+    Write-Host "`nRunning Abstractions API compatibility validation..." -ForegroundColor Cyan
+    & (Join-Path $PSScriptRoot "eng/Validate-AbstractionsApiCompat.ps1") -ArtifactsDir "artifacts" -PackageId "RynorArch.Abstractions"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 

@@ -11,6 +11,8 @@ Use the repository script to validate build/test/pack locally before creating a 
 ./publish.ps1 -Increment None
 ```
 
+By default, the script also runs an ApiCompat baseline check for `RynorArch.Abstractions` against the previous NuGet release.
+
 Do not run `dotnet nuget push` manually. Publishing is handled by GitHub Actions on tag pushes.
 
 ## Automated release flow
@@ -40,6 +42,9 @@ Branch protection policy for `main`:
 - Run `dotnet restore RynorArch.slnx`.
 - Run `dotnet build RynorArch.slnx -c Release`.
 - Run `dotnet test RynorArch.slnx -c Release`.
+- Run framework-specific compile checks for `RynorArch.Abstractions` (`netstandard2.0`, `netstandard2.1`, `net6.0`, `net8.0`, `net9.0`).
+- Confirm Abstractions API compatibility baseline validation passes (`eng/Validate-AbstractionsApiCompat.ps1`).
+- Confirm Abstractions coverage artifact is generated and line coverage is at least 80%.
 - Run `dotnet test tests/RynorArch.NuGetIntegration.Tests/RynorArch.NuGetIntegration.Tests.csproj -c Release` after packing to `local-feed`.
 - Run `dotnet test tests/RynorArch.Integration.Tests/RynorArch.Integration.Tests.csproj -c Release`.
 - Run `dotnet run --project src/RynorArch.Cli/RynorArch.Cli.csproj -- doctor samples/RynorArch.Sample`.

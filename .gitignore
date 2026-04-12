@@ -215,3 +215,6 @@ coverage*
 samples/**/Generated/
 
 *.env
+
+# Local .NET tool-path installs used by release validation scripts
+.tools/
