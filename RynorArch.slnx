@@ -12,5 +12,6 @@
     <Project Path="tests/RynorArch.E2E.Tests/RynorArch.E2E.Tests.csproj" />
     <Project Path="tests/RynorArch.Generator.Tests/RynorArch.Generator.Tests.csproj" />
     <Project Path="tests/RynorArch.Integration.Tests/RynorArch.Integration.Tests.csproj" />
+    <Project Path="tests/RynorArch.Performance.Tests/RynorArch.Performance.Tests.csproj" />
   </Folder>
 </Solution>

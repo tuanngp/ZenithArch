@@ -45,6 +45,8 @@ Branch protection policy for `main`:
 - Run framework-specific compile checks for `RynorArch.Abstractions` (`netstandard2.0`, `netstandard2.1`, `net6.0`, `net8.0`, `net9.0`).
 - Confirm Abstractions API compatibility baseline validation passes (`eng/Validate-AbstractionsApiCompat.ps1`).
 - Confirm Abstractions coverage artifact is generated and line coverage is at least 80%.
+- Run generator compile-time benchmark smoke (`dotnet run --project tests/RynorArch.Performance.Tests/RynorArch.Performance.Tests.csproj -c Release -- --filter *RunGenerator* --job Dry`).
+- Verify benchmark artifacts are generated under `tests/RynorArch.Performance.Tests/BenchmarkDotNet.Artifacts/results`.
 - Run `dotnet test tests/RynorArch.NuGetIntegration.Tests/RynorArch.NuGetIntegration.Tests.csproj -c Release` after packing to `local-feed`.
 - Run `dotnet test tests/RynorArch.Integration.Tests/RynorArch.Integration.Tests.csproj -c Release`.
 - Run `dotnet run --project src/RynorArch.Cli/RynorArch.Cli.csproj -- doctor samples/RynorArch.Sample`.

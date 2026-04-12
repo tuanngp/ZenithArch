@@ -50,6 +50,18 @@ dotnet test RynorArch.slnx -c Release
 dotnet run --project src/RynorArch.Cli/RynorArch.Cli.csproj -- doctor samples/RynorArch.Sample
 ```
 
+## Generator performance baseline (compile-time)
+
+Run dry benchmarks for generator hot paths:
+
+```powershell
+dotnet run --project tests/RynorArch.Performance.Tests/RynorArch.Performance.Tests.csproj -c Release -- --filter *RunGenerator* --job Dry
+```
+
+Benchmark artifacts are written to:
+
+- `tests/RynorArch.Performance.Tests/BenchmarkDotNet.Artifacts/results`
+
 ## Writing new runtime tests
 
 1. Reuse `IntegrationTestHost` to boot a SQLite-backed service collection.

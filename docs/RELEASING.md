@@ -30,6 +30,8 @@ Mặc định script sẽ chạy thêm ApiCompat baseline cho `RynorArch.Abstrac
 - Chạy compile check theo từng framework của `RynorArch.Abstractions` (`netstandard2.0`, `netstandard2.1`, `net6.0`, `net8.0`, `net9.0`).
 - Xác nhận ApiCompat baseline pass bằng `eng/Validate-AbstractionsApiCompat.ps1`.
 - Xác nhận artifact coverage của Abstractions được tạo và line coverage đạt tối thiểu 80%.
+- Chạy benchmark compile-time cho generator (`dotnet run --project tests/RynorArch.Performance.Tests/RynorArch.Performance.Tests.csproj -c Release -- --filter *RunGenerator* --job Dry`).
+- Xác nhận benchmark artifacts được tạo tại `tests/RynorArch.Performance.Tests/BenchmarkDotNet.Artifacts/results`.
 - Chạy `dotnet test tests/RynorArch.Integration.Tests/RynorArch.Integration.Tests.csproj -c Release`.
 - Chạy `dotnet run --project src/RynorArch.Cli/RynorArch.Cli.csproj -- doctor samples/RynorArch.Sample`.
 - Xác nhận các kịch bản runtime trong `docs/RUNTIME_TESTING.md` đều xanh.

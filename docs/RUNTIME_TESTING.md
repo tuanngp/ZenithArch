@@ -49,6 +49,18 @@ dotnet test RynorArch.slnx -c Release
 dotnet run --project src/RynorArch.Cli/RynorArch.Cli.csproj -- doctor samples/RynorArch.Sample
 ```
 
+## Baseline performance cho generator (compile-time)
+
+Chạy benchmark dạng dry cho các hot path của generator:
+
+```powershell
+dotnet run --project tests/RynorArch.Performance.Tests/RynorArch.Performance.Tests.csproj -c Release -- --filter *RunGenerator* --job Dry
+```
+
+Artifact benchmark được ghi vào:
+
+- `tests/RynorArch.Performance.Tests/BenchmarkDotNet.Artifacts/results`
+
 ## Viết thêm runtime tests
 
 1. Tái sử dụng `IntegrationTestHost` để khởi tạo service collection chạy trên SQLite.
