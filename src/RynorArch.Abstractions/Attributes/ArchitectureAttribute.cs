@@ -55,6 +55,12 @@ public sealed class ArchitectureAttribute : Attribute
     public bool EnableExperimentalEndpoints { get; set; }
 
     /// <summary>
+    /// Optional hardening mode for generated endpoints.
+    /// Default value keeps endpoint output unchanged.
+    /// </summary>
+    public EndpointHardeningMode EndpointHardeningMode { get; set; } = EndpointHardeningMode.None;
+
+    /// <summary>
     /// When true, generates DTO records and mapping extensions for Entity.
     /// </summary>
     public bool GenerateDtos { get; set; }

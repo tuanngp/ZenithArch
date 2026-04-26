@@ -8,6 +8,8 @@ namespace RynorArch.Generator.Emitters;
 
 internal static class EndpointEmitter
 {
+    private const int RequireAuthorizationHardeningMode = 1;
+
     public static void Emit(SourceProductionContext context, ImmutableArray<EntityModel> entities, ArchitectureConfig config)
     {
         if (entities.Length == 0 || !config.IsCqrs) return;
@@ -52,6 +54,8 @@ internal static class EndpointEmitter
         sb.AppendLine("    public static IEndpointRouteBuilder MapRynorArchEndpoints(this IEndpointRouteBuilder endpoints)");
         sb.AppendLine("    {");
 
+        bool requiresAuthorization = config.EndpointHardeningMode >= RequireAuthorizationHardeningMode;
+
         for (int i = 0; i < sortedEntities.Length; i++)
         {
             var entity = sortedEntities[i];
@@ -61,8 +65,19 @@ internal static class EndpointEmitter
             sb.AppendLine($"        endpoints.MapGet(\"/api/{slug}/{{id:guid}}\", async (Guid id, [FromServices] IMediator mediator) =>");
             sb.AppendLine("        {");
             sb.AppendLine($"            var result = await mediator.Send(new Get{entity.Name}ByIdQuery(id));");
-            sb.AppendLine("            return result is not null ? Results.Ok(result) : Results.NotFound();");
+            if (requiresAuthorization)
+            {
+                sb.AppendLine("            return result is not null ? Results.Ok(result) : Results.NotFound(new ProblemDetails { Title = \"Not Found\", Detail = \"Requested resource was not found.\", Status = StatusCodes.Status404NotFound });");
+            }
+            else
+            {
+                sb.AppendLine("            return result is not null ? Results.Ok(result) : Results.NotFound();");
+            }
             sb.AppendLine($"        }}).WithName(\"Get{entity.Name}ById\")");
+            if (requiresAuthorization)
+            {
+                sb.AppendLine("          .RequireAuthorization()");
+            }
             sb.AppendLine($"          .WithTags(\"{entity.Name}\");");
             sb.AppendLine();
             
@@ -72,16 +87,38 @@ internal static class EndpointEmitter
             sb.AppendLine($"            var result = await mediator.Send(command);");
             sb.AppendLine($"            return Results.Created($\"/api/{slug}/{{result}}\", new {{ id = result }});");
             sb.AppendLine($"        }}).WithName(\"Create{entity.Name}\")");
+            if (requiresAuthorization)
+            {
+                sb.AppendLine("          .RequireAuthorization()");
+            }
             sb.AppendLine($"          .WithTags(\"{entity.Name}\");");
             sb.AppendLine();
             
             // Map PUT
             sb.AppendLine($"        endpoints.MapPut(\"/api/{slug}/{{id:guid}}\", async (Guid id, [FromBody] Update{entity.Name}Command command, [FromServices] IMediator mediator) =>");
             sb.AppendLine("        {");
-            sb.AppendLine("            if (id != command.Id) return Results.BadRequest();");
+            if (requiresAuthorization)
+            {
+                sb.AppendLine("            if (id != command.Id) return Results.BadRequest(new ProblemDetails { Title = \"Bad Request\", Detail = \"Route id must match payload id.\", Status = StatusCodes.Status400BadRequest });");
+            }
+            else
+            {
+                sb.AppendLine("            if (id != command.Id) return Results.BadRequest();");
+            }
             sb.AppendLine($"            var success = await mediator.Send(command);");
-            sb.AppendLine("            return success ? Results.NoContent() : Results.NotFound();");
+            if (requiresAuthorization)
+            {
+                sb.AppendLine("            return success ? Results.NoContent() : Results.NotFound(new ProblemDetails { Title = \"Not Found\", Detail = \"Requested resource was not found.\", Status = StatusCodes.Status404NotFound });");
+            }
+            else
+            {
+                sb.AppendLine("            return success ? Results.NoContent() : Results.NotFound();");
+            }
             sb.AppendLine($"        }}).WithName(\"Update{entity.Name}\")");
+            if (requiresAuthorization)
+            {
+                sb.AppendLine("          .RequireAuthorization()");
+            }
             sb.AppendLine($"          .WithTags(\"{entity.Name}\");");
             sb.AppendLine();
             
@@ -89,8 +126,19 @@ internal static class EndpointEmitter
             sb.AppendLine($"        endpoints.MapDelete(\"/api/{slug}/{{id:guid}}\", async (Guid id, [FromServices] IMediator mediator) =>");
             sb.AppendLine("        {");
             sb.AppendLine($"            var success = await mediator.Send(new Delete{entity.Name}Command(id));");
-            sb.AppendLine("            return success ? Results.NoContent() : Results.NotFound();");
+            if (requiresAuthorization)
+            {
+                sb.AppendLine("            return success ? Results.NoContent() : Results.NotFound(new ProblemDetails { Title = \"Not Found\", Detail = \"Requested resource was not found.\", Status = StatusCodes.Status404NotFound });");
+            }
+            else
+            {
+                sb.AppendLine("            return success ? Results.NoContent() : Results.NotFound();");
+            }
             sb.AppendLine($"        }}).WithName(\"Delete{entity.Name}\")");
+            if (requiresAuthorization)
+            {
+                sb.AppendLine("          .RequireAuthorization()");
+            }
             sb.AppendLine($"          .WithTags(\"{entity.Name}\");");
             sb.AppendLine();
         }

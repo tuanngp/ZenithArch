@@ -55,6 +55,7 @@ public sealed class AbstractionsCharacterizationTests
         Assert.False(attribute.GenerateDependencyInjection);
         Assert.False(attribute.GenerateEndpoints);
         Assert.False(attribute.EnableExperimentalEndpoints);
+        Assert.Equal(EndpointHardeningMode.None, attribute.EndpointHardeningMode);
         Assert.False(attribute.GenerateDtos);
         Assert.False(attribute.GenerateEfConfigurations);
         Assert.False(attribute.GenerateCachingDecorators);

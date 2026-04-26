@@ -137,6 +137,34 @@ internal static class GlobalResolver
                 "GenerateEndpoints is set to true but selected pattern does not generate CQRS request/handler types.");
         }
 
+        if (config.EndpointHardeningMode != 0)
+        {
+            if (!config.GenerateEndpoints)
+            {
+                DiagnosticReporter.Report(
+                    context,
+                    DiagnosticDescriptors.InvalidEndpointHardeningConfiguration,
+                    location,
+                    "EndpointHardeningMode is configured while GenerateEndpoints is false. Enable GenerateEndpoints and EnableExperimentalEndpoints, or reset EndpointHardeningMode to None.");
+            }
+            else if (!config.EnableExperimentalEndpoints)
+            {
+                DiagnosticReporter.Report(
+                    context,
+                    DiagnosticDescriptors.InvalidEndpointHardeningConfiguration,
+                    location,
+                    "EndpointHardeningMode requires EnableExperimentalEndpoints = true when endpoint generation is enabled.");
+            }
+            else if (!config.IsCqrs)
+            {
+                DiagnosticReporter.Report(
+                    context,
+                    DiagnosticDescriptors.InvalidEndpointHardeningConfiguration,
+                    location,
+                    "EndpointHardeningMode is configured but selected pattern does not generate CQRS endpoints.");
+            }
+        }
+
         if (config.GenerateCachingDecorators && !hasDistributedCache)
         {
             ReportMissingDependency(
@@ -165,10 +193,13 @@ internal static class GlobalResolver
 
         if (config.GenerateEndpoints && config.EnableExperimentalEndpoints && config.IsCqrs)
         {
-            DiagnosticReporter.Report(
-                context,
-                DiagnosticDescriptors.EndpointBehaviorNotice,
-                location);
+            if (config.EndpointHardeningMode == 0)
+            {
+                DiagnosticReporter.Report(
+                    context,
+                    DiagnosticDescriptors.EndpointBehaviorNotice,
+                    location);
+            }
 
             DiagnosticReporter.Report(
                 context,
@@ -258,6 +289,7 @@ internal static class GlobalResolver
             || config.GenerateDependencyInjection
             || config.GenerateEndpoints
             || config.EnableExperimentalEndpoints
+            || config.EndpointHardeningMode != 0
             || config.GenerateDtos
             || config.GenerateEfConfigurations
             || config.GenerateCachingDecorators

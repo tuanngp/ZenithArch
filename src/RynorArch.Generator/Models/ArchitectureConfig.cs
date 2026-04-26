@@ -71,6 +71,12 @@ public sealed class ArchitectureConfig : IEquatable<ArchitectureConfig>
     public bool GenerateCachingDecorators { get; }
 
     /// <summary>
+    /// Gets the endpoint hardening mode numeric value.
+    /// 0 = None, 1 = RequireAuthorization.
+    /// </summary>
+    public int EndpointHardeningMode { get; }
+
+    /// <summary>
     /// Gets a value indicating whether generated pagination helpers are enabled.
     /// </summary>
     public bool GeneratePagination { get; }
@@ -98,6 +104,7 @@ public sealed class ArchitectureConfig : IEquatable<ArchitectureConfig>
     /// <param name="generateDtos">Enables generated DTO projection support when true.</param>
     /// <param name="generateEfConfigurations">Enables generated EF Core configurations when true.</param>
     /// <param name="generateCachingDecorators">Enables generated caching decorators when true.</param>
+    /// <param name="endpointHardeningMode">Numeric hardening mode for generated endpoints.</param>
     /// <param name="generatePagination">Enables generated pagination helpers when true.</param>
     /// <param name="cqrsDbContextTypeName">Optional fully qualified DbContext type name.</param>
     /// <param name="cqrsSaveMode">Numeric save mode used by generated CQRS write handlers.</param>
@@ -116,6 +123,7 @@ public sealed class ArchitectureConfig : IEquatable<ArchitectureConfig>
         bool generateDtos = false,
         bool generateEfConfigurations = false,
         bool generateCachingDecorators = false,
+        int endpointHardeningMode = 0,
         bool generatePagination = false,
         string? cqrsDbContextTypeName = null,
         int cqrsSaveMode = 0,
@@ -132,6 +140,7 @@ public sealed class ArchitectureConfig : IEquatable<ArchitectureConfig>
         GenerateDtos = generateDtos;
         GenerateEfConfigurations = generateEfConfigurations;
         GenerateCachingDecorators = generateCachingDecorators;
+        EndpointHardeningMode = endpointHardeningMode;
         GeneratePagination = generatePagination;
         CqrsDbContextTypeName = string.IsNullOrWhiteSpace(cqrsDbContextTypeName)
             ? DefaultCqrsDbContextTypeName
@@ -181,6 +190,7 @@ public sealed class ArchitectureConfig : IEquatable<ArchitectureConfig>
             && GenerateDtos == other.GenerateDtos
             && GenerateEfConfigurations == other.GenerateEfConfigurations
             && GenerateCachingDecorators == other.GenerateCachingDecorators
+            && EndpointHardeningMode == other.EndpointHardeningMode
             && GeneratePagination == other.GeneratePagination
             && string.Equals(CqrsDbContextTypeName, other.CqrsDbContextTypeName, StringComparison.Ordinal)
             && CqrsSaveMode == other.CqrsSaveMode;
@@ -213,6 +223,7 @@ public sealed class ArchitectureConfig : IEquatable<ArchitectureConfig>
             hash = (hash ^ GenerateDtos.GetHashCode()) * 16777619;
             hash = (hash ^ GenerateEfConfigurations.GetHashCode()) * 16777619;
             hash = (hash ^ GenerateCachingDecorators.GetHashCode()) * 16777619;
+            hash = (hash ^ EndpointHardeningMode.GetHashCode()) * 16777619;
             hash = (hash ^ GeneratePagination.GetHashCode()) * 16777619;
             hash = (hash ^ StringComparer.Ordinal.GetHashCode(CqrsDbContextTypeName)) * 16777619;
             hash = (hash ^ CqrsSaveMode.GetHashCode()) * 16777619;

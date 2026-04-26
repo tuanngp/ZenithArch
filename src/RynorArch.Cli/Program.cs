@@ -359,6 +359,8 @@ class Program
         bool hasProfile = content.Contains("Profile = ArchitectureProfile.", StringComparison.Ordinal);
         bool generateEndpoints = content.Contains("GenerateEndpoints = true", StringComparison.Ordinal);
         bool enableExperimentalEndpoints = content.Contains("EnableExperimentalEndpoints = true", StringComparison.Ordinal);
+        bool hasEndpointHardeningMode = content.Contains("EndpointHardeningMode =", StringComparison.Ordinal);
+        bool endpointHardeningModeNone = content.Contains("EndpointHardeningMode = EndpointHardeningMode.None", StringComparison.Ordinal);
 
         if (!hasProfile)
         {
@@ -376,7 +378,30 @@ class Program
         else if (generateEndpoints)
         {
             results.Add(new DoctorCheckResult("DR006", DoctorSeverity.Pass, "Endpoint opt-in", "Endpoint generation has explicit experimental opt-in"));
-            results.Add(new DoctorCheckResult("DR016", DoctorSeverity.Warn, "Endpoint hardening", "Generated endpoints are intentionally minimal", "Apply docs/ENDPOINT_HARDENING.md before production rollout."));
+            if (hasEndpointHardeningMode && !endpointHardeningModeNone)
+            {
+                results.Add(new DoctorCheckResult("DR016", DoctorSeverity.Pass, "Endpoint hardening", "Endpoint hardening mode is enabled"));
+            }
+            else
+            {
+                results.Add(new DoctorCheckResult("DR016", DoctorSeverity.Warn, "Endpoint hardening", "Generated endpoints are intentionally minimal", "Apply docs/ENDPOINT_HARDENING.md before production rollout."));
+            }
+        }
+
+        if (hasEndpointHardeningMode && !endpointHardeningModeNone)
+        {
+            if (!generateEndpoints)
+            {
+                results.Add(new DoctorCheckResult("DR017", DoctorSeverity.Warn, "Endpoint hardening mode", "EndpointHardeningMode is configured while GenerateEndpoints is disabled", "Enable GenerateEndpoints + EnableExperimentalEndpoints, or set EndpointHardeningMode = EndpointHardeningMode.None."));
+            }
+            else if (!enableExperimentalEndpoints)
+            {
+                results.Add(new DoctorCheckResult("DR017", DoctorSeverity.Fail, "Endpoint hardening mode", "EndpointHardeningMode requires EnableExperimentalEndpoints = true", "Set EnableExperimentalEndpoints = true or reset EndpointHardeningMode to None."));
+            }
+            else
+            {
+                results.Add(new DoctorCheckResult("DR017", DoctorSeverity.Pass, "Endpoint hardening mode", "Endpoint hardening mode is configured coherently"));
+            }
         }
     }
 

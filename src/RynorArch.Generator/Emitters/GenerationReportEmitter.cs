@@ -29,6 +29,7 @@ internal static class GenerationReportEmitter
         w.AppendLine($"public const bool GenerateDtos = {config.GenerateDtos.ToString().ToLowerInvariant()};");
         w.AppendLine($"public const bool GenerateEfConfigurations = {config.GenerateEfConfigurations.ToString().ToLowerInvariant()};");
         w.AppendLine($"public const bool GenerateCachingDecorators = {config.GenerateCachingDecorators.ToString().ToLowerInvariant()};");
+        w.AppendLine($"public const int EndpointHardeningMode = {config.EndpointHardeningMode};");
         w.AppendLine($"public const bool GeneratePagination = {config.GeneratePagination.ToString().ToLowerInvariant()};");
         w.AppendLine($"public const int CqrsSaveMode = {config.CqrsSaveMode};");
         w.AppendLine($"public const string CqrsDbContextTypeName = \"{config.CqrsDbContextTypeName}\";");

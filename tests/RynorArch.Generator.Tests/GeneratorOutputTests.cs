@@ -315,8 +315,47 @@ public sealed class GeneratorOutputTests
         Assert.Contains("var success = await mediator.Send(command);", endpointSource);
         Assert.Contains("var success = await mediator.Send(new DeleteTripCommand(id));", endpointSource);
         Assert.Contains("return success ? Results.NoContent() : Results.NotFound();", endpointSource);
+        Assert.DoesNotContain(".RequireAuthorization()", endpointSource, StringComparison.Ordinal);
+        Assert.DoesNotContain("new ProblemDetails", endpointSource, StringComparison.Ordinal);
         Assert.DoesNotContain("await mediator.Send(command);\r\n            return Results.NoContent();", endpointSource, StringComparison.Ordinal);
         Assert.DoesNotContain("await mediator.Send(new DeleteTripCommand(id));\r\n            return Results.NoContent();", endpointSource, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Generates_endpoint_extensions_with_authorization_when_hardening_mode_is_enabled()
+    {
+        var result = GeneratorTestHarness.Run("""
+            using RynorArch.Abstractions.Attributes;
+            using RynorArch.Abstractions.Base;
+            using RynorArch.Abstractions.Enums;
+
+            [assembly: Architecture(
+                Pattern = ArchitecturePattern.Cqrs,
+                GenerateEndpoints = true,
+                EnableExperimentalEndpoints = true,
+                EndpointHardeningMode = EndpointHardeningMode.RequireAuthorization)]
+
+            namespace Demo.Domain;
+
+            [Entity]
+            public partial class Trip : EntityBase
+            {
+                public string Destination { get; set; } = string.Empty;
+            }
+            """);
+
+        Assert.Contains("RynorArchEndpointExtensions.g.cs", result.GeneratedSources.Keys);
+        var endpointSource = result.GeneratedSources["RynorArchEndpointExtensions.g.cs"];
+
+        Assert.Contains(".RequireAuthorization()", endpointSource, StringComparison.Ordinal);
+        Assert.Contains("WithName(\"GetTripById\")", endpointSource, StringComparison.Ordinal);
+        Assert.Contains("WithName(\"CreateTrip\")", endpointSource, StringComparison.Ordinal);
+        Assert.Contains("WithName(\"UpdateTrip\")", endpointSource, StringComparison.Ordinal);
+        Assert.Contains("WithName(\"DeleteTrip\")", endpointSource, StringComparison.Ordinal);
+        Assert.Contains("new ProblemDetails { Title = \"Not Found\"", endpointSource, StringComparison.Ordinal);
+        Assert.Contains("new ProblemDetails { Title = \"Bad Request\"", endpointSource, StringComparison.Ordinal);
+        Assert.Contains("Status = StatusCodes.Status404NotFound", endpointSource, StringComparison.Ordinal);
+        Assert.Contains("Status = StatusCodes.Status400BadRequest", endpointSource, StringComparison.Ordinal);
     }
 
     [Fact]

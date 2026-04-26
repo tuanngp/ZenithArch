@@ -190,6 +190,68 @@ public sealed class GeneratorDiagnosticsTests
     }
 
     [Fact]
+    public void Reports_warning_when_endpoint_hardening_mode_is_enabled_without_endpoint_generation()
+    {
+        var result = GeneratorTestHarness.Run("""
+            using RynorArch.Abstractions.Attributes;
+            using RynorArch.Abstractions.Base;
+            using RynorArch.Abstractions.Enums;
+            using Microsoft.EntityFrameworkCore;
+
+            [assembly: Architecture(
+                Pattern = ArchitecturePattern.Cqrs,
+                EndpointHardeningMode = EndpointHardeningMode.RequireAuthorization)]
+
+            namespace Demo.Domain;
+
+            [Entity]
+            public partial class Trip : EntityBase
+            {
+                public string Destination { get; set; } = string.Empty;
+            }
+
+            public sealed class AppDbContext : DbContext
+            {
+                public DbSet<Trip> Trips => Set<Trip>();
+            }
+            """);
+
+        AssertContainsDiagnostic(result.Diagnostics, "RYNOR017", DiagnosticSeverity.Warning);
+    }
+
+    [Fact]
+    public void Reports_warning_when_endpoint_hardening_mode_is_enabled_without_experimental_opt_in()
+    {
+        var result = GeneratorTestHarness.Run("""
+            using RynorArch.Abstractions.Attributes;
+            using RynorArch.Abstractions.Base;
+            using RynorArch.Abstractions.Enums;
+            using Microsoft.EntityFrameworkCore;
+
+            [assembly: Architecture(
+                Pattern = ArchitecturePattern.Cqrs,
+                GenerateEndpoints = true,
+                EndpointHardeningMode = EndpointHardeningMode.RequireAuthorization)]
+
+            namespace Demo.Domain;
+
+            [Entity]
+            public partial class Trip : EntityBase
+            {
+                public string Destination { get; set; } = string.Empty;
+            }
+
+            public sealed class AppDbContext : DbContext
+            {
+                public DbSet<Trip> Trips => Set<Trip>();
+            }
+            """);
+
+        AssertContainsDiagnostic(result.Diagnostics, "RYNOR012", DiagnosticSeverity.Warning);
+        AssertContainsDiagnostic(result.Diagnostics, "RYNOR017", DiagnosticSeverity.Warning);
+    }
+
+    [Fact]
     public void Reports_warning_when_per_request_save_mode_is_enabled_without_generated_di()
     {
         var result = GeneratorTestHarness.Run("""
@@ -315,6 +377,39 @@ public sealed class GeneratorDiagnosticsTests
             }
             """);
 
+        AssertContainsDiagnostic(result.Diagnostics, "RYNOR016", DiagnosticSeverity.Info);
+    }
+
+    [Fact]
+    public void Does_not_report_minimal_endpoint_behavior_notice_when_hardening_mode_is_enabled()
+    {
+        var result = GeneratorTestHarness.Run("""
+            using RynorArch.Abstractions.Attributes;
+            using RynorArch.Abstractions.Base;
+            using RynorArch.Abstractions.Enums;
+            using Microsoft.EntityFrameworkCore;
+
+            [assembly: Architecture(
+                Pattern = ArchitecturePattern.Cqrs,
+                GenerateEndpoints = true,
+                EnableExperimentalEndpoints = true,
+                EndpointHardeningMode = EndpointHardeningMode.RequireAuthorization)]
+
+            namespace Demo.Domain;
+
+            [Entity]
+            public partial class Trip : EntityBase
+            {
+                public string Destination { get; set; } = string.Empty;
+            }
+
+            public sealed class AppDbContext : DbContext
+            {
+                public DbSet<Trip> Trips => Set<Trip>();
+            }
+            """);
+
+        Assert.DoesNotContain(result.Diagnostics, diagnostic => diagnostic.Id == "RYNOR009");
         AssertContainsDiagnostic(result.Diagnostics, "RYNOR016", DiagnosticSeverity.Info);
     }
 

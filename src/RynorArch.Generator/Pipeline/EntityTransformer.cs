@@ -138,6 +138,7 @@ internal static class EntityTransformer
             bool generateDtos = false;
             bool generateEfConfigurations = false;
             bool generateCachingDecorators = false;
+            int endpointHardeningMode = 0;
             bool generatePagination = false;
             string cqrsDbContextTypeName = ArchitectureConfig.DefaultCqrsDbContextTypeName;
             int cqrsSaveMode = 0;
@@ -153,6 +154,7 @@ internal static class EntityTransformer
             bool? explicitGenerateDtos = null;
             bool? explicitGenerateEfConfigurations = null;
             bool? explicitGenerateCachingDecorators = null;
+            int? explicitEndpointHardeningMode = null;
             bool? explicitGeneratePagination = null;
             string? explicitDbContextTypeName = null;
             int? explicitCqrsSaveMode = null;
@@ -223,6 +225,12 @@ internal static class EntityTransformer
                             explicitGenerateCachingDecorators = configuredGenerateCachingDecorators;
                         }
                         break;
+                    case "EndpointHardeningMode":
+                        if (arg.Value.Value is int configuredEndpointHardeningMode)
+                        {
+                            explicitEndpointHardeningMode = configuredEndpointHardeningMode;
+                        }
+                        break;
                     case "GeneratePagination":
                         if (arg.Value.Value is bool configuredGeneratePagination)
                         {
@@ -262,6 +270,7 @@ internal static class EntityTransformer
                 ref generateDtos,
                 ref generateEfConfigurations,
                 ref generateCachingDecorators,
+                ref endpointHardeningMode,
                 ref generatePagination,
                 ref cqrsSaveMode);
 
@@ -316,6 +325,11 @@ internal static class EntityTransformer
                 generateCachingDecorators = explicitGenerateCachingDecorators.Value;
             }
 
+            if (explicitEndpointHardeningMode.HasValue)
+            {
+                endpointHardeningMode = explicitEndpointHardeningMode.Value;
+            }
+
             if (explicitGeneratePagination.HasValue)
             {
                 generatePagination = explicitGeneratePagination.Value;
@@ -342,6 +356,7 @@ internal static class EntityTransformer
                 generateDtos,
                 generateEfConfigurations,
                 generateCachingDecorators,
+                endpointHardeningMode,
                 generatePagination,
                 cqrsDbContextTypeName,
                 cqrsSaveMode,
@@ -363,6 +378,7 @@ internal static class EntityTransformer
         ref bool generateDtos,
         ref bool generateEfConfigurations,
         ref bool generateCachingDecorators,
+        ref int endpointHardeningMode,
         ref bool generatePagination,
         ref int cqrsSaveMode)
     {
@@ -411,6 +427,7 @@ internal static class EntityTransformer
         _ = generateEndpoints;
         _ = enableExperimentalEndpoints;
         _ = generateCachingDecorators;
+        _ = endpointHardeningMode;
     }
 
     public static bool HasArchitectureConfiguration(Compilation compilation, System.Threading.CancellationToken cancellationToken)

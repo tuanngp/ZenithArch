@@ -137,4 +137,12 @@ internal static class DiagnosticDescriptors
         category: Category,
         defaultSeverity: DiagnosticSeverity.Info,
         isEnabledByDefault: true);
+
+    public static readonly DiagnosticDescriptor InvalidEndpointHardeningConfiguration = new(
+        id: "RYNOR017",
+        title: "Endpoint hardening mode configuration is invalid",
+        messageFormat: "{0}",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true);
 }
