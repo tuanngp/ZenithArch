@@ -13,28 +13,28 @@
 
 | Triệu chứng | Chẩn đoán thường gặp | Sửa nhanh |
 | --- | --- | --- |
-| Không thấy file sinh trong `obj/` | `RYNOR006` | Thêm `[assembly: Architecture(...)]` trong `AssemblyConfig.cs` |
-| Entity không được sinh handler/repository | `RYNOR005` | Đổi class thành `partial` và build lại |
-| Build báo thiếu dependency | `RYNOR007` | Bổ sung package/framework theo gợi ý diagnostic |
-| Bật endpoint nhưng không sinh route | `RYNOR012` | Bật cả `GenerateEndpoints = true` và `EnableExperimentalEndpoints = true` |
-| Bật validation nhưng request sai vẫn chạy | `RYNOR015` hoặc wiring thiếu | Bật `GenerateDependencyInjection` hoặc đăng ký `RynorArchValidationBehavior<,>` thủ công |
+| Không thấy file sinh trong `obj/` | `ZENITH006` | Thêm `[assembly: Architecture(...)]` trong `AssemblyConfig.cs` |
+| Entity không được sinh handler/repository | `ZENITH005` | Đổi class thành `partial` và build lại |
+| Build báo thiếu dependency | `ZENITH007` | Bổ sung package/framework theo gợi ý diagnostic |
+| Bật endpoint nhưng không sinh route | `ZENITH012` | Bật cả `GenerateEndpoints = true` và `EnableExperimentalEndpoints = true` |
+| Bật validation nhưng request sai vẫn chạy | `ZENITH015` hoặc wiring thiếu | Bật `GenerateDependencyInjection` hoặc đăng ký `ZenithArchValidationBehavior<,>` thủ công |
 
 ## Chẩn đoán thường gặp
 
-### `RYNOR001` Không tìm thấy entity
+### `ZENITH001` Không tìm thấy entity
 
 Không có class nào dùng `[Entity]` trong compilation hiện tại.
 
 Kiểm tra:
-- project đã tham chiếu `RynorArch.Abstractions`
+- project đã tham chiếu `ZenithArch.Abstractions`
 - entity class nằm trong đúng project đang build
 - entity đã được đánh dấu `[Entity]`
 
-### `RYNOR002` AggregateRoot yêu cầu Entity
+### `ZENITH002` AggregateRoot yêu cầu Entity
 
 `[AggregateRoot]` chỉ hợp lệ trên class có `[Entity]`.
 
-### `RYNOR003` Xung đột architecture pattern
+### `ZENITH003` Xung đột architecture pattern
 
 Feature flags đang chọn không tương thích với architecture pattern.
 
@@ -42,30 +42,30 @@ Ví dụ:
 - `UseUnitOfWork = true` với `Cqrs`
 - `EnableValidation = true` với `Repository`
 
-### `RYNOR004` Kiểu dữ liệu QueryFilter không hỗ trợ
+### `ZENITH004` Kiểu dữ liệu QueryFilter không hỗ trợ
 
 `[QueryFilter]` hỗ trợ string, numeric, bool, `DateTime`, `Guid`, enum và nullable của các kiểu này.
 
 Nếu cần lọc phức tạp, hãy bỏ `[QueryFilter]` và tự triển khai trong partial handler hoặc specification.
 
-### `RYNOR005` Entity phải là partial
+### `ZENITH005` Entity phải là partial
 
 Generated extensions và partial hooks yêu cầu entity được khai báo `partial`.
 
-### `RYNOR006` Thiếu architecture configuration
+### `ZENITH006` Thiếu architecture configuration
 
 Thêm cấu hình ở mức assembly, ví dụ:
 
 ```csharp
-using RynorArch.Abstractions.Attributes;
-using RynorArch.Abstractions.Enums;
+using ZenithArch.Abstractions.Attributes;
+using ZenithArch.Abstractions.Enums;
 
 [assembly: Architecture(Pattern = ArchitecturePattern.Cqrs)]
 ```
 
-RynorArch sẽ không sinh mã nếu thiếu cấu hình kiến trúc tường minh.
+Zenith Arch sẽ không sinh mã nếu thiếu cấu hình kiến trúc tường minh.
 
-### `RYNOR007` Thiếu dependency bắt buộc
+### `ZENITH007` Thiếu dependency bắt buộc
 
 Một hoặc nhiều feature đang bật yêu cầu package/framework chưa có trong compilation.
 Diagnostic sẽ gợi ý chính xác `PackageReference` hoặc `FrameworkReference` cần bổ sung.
@@ -77,7 +77,7 @@ Ví dụ thường gặp:
 - Bật endpoint nhưng thiếu `Microsoft.AspNetCore.App`
 - Bật caching decorators nhưng thiếu `Microsoft.Extensions.Caching.*`
 
-### `RYNOR008` DbContextType không hợp lệ
+### `ZENITH008` DbContextType không hợp lệ
 
 `DbContextType` đã cấu hình nhưng kiểu không resolve được hoặc không kế thừa `Microsoft.EntityFrameworkCore.DbContext`.
 
@@ -85,13 +85,13 @@ Cách xử lý:
 - đặt `DbContextType = typeof(YourDbContext)` với kiểu hợp lệ trong compilation
 - hoặc bỏ `DbContextType` để fallback về `Microsoft.EntityFrameworkCore.DbContext`
 
-### `RYNOR009` Thông báo endpoint behavior tối giản
+### `ZENITH009` Thông báo endpoint behavior tối giản
 
 Endpoint generation đã bật và compile thành công, nhưng endpoint sinh ra được giữ tối giản có chủ đích.
 Hãy áp dụng hardening trước khi dùng cho API doanh nghiệp.
 Checklist: `docs/ENDPOINT_HARDENING.md`.
 
-### `RYNOR010` Thông báo cache behavior
+### `ZENITH010` Thông báo cache behavior
 
 Generated cache pipeline behaviors có per-entity invalidation contracts.
 Hãy bảo đảm invalidator được đăng ký trong DI (generated DI helper sẽ làm việc này khi bật).
@@ -99,14 +99,14 @@ Hướng dẫn rollout vận hành: `docs/CACHING_OPERATIONS.md`.
 
 ### Bật validation nhưng command sai vẫn pass
 
-Khi `EnableValidation = true`, generated DI phải đăng ký `RynorArchValidationBehavior<,>`.
+Khi `EnableValidation = true`, generated DI phải đăng ký `ZenithArchValidationBehavior<,>`.
 
 Kiểm tra:
-- đã gọi `AddRynorArchDependencies()` ở startup hoặc có đăng ký thủ công tương đương
+- đã gọi `AddZenithArchDependencies()` ở startup hoặc có đăng ký thủ công tương đương
 - MediatR được cấu hình đúng assembly chứa generated handlers
 - có generated validator files (`*.Validation.g.cs`) trong `obj/`
 
-Nếu `GenerateDependencyInjection = false`, cần đăng ký thủ công `IPipelineBehavior<,>` vào `RynorArchValidationBehavior<,>`.
+Nếu `GenerateDependencyInjection = false`, cần đăng ký thủ công `IPipelineBehavior<,>` vào `ZenithArchValidationBehavior<,>`.
 
 ### Endpoint sinh ra trả mã ghi dữ liệu không đúng kỳ vọng
 
@@ -114,14 +114,14 @@ Generated behavior hiện tại:
 - `POST` trả `201 Created` với payload `{ id = <guid> }`
 - `PUT`/`DELETE` trả `404` nếu resource thiếu, và `204` nếu thành công
 
-Nếu vẫn thấy luôn `204`, hãy rebuild và kiểm tra `RynorArchEndpointExtensions.g.cs` trong `obj/`.
+Nếu vẫn thấy luôn `204`, hãy rebuild và kiểm tra `ZenithArchEndpointExtensions.g.cs` trong `obj/`.
 
-### `RYNOR011` Feature flag bị bỏ qua theo pattern đã chọn
+### `ZENITH011` Feature flag bị bỏ qua theo pattern đã chọn
 
 Một feature flag được bật nhưng pattern hiện tại không hỗ trợ sinh artifact tương ứng.
 Hãy căn chỉnh pattern và flags trong `[assembly: Architecture(...)]`.
 
-### `RYNOR012` Endpoint generation cần experimental opt-in
+### `ZENITH012` Endpoint generation cần experimental opt-in
 
 `GenerateEndpoints` đã bật nhưng `EnableExperimentalEndpoints` chưa bật.
 
@@ -135,15 +135,15 @@ Sửa bằng cách bật tường minh:
 )]
 ```
 
-### `RYNOR013` CQRS save mode cần generated DI wiring
+### `ZENITH013` CQRS save mode cần generated DI wiring
 
 `CqrsSaveMode.PerRequestTransaction` đang bật trong khi `GenerateDependencyInjection` = false.
 
 Cách xử lý:
 - đặt `GenerateDependencyInjection = true`, hoặc
-- đăng ký thủ công `IPipelineBehavior<,>` vào `RynorArchSaveChangesBehavior<,>`
+- đăng ký thủ công `IPipelineBehavior<,>` vào `ZenithArchSaveChangesBehavior<,>`
 
-### `RYNOR014` Khuyến nghị migration sang starter profile
+### `ZENITH014` Khuyến nghị migration sang starter profile
 
 Module hiện còn dùng cấu hình explicit-flag kiểu cũ.
 
@@ -153,15 +153,15 @@ Cách xử lý:
 
 Mapping chi tiết: `docs/UPGRADING_PROFILES.md`.
 
-### `RYNOR015` Validation cần generated DI wiring
+### `ZENITH015` Validation cần generated DI wiring
 
 `EnableValidation` đang bật trong khi `GenerateDependencyInjection` = false.
 
 Cách xử lý:
 - đặt `GenerateDependencyInjection = true`, hoặc
-- đăng ký thủ công `IPipelineBehavior<,>` vào `RynorArchValidationBehavior<,>`
+- đăng ký thủ công `IPipelineBehavior<,>` vào `ZenithArchValidationBehavior<,>`
 
-### `RYNOR016` Khuyến nghị checklist hardening endpoint
+### `ZENITH016` Khuyến nghị checklist hardening endpoint
 
 `GenerateEndpoints` đã bật và endpoint generation thành công.
 Đây là diagnostic thông tin để nhắc kiểm tra hardening trước khi rollout production.
@@ -174,7 +174,7 @@ Tối thiểu cần kiểm tra:
 
 ## Debug generated output
 
-- Mở `RynorArch.GenerationReport.g.cs` để xem artifacts đã sinh.
+- Mở `ZenithArch.GenerationReport.g.cs` để xem artifacts đã sinh.
 - Kiểm tra header metadata `rynor-artifact`, `rynor-entity`, `rynor-assumptions`.
 - Dùng diagnostics làm tín hiệu chính trước khi debug body code sinh.
 
@@ -188,7 +188,7 @@ Tối thiểu cần kiểm tra:
 - Xóa thư mục `bin/` và `obj/`.
 - Restore package lại.
 - So sánh output sinh mã trước/sau nâng cấp.
-- Chạy lại `dotnet test RynorArch.slnx`.
+- Chạy lại `dotnet test ZenithArch.slnx`.
 
 ## Troubleshooting với CLI doctor
 

@@ -10,37 +10,37 @@ This document shows practical startup wiring for generated artifacts.
 ```csharp
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using RynorArch.DependencyInjection;
+using ZenithArch.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
-builder.Services.AddRynorArchDependencies();
+builder.Services.AddZenithArchDependencies();
 
 var app = builder.Build();
 app.Run();
 ```
 
 Notes:
-- `AddRynorArchDependencies()` can register MediatR automatically by default.
-- If using custom MediatR setup, call `AddRynorArchDependencies(registerMediatR: false)`.
+- `AddZenithArchDependencies()` can register MediatR automatically by default.
+- If using custom MediatR setup, call `AddZenithArchDependencies(registerMediatR: false)`.
 
 Validation behavior:
-- When `EnableValidation = true`, generated DI now registers `RynorArchValidationBehavior<,>`.
+- When `EnableValidation = true`, generated DI now registers `ZenithArchValidationBehavior<,>`.
 - Generated `Create*` and `Update*` validators are executed automatically through MediatR pipeline behavior.
 - Partial `OnValidate(...)` hooks in handlers remain available for additional domain-specific checks.
 
 Optional runtime hooks:
 - Generated handlers resolve `ISecurityContext` (if registered) and propagate `UserId`/`TenantId` metadata to execution observer hooks.
-- Generated handlers and validation behavior resolve `IRynorArchExecutionObserver` as `IEnumerable<T>`. Register zero, one, or many observers without changing generator config.
+- Generated handlers and validation behavior resolve `IZenithArchExecutionObserver` as `IEnumerable<T>`. Register zero, one, or many observers without changing generator config.
 
 ```csharp
-using RynorArch.Abstractions.Interfaces;
+using ZenithArch.Abstractions.Interfaces;
 
 builder.Services.AddScoped<ISecurityContext, HttpSecurityContext>();
-builder.Services.AddSingleton<IRynorArchExecutionObserver, StructuredExecutionObserver>();
+builder.Services.AddSingleton<IZenithArchExecutionObserver, StructuredExecutionObserver>();
 ```
 
 If no implementations are registered, generated handlers continue to work with no runtime changes.
@@ -49,18 +49,18 @@ If no implementations are registered, generated handlers continue to work with n
 
 ```csharp
 using Microsoft.EntityFrameworkCore;
-using RynorArch.DependencyInjection;
+using ZenithArch.DependencyInjection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 
-builder.Services.AddRynorArchDependencies<AppDbContext>();
+builder.Services.AddZenithArchDependencies<AppDbContext>();
 ```
 
 Notes:
-- Prefer `AddRynorArchDependencies<TDbContext>()` when `UseUnitOfWork = true` so generated `IUnitOfWork` is auto-wired.
+- Prefer `AddZenithArchDependencies<TDbContext>()` when `UseUnitOfWork = true` so generated `IUnitOfWork` is auto-wired.
 - The non-generic overload remains valid when you do not use UnitOfWork.
 
 ## Endpoint generation
@@ -68,9 +68,9 @@ Notes:
 If enabled:
 
 ```csharp
-using RynorArch.Endpoints;
+using ZenithArch.Endpoints;
 
-app.MapRynorArchEndpoints();
+app.MapZenithArchEndpoints();
 ```
 
 Remember endpoint generation requires both:
@@ -88,14 +88,14 @@ Generated write semantics:
 
 When `GenerateCachingDecorators = true`:
 - register a distributed cache provider (for example Redis or memory-backed distributed cache)
-- call `AddRynorArchDependencies()` so generated cache behaviors and invalidators are wired
+- call `AddZenithArchDependencies()` so generated cache behaviors and invalidators are wired
 - follow `docs/CACHING_OPERATIONS.md` for TTL, key design, and rollout guardrails
 
 ## Save mode
 
 If `CqrsSaveMode = CqrsSaveMode.PerRequestTransaction`:
 - keep generated DI wiring enabled, or
-- manually register `IPipelineBehavior<,>` to `RynorArchSaveChangesBehavior<,>`
+- manually register `IPipelineBehavior<,>` to `ZenithArchSaveChangesBehavior<,>`
 
 ## Domain events for aggregate roots
 

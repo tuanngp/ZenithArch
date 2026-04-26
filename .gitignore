@@ -211,7 +211,7 @@ coverage*
 .idea/
 *.sln.iml
 
-# RynorArch Output tests
+# ZenithArch Output tests
 samples/**/Generated/
 
 *.env

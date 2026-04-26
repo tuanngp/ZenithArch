@@ -9,15 +9,15 @@
     <Version>$(VersionPrefix)</Version>
     <PackageVersion>$(Version)</PackageVersion>
     <Authors>Nguyen Gia Phuong Tuan</Authors>
-    <Company>RynorArch Contributors</Company>
-    <PackageProjectUrl>https://github.com/tuanngp/RynorArch</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/tuanngp/RynorArch</RepositoryUrl>
+    <Company>ZenithArch Contributors</Company>
+    <PackageProjectUrl>https://github.com/tuanngp/ZenithArch</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/tuanngp/ZenithArch</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageIcon>icon.png</PackageIcon>
-    <PackageReleaseNotes>RynorArch $(PackageVersion): migration baseline for standardized NuGet process, SemVer governance, XML API docs, characterization tests, and CI tag-based publishing. Full changelog: https://github.com/tuanngp/RynorArch/blob/main/CHANGELOG.md</PackageReleaseNotes>
+    <PackageReleaseNotes>ZenithArch $(PackageVersion): migration baseline for standardized NuGet process, SemVer governance, XML API docs, characterization tests, and CI tag-based publishing. Full changelog: https://github.com/tuanngp/ZenithArch/blob/main/CHANGELOG.md</PackageReleaseNotes>
     <PackageTags>source-generator;roslyn;clean-architecture;cqrs;ddd;ef-core;mediatr;dotnet;nuget</PackageTags>
     <Deterministic>true</Deterministic>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>

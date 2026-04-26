@@ -8,7 +8,7 @@ This guide covers runtime expectations when `GenerateCachingDecorators = true`.
 ## Runtime prerequisites
 
 - Register a distributed cache provider (`AddDistributedMemoryCache` for dev or Redis in production).
-- Ensure generated DI wiring is enabled via `AddRynorArchDependencies()`.
+- Ensure generated DI wiring is enabled via `AddZenithArchDependencies()`.
 - Verify cache keys are stable across deployments.
 
 ## Default generated behavior

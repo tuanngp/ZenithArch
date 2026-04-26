@@ -3,7 +3,7 @@
 [Tiếng Việt](AI_AGENT_PLAYBOOK.md) | [English](AI_AGENT_PLAYBOOK.en.md)
 
 
-This playbook defines deterministic workflows for AI agents working with RynorArch projects.
+This playbook defines deterministic workflows for AI agents working with Zenith Arch projects.
 
 ## Workflow Contract
 
@@ -19,7 +19,7 @@ Use this contract for every agent task:
 ### Input requirements
 
 - A project root containing a `.csproj`.
-- `RynorArch.Abstractions` and `RynorArch.Generator` available via package or project references.
+- `ZenithArch.Abstractions` and `ZenithArch.Generator` available via package or project references.
 
 ### Execution path
 
@@ -51,7 +51,7 @@ Use this contract for every agent task:
 
 - `Domain/<EntityName>.cs`
 - Optional CQRS extension partials under `Cqrs/<EntityName>/`
-- `RynorArch.GenerationReport.g.cs` under `obj/`
+- `ZenithArch.GenerationReport.g.cs` under `obj/`
 
 ### Success criteria
 
@@ -66,9 +66,9 @@ Use this contract for every agent task:
 
 ### Execution path
 
-1. Call `builder.Services.AddRynorArchDependencies();`.
-2. If UnitOfWork is enabled, use `builder.Services.AddRynorArchDependencies<AppDbContext>();`.
-3. If endpoint generation is enabled, call `app.MapRynorArchEndpoints();`.
+1. Call `builder.Services.AddZenithArchDependencies();`.
+2. If UnitOfWork is enabled, use `builder.Services.AddZenithArchDependencies<AppDbContext>();`.
+3. If endpoint generation is enabled, call `app.MapZenithArchEndpoints();`.
 
 ### Success criteria
 
@@ -100,7 +100,7 @@ Use this contract for every agent task:
 ```bash
 dotnet build
 rynor doctor
-dotnet test RynorArch.slnx -v minimal
+dotnet test ZenithArch.slnx -v minimal
 ```
 
 ## Related Guides

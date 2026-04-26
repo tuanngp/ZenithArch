@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/samples/">
+    <Project Path="samples/ZenithArch.Sample/ZenithArch.Sample.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/ZenithArch.Abstractions/ZenithArch.Abstractions.csproj" />
+    <Project Path="src/ZenithArch.Cli/ZenithArch.Cli.csproj" />
+    <Project Path="src/ZenithArch.Generator/ZenithArch.Generator.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ZenithArch.Abstractions.Tests/ZenithArch.Abstractions.Tests.csproj" />
+    <Project Path="tests/ZenithArch.E2E.Tests/ZenithArch.E2E.Tests.csproj" />
+    <Project Path="tests/ZenithArch.Generator.Tests/ZenithArch.Generator.Tests.csproj" />
+    <Project Path="tests/ZenithArch.Integration.Tests/ZenithArch.Integration.Tests.csproj" />
+    <Project Path="tests/ZenithArch.Performance.Tests/ZenithArch.Performance.Tests.csproj" />
+  </Folder>
+</Solution>

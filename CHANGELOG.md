@@ -40,9 +40,9 @@ SemVer baseline decision:
 - AI-agent playbook documenting deterministic task contracts and verification rules.
 - New CLI `doctor` command for readiness checks with actionable fix steps.
 - E2E smoke test project for CLI workflow validation and CI/release quality gates.
-- Runtime integration test suite (`tests/RynorArch.Integration.Tests`) covering CRUD, soft-delete, audit stamping, validation gating, transaction rollback, and cache invalidation semantics on SQLite in-memory.
+- Runtime integration test suite (`tests/ZenithArch.Integration.Tests`) covering CRUD, soft-delete, audit stamping, validation gating, transaction rollback, and cache invalidation semantics on SQLite in-memory.
 - Runtime validation guide: `docs/RUNTIME_TESTING.md`.
-- Endpoint E2E semantics tests (`tests/RynorArch.E2E.Tests/EndpointSemanticsTests.cs`) covering `201/200/404/400/204` contracts for generated minimal APIs.
+- Endpoint E2E semantics tests (`tests/ZenithArch.E2E.Tests/EndpointSemanticsTests.cs`) covering `201/200/404/400/204` contracts for generated minimal APIs.
 
 ### Changed
 - Centralized package metadata and versioning in `Directory.Build.props`.
@@ -55,26 +55,26 @@ SemVer baseline decision:
 - Optimized the shared CRUD runtime to cache per-entity soft-delete traits and clarify specification application for list versus count operations.
 - Moved `IUnitOfWork` emission to a one-per-compilation path instead of repeating the source add per entity.
 - Centralized QueryFilter generation rules so CQRS list handlers and generated specifications stay aligned.
-- Enforced fail-fast behavior when `[assembly: Architecture(...)]` is missing (`RYNOR006` now blocks generation).
-- Replaced hard `AppDbContext` convention with configurable `DbContextType` validation for CQRS handlers (`RYNOR008`).
+- Enforced fail-fast behavior when `[assembly: Architecture(...)]` is missing (`ZENITH006` now blocks generation).
+- Replaced hard `AppDbContext` convention with configurable `DbContextType` validation for CQRS handlers (`ZENITH008`).
 - Added cache invalidation contracts and default distributed-cache invalidator implementations for generated query caches.
 - Added `CqrsSaveMode` with per-request transaction save behavior and generated MediatR pipeline support.
-- Gated endpoint generation behind explicit experimental opt-in (`EnableExperimentalEndpoints`, `RYNOR012`).
+- Gated endpoint generation behind explicit experimental opt-in (`EnableExperimentalEndpoints`, `ZENITH012`).
 - Added `ArchitectureProfile` quick-start presets to reduce first-run configuration friction.
 - Upgraded generated DI extension to auto-register CQRS handlers, validators, and cache query behaviors.
-- Added actionable dependency hints (`RYNOR007`) and save-mode wiring warning (`RYNOR013`).
+- Added actionable dependency hints (`ZENITH007`) and save-mode wiring warning (`ZENITH013`).
 - Expanded CLI with `init` command, profile-based setup prompts, automatic `AssemblyConfig.cs`, and next-step guidance output.
-- Added low-touch UnitOfWork wiring via generated `AddRynorArchDependencies<TDbContext>()` overload and generated runtime adapter.
-- Made `RynorArch.Sample` runnable end-to-end as a minimal web app using in-memory EF Core.
-- Added profile migration recommendation diagnostic (`RYNOR014`) and linked behavior notices to hardening docs.
-- Added generated `RynorArchValidationBehavior<,>` and DI wiring so `EnableValidation` now enforces command validators automatically at runtime.
-- Added `RYNOR015` warning to flag `EnableValidation` with `GenerateDependencyInjection = false` when validation pipeline wiring must be registered manually.
+- Added low-touch UnitOfWork wiring via generated `AddZenithArchDependencies<TDbContext>()` overload and generated runtime adapter.
+- Made `ZenithArch.Sample` runnable end-to-end as a minimal web app using in-memory EF Core.
+- Added profile migration recommendation diagnostic (`ZENITH014`) and linked behavior notices to hardening docs.
+- Added generated `ZenithArchValidationBehavior<,>` and DI wiring so `EnableValidation` now enforces command validators automatically at runtime.
+- Added `ZENITH015` warning to flag `EnableValidation` with `GenerateDependencyInjection = false` when validation pipeline wiring must be registered manually.
 - Corrected generated endpoint write semantics: `POST` now returns `{ id = ... }`, while `PUT` and `DELETE` now return `404` when target entities are missing.
 - Updated generated CQRS write handlers for aggregate roots to raise generated domain events (`Created`, `Updated`, `Deleted`) before persistence.
 - Hardened generated EF configuration string detection to support fully-qualified string type names.
 - Optimized generated validation behavior to avoid unnecessary allocations when no validators are registered and to lazily allocate validation failure buffers.
 - Made generated endpoint and DI outputs deterministic by sorting namespaces/entities, reducing incremental build churn and cache invalidation noise.
-- Added `RYNOR016` diagnostic to surface endpoint hardening checklist reminders when endpoint generation is enabled.
+- Added `ZENITH016` diagnostic to surface endpoint hardening checklist reminders when endpoint generation is enabled.
 
 ### Fixed
 - Resolved endpoint semantics mismatch for write operations by returning expected HTTP contracts.
@@ -86,7 +86,7 @@ SemVer baseline decision:
 ## [1.0.6] - 2026-04-05
 
 ### Added
-- Initial published package set for `RynorArch.Abstractions`, `RynorArch.Generator`, and `RynorArch.Cli`.
+- Initial published package set for `ZenithArch.Abstractions`, `ZenithArch.Generator`, and `ZenithArch.Cli`.
 
 ### Changed
 - Legacy release from pre-standardized NuGet workflow period.
@@ -156,7 +156,7 @@ SemVer baseline decision:
 ## [1.0.1] - 2026-04-05
 
 ### Added
-- Legacy patch release for `RynorArch.Generator` (historical details unavailable).
+- Legacy patch release for `ZenithArch.Generator` (historical details unavailable).
 
 ### Changed
 - Generator-only package iteration before full package set alignment.
@@ -170,7 +170,7 @@ SemVer baseline decision:
 ## [1.0.0] - 2026-04-05
 
 ### Added
-- Initial documented release of `RynorArch.Generator` on NuGet.org.
+- Initial documented release of `ZenithArch.Generator` on NuGet.org.
 
 ### Changed
 - Pre-standardization release from legacy process.

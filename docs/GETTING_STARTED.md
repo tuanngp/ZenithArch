@@ -2,7 +2,7 @@
 
 [Tiếng Việt](GETTING_STARTED.md) | [English](GETTING_STARTED.en.md)
 
-Mục tiêu của tài liệu này: giúp bạn đi từ dự án trống đến trạng thái chạy được với RynorArch trong ít bước nhất.
+Mục tiêu của tài liệu này: giúp bạn đi từ dự án trống đến trạng thái chạy được với Zenith Arch trong ít bước nhất.
 
 ## Trước khi bắt đầu
 
@@ -13,8 +13,8 @@ Mục tiêu của tài liệu này: giúp bạn đi từ dự án trống đến
 ## Bước 1: Cài package
 
 ```xml
-<PackageReference Include="RynorArch.Abstractions" Version="1.0.6" />
-<PackageReference Include="RynorArch.Generator" Version="1.0.6" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+<PackageReference Include="ZenithArch.Abstractions" Version="1.0.6" />
+<PackageReference Include="ZenithArch.Generator" Version="1.0.6" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 ```
 
 Kết quả mong đợi: project đã có đủ package lõi để generator hoạt động.
@@ -32,8 +32,8 @@ rynor init
 Tạo file `AssemblyConfig.cs`:
 
 ```csharp
-using RynorArch.Abstractions.Attributes;
-using RynorArch.Abstractions.Enums;
+using ZenithArch.Abstractions.Attributes;
+using ZenithArch.Abstractions.Enums;
 
 [assembly: Architecture(
     Profile = ArchitectureProfile.CqrsQuickStart,
@@ -47,8 +47,8 @@ Kết quả mong đợi: có `AssemblyConfig.cs` chứa `[assembly: Architecture
 ## Bước 3: Tạo entity đầu tiên
 
 ```csharp
-using RynorArch.Abstractions.Attributes;
-using RynorArch.Abstractions.Base;
+using ZenithArch.Abstractions.Attributes;
+using ZenithArch.Abstractions.Base;
 
 namespace MyApp.Domain;
 
@@ -60,7 +60,7 @@ public partial class Trip : EntityBase
 }
 ```
 
-Điểm bắt buộc: class phải là `partial`, nếu không bạn sẽ gặp `RYNOR005`.
+Điểm bắt buộc: class phải là `partial`, nếu không bạn sẽ gặp `ZENITH005`.
 
 ## Bước 4: Build để sinh mã
 
@@ -68,7 +68,7 @@ public partial class Trip : EntityBase
 dotnet build
 ```
 
-Kiểm tra output sinh mã trong `obj/` và `RynorArch.GenerationReport.g.cs`.
+Kiểm tra output sinh mã trong `obj/` và `ZenithArch.GenerationReport.g.cs`.
 
 Kết quả mong đợi:
 
@@ -80,13 +80,13 @@ Kết quả mong đợi:
 Trong startup của ứng dụng:
 
 ```csharp
-builder.Services.AddRynorArchDependencies();
+builder.Services.AddZenithArchDependencies();
 ```
 
 Nếu dùng `UseUnitOfWork = true` (Repository/FullStack), ưu tiên:
 
 ```csharp
-builder.Services.AddRynorArchDependencies<AppDbContext>();
+builder.Services.AddZenithArchDependencies<AppDbContext>();
 ```
 
 Generated DI extension sẽ đăng ký handlers/repositories (theo pattern), validators và cache behaviors (nếu bật).
@@ -101,9 +101,9 @@ Mục tiêu: không còn FAIL checks trước khi đi tiếp.
 
 ## Lỗi thường gặp nhất và cách xử lý nhanh
 
-- `RYNOR005`: class có `[Entity]` phải là `partial`.
-- `RYNOR006`: thiếu `AssemblyConfig.cs` hoặc thiếu `[assembly: Architecture(...)]`.
-- `RYNOR007`: thiếu package phụ thuộc của feature đang bật.
+- `ZENITH005`: class có `[Entity]` phải là `partial`.
+- `ZENITH006`: thiếu `AssemblyConfig.cs` hoặc thiếu `[assembly: Architecture(...)]`.
+- `ZENITH007`: thiếu package phụ thuộc của feature đang bật.
 
 Mẹo: sau khi sửa lỗi cấu hình/phụ thuộc, luôn chạy lại `dotnet build` rồi `rynor doctor`.
 
@@ -112,7 +112,7 @@ Mẹo: sau khi sửa lỗi cấu hình/phụ thuộc, luôn chạy lại `dotnet
 1. Một `AssemblyConfig.cs` hợp lệ.
 2. Ít nhất một entity có `[Entity]` và `partial`.
 3. Generated output dưới `obj/`.
-4. Startup đã gọi `AddRynorArchDependencies(...)`.
+4. Startup đã gọi `AddZenithArchDependencies(...)`.
 5. `rynor doctor` không còn FAIL.
 
 ## Lộ trình cho AI agent

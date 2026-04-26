@@ -7,7 +7,7 @@
 | UseSpecification | Yes | Yes | Yes | Generates specification artifacts from `[QueryFilter]` |
 | UseUnitOfWork | No | Yes | Yes | Ignored in pure CQRS |
 | EnableValidation | Yes | No | Yes | Generates FluentValidation validators for commands |
-| GenerateDependencyInjection | Yes | Yes | Yes | Emits `AddRynorArchDependencies()` |
+| GenerateDependencyInjection | Yes | Yes | Yes | Emits `AddZenithArchDependencies()` |
 | GenerateEndpoints | Yes | No | Yes | Requires `EnableExperimentalEndpoints = true` |
 | GenerateDtos | Yes | Yes | Yes | DTO records and mapping extensions |
 | GenerateEfConfigurations | Yes | Yes | Yes | Entity type configuration partials |
@@ -35,4 +35,4 @@ Profile defaults are only a starting point. Explicit flags in `Architecture(...)
 | Dependency alignment | `rynor doctor` (`DR007`-`DR013`) | required dependencies are present for active features |
 | Entity shape | `rynor doctor` (`DR014`) | all `[Entity]` declarations are `partial` |
 | Generation marker | `rynor doctor` (`DR015`) | generation report exists under `obj/` after build |
-| Runtime semantics | `dotnet test tests/RynorArch.Integration.Tests` | CRUD, soft-delete, audit, validation, transaction, and cache behaviors pass |
+| Runtime semantics | `dotnet test tests/ZenithArch.Integration.Tests` | CRUD, soft-delete, audit, validation, transaction, and cache behaviors pass |

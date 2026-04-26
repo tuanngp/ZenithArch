@@ -1,9 +1,9 @@
 <#
 .SYNOPSIS
-Builds, packs, and optionally publishes the RynorArch projects to NuGet.
+Builds, packs, and optionally publishes the ZenithArch projects to NuGet.
 
 .DESCRIPTION
-This script automates the versioning, packaging, and deployment of RynorArch NuGet packages.
+This script automates the versioning, packaging, and deployment of ZenithArch NuGet packages.
 
 .EXAMPLE
 .\publish.ps1 -Increment None
@@ -76,11 +76,11 @@ if ($Increment -ne "None") {
 
 # 4. Build and test first
 Write-Host "`nBuilding solution..." -ForegroundColor Cyan
-dotnet build "RynorArch.slnx" -c Release
+dotnet build "ZenithArch.slnx" -c Release
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 Write-Host "`nRunning tests..." -ForegroundColor Cyan
-dotnet test "RynorArch.slnx" -c Release --no-build
+dotnet test "ZenithArch.slnx" -c Release --no-build
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 # 5. Pack
@@ -101,7 +101,7 @@ foreach ($projectFile in $projectFiles) {
 
 if (-not $SkipApiCompat) {
     Write-Host "`nRunning Abstractions API compatibility validation..." -ForegroundColor Cyan
-    & (Join-Path $PSScriptRoot "eng/Validate-AbstractionsApiCompat.ps1") -ArtifactsDir "artifacts" -PackageId "RynorArch.Abstractions"
+    & (Join-Path $PSScriptRoot "eng/Validate-AbstractionsApiCompat.ps1") -ArtifactsDir "artifacts" -PackageId "ZenithArch.Abstractions"
     if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 }
 

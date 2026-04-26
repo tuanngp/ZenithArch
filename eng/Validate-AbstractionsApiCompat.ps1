@@ -3,7 +3,7 @@ param(
     [string]$ArtifactsDir = "artifacts",
 
     [Parameter(Mandatory = $false)]
-    [string]$PackageId = "RynorArch.Abstractions",
+    [string]$PackageId = "ZenithArch.Abstractions",
 
     [Parameter(Mandatory = $false)]
     [string]$ToolDir = ".tools"

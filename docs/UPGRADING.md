@@ -5,7 +5,7 @@
 ## Quy trình nâng cấp
 
 1. Cập nhật version package trên một branch riêng.
-2. Chạy `dotnet test RynorArch.slnx`.
+2. Chạy `dotnet test ZenithArch.slnx`.
 3. So sánh output sinh mã trên một dự án mẫu đại diện.
 4. Đọc `CHANGELOG.md` để nắm thay đổi về hành vi và diagnostics.
 5. Chỉ rollout sang các module khác khi module nâng cấp đầu tiên đã ổn định.
@@ -74,9 +74,9 @@ Phần lớn hệ thống sử dụng không cần migration ngoài rebuild và 
 
 Sau khi nâng cấp, ngoài compile success, cần kiểm tra observability và diagnostics:
 
-1. Xác nhận `RynorArch.GenerationReport.g.cs` được sinh và liệt kê đúng entities/artifacts.
+1. Xác nhận `ZenithArch.GenerationReport.g.cs` được sinh và liệt kê đúng entities/artifacts.
 2. Kiểm tra header metadata `rynor-artifact` trong file sinh để bảo đảm traceability.
-3. Rà `RYNOR007`-`RYNOR013` và xử lý toàn bộ lỗi trước rollout.
-4. Nếu bật CQRS, xác minh `DbContextType` (nếu set) resolve được về `DbContext` hợp lệ (`RYNOR008`).
-5. Nếu bật endpoint generation, xác minh đã có explicit experimental opt-in (`RYNOR012`).
-6. Nếu dùng `UseUnitOfWork` trong Repository, chuyển startup wiring sang `AddRynorArchDependencies<TDbContext>()` để auto-register generated `IUnitOfWork` adapter.
+3. Rà `ZENITH007`-`ZENITH013` và xử lý toàn bộ lỗi trước rollout.
+4. Nếu bật CQRS, xác minh `DbContextType` (nếu set) resolve được về `DbContext` hợp lệ (`ZENITH008`).
+5. Nếu bật endpoint generation, xác minh đã có explicit experimental opt-in (`ZENITH012`).
+6. Nếu dùng `UseUnitOfWork` trong Repository, chuyển startup wiring sang `AddZenithArchDependencies<TDbContext>()` để auto-register generated `IUnitOfWork` adapter.

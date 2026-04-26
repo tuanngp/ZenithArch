@@ -7,7 +7,7 @@ Tài liệu này mô tả kỳ vọng runtime khi bật `GenerateCachingDecorato
 ## Điều kiện tiên quyết runtime
 
 - Đăng ký distributed cache provider (`AddDistributedMemoryCache` cho môi trường dev hoặc Redis cho production).
-- Bảo đảm generated DI wiring được bật qua `AddRynorArchDependencies()`.
+- Bảo đảm generated DI wiring được bật qua `AddZenithArchDependencies()`.
 - Xác nhận cache key ổn định giữa các lần triển khai.
 
 ## Hành vi sinh mã mặc định

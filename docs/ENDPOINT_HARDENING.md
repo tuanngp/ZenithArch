@@ -2,7 +2,7 @@
 
 [Tiếng Việt](ENDPOINT_HARDENING.md) | [English](ENDPOINT_HARDENING.en.md)
 
-Generated endpoint của RynorArch được thiết kế tối giản có chủ đích. Hãy áp dụng checklist dưới đây trước khi đưa vào production.
+Generated endpoint của Zenith Arch được thiết kế tối giản có chủ đích. Hãy áp dụng checklist dưới đây trước khi đưa vào production.
 
 ## 1. Thiết lập ranh giới phân quyền
 
@@ -50,5 +50,5 @@ var app = builder.Build();
 app.UseExceptionHandler();
 app.MapGroup("/api")
    .RequireAuthorization()
-   .MapRynorArchEndpoints();
+   .MapZenithArchEndpoints();
 ```

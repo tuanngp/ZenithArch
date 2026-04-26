@@ -7,8 +7,8 @@ This guide validates generated runtime behavior end-to-end, not just generated s
 
 ## Why this exists
 
-`RynorArch.Generator.Tests` validates diagnostics and generated output contracts.
-`RynorArch.Integration.Tests` validates runtime behavior against a relational provider.
+`ZenithArch.Generator.Tests` validates diagnostics and generated output contracts.
+`ZenithArch.Integration.Tests` validates runtime behavior against a relational provider.
 
 Both are required before release.
 
@@ -16,12 +16,12 @@ Both are required before release.
 
 Runtime integration tests live in:
 
-- `tests/RynorArch.Integration.Tests`
+- `tests/ZenithArch.Integration.Tests`
 
 The test host uses:
 
 - SQLite in-memory (`Microsoft.EntityFrameworkCore.Sqlite`)
-- Generated CQRS handlers and MediatR pipeline behaviors from `samples/RynorArch.Sample`
+- Generated CQRS handlers and MediatR pipeline behaviors from `samples/ZenithArch.Sample`
 - Generated caching invalidators and validation behavior
 
 ## Covered scenarios
@@ -38,16 +38,16 @@ The runtime suite currently verifies:
 ## Run locally
 
 ```powershell
-dotnet test tests/RynorArch.Integration.Tests/RynorArch.Integration.Tests.csproj -c Release
+dotnet test tests/ZenithArch.Integration.Tests/ZenithArch.Integration.Tests.csproj -c Release
 ```
 
 To run the full release gate:
 
 ```powershell
-dotnet restore RynorArch.slnx
-dotnet build RynorArch.slnx -c Release
-dotnet test RynorArch.slnx -c Release
-dotnet run --project src/RynorArch.Cli/RynorArch.Cli.csproj -- doctor samples/RynorArch.Sample
+dotnet restore ZenithArch.slnx
+dotnet build ZenithArch.slnx -c Release
+dotnet test ZenithArch.slnx -c Release
+dotnet run --project src/ZenithArch.Cli/ZenithArch.Cli.csproj -- doctor samples/ZenithArch.Sample
 ```
 
 ## Generator performance baseline (compile-time)
@@ -55,12 +55,12 @@ dotnet run --project src/RynorArch.Cli/RynorArch.Cli.csproj -- doctor samples/Ry
 Run dry benchmarks for generator hot paths:
 
 ```powershell
-dotnet run --project tests/RynorArch.Performance.Tests/RynorArch.Performance.Tests.csproj -c Release -- --filter *RunGenerator* --job Dry
+dotnet run --project tests/ZenithArch.Performance.Tests/ZenithArch.Performance.Tests.csproj -c Release -- --filter *RunGenerator* --job Dry
 ```
 
 Benchmark artifacts are written to:
 
-- `tests/RynorArch.Performance.Tests/BenchmarkDotNet.Artifacts/results`
+- `tests/ZenithArch.Performance.Tests/BenchmarkDotNet.Artifacts/results`
 
 ## Writing new runtime tests
 

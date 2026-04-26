@@ -1,38 +1,38 @@
-# RynorArch
+# Zenith Arch
 
 Compile-time architecture automation for .NET with Roslyn incremental source generation.
 
-[![NuGet RynorArch.Abstractions](https://img.shields.io/nuget/v/RynorArch.Abstractions.svg)](https://www.nuget.org/packages/RynorArch.Abstractions)
-[![NuGet RynorArch.Generator](https://img.shields.io/nuget/v/RynorArch.Generator.svg)](https://www.nuget.org/packages/RynorArch.Generator)
-[![NuGet RynorArch.Cli](https://img.shields.io/nuget/v/RynorArch.Cli.svg)](https://www.nuget.org/packages/RynorArch.Cli)
+[![NuGet ZenithArch.Abstractions](https://img.shields.io/nuget/v/ZenithArch.Abstractions.svg)](https://www.nuget.org/packages/ZenithArch.Abstractions)
+[![NuGet ZenithArch.Generator](https://img.shields.io/nuget/v/ZenithArch.Generator.svg)](https://www.nuget.org/packages/ZenithArch.Generator)
+[![NuGet ZenithArch.Cli](https://img.shields.io/nuget/v/ZenithArch.Cli.svg)](https://www.nuget.org/packages/ZenithArch.Cli)
 
 ## Installation
 
 ```bash
-dotnet add package RynorArch.Abstractions
-dotnet add package RynorArch.Generator
+dotnet add package ZenithArch.Abstractions
+dotnet add package ZenithArch.Generator
 ```
 
 For source generator usage, configure analyzer-style reference:
 
 ```xml
 <ItemGroup>
-  <PackageReference Include="RynorArch.Abstractions" Version="1.0.8" />
-  <PackageReference Include="RynorArch.Generator" Version="1.0.8" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+  <PackageReference Include="ZenithArch.Abstractions" Version="1.0.8" />
+  <PackageReference Include="ZenithArch.Generator" Version="1.0.8" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 </ItemGroup>
 ```
 
 Optional CLI installation:
 
 ```bash
-dotnet tool install --global RynorArch.Cli --version 1.0.8
+dotnet tool install --global ZenithArch.Cli --version 1.0.8
 ```
 
 ## Quickstart
 
 ```csharp
-using RynorArch.Abstractions.Attributes;
-using RynorArch.Abstractions.Enums;
+using ZenithArch.Abstractions.Attributes;
+using ZenithArch.Abstractions.Enums;
 
 [assembly: Architecture(
     Profile = ArchitectureProfile.CqrsQuickStart,
@@ -64,12 +64,12 @@ dotnet build
 Then register generated DI extensions:
 
 ```csharp
-builder.Services.AddRynorArchDependencies();
+builder.Services.AddZenithArchDependencies();
 ```
 
 ## Full API Reference
 
-### RynorArch.Abstractions.Attributes
+### ZenithArch.Abstractions.Attributes
 
 - `ArchitectureAttribute`: Assembly-level generation contract (pattern, profile, feature flags).
   - Example: `[assembly: Architecture(Pattern = ArchitecturePattern.Cqrs, GenerateDependencyInjection = true)]`
@@ -90,7 +90,7 @@ builder.Services.AddRynorArchDependencies();
 - `EmailAttribute`: Marks a property for email-format validation.
   - Example: `[Email] public string ContactEmail { get; set; } = string.Empty;`
 
-### RynorArch.Abstractions.Enums
+### ZenithArch.Abstractions.Enums
 
 - `ArchitecturePattern`: Selects CQRS, Repository, or FullStack generation topology.
   - Example: `Pattern = ArchitecturePattern.FullStack`
@@ -99,7 +99,7 @@ builder.Services.AddRynorArchDependencies();
 - `CqrsSaveMode`: Controls write persistence timing.
   - Example: `CqrsSaveMode = CqrsSaveMode.PerRequestTransaction`
 
-### RynorArch.Abstractions.Interfaces
+### ZenithArch.Abstractions.Interfaces
 
 - `IAggregateRoot`: Aggregate marker with domain-event buffer contract.
   - Example: `public partial class Order : EntityBase, IAggregateRoot { }`
@@ -113,10 +113,10 @@ builder.Services.AddRynorArchDependencies();
   - Example: `public Expression<Func<Trip, bool>>? Criteria { get; }`
 - `ISecurityContext`: User/tenant context abstraction.
   - Example: `public string? UserId => _http.User.Identity?.Name;`
-- `IRynorArchExecutionObserver`: Runtime observer hooks for telemetry.
+- `IZenithArchExecutionObserver`: Runtime observer hooks for telemetry.
   - Example: `public void OnValidationFailed(string requestName, int failureCount) { ... }`
 
-### RynorArch.Abstractions.Base
+### ZenithArch.Abstractions.Base
 
 - `EntityBase`: Aggregate base type with `Id`, domain event buffering, and clear operations.
   - Example: `public partial class Trip : EntityBase { }`
@@ -154,13 +154,13 @@ builder.Services.AddRynorArchDependencies();
 
 ## Versioning Policy
 
-RynorArch follows SemVer (`MAJOR.MINOR.PATCH`).
+Zenith Arch follows SemVer (`MAJOR.MINOR.PATCH`).
 
 - Breaking public API changes require a major version bump.
 - New backward-compatible capabilities use a minor version bump.
 - Backward-compatible fixes and process improvements use a patch bump.
 
-Full change history: [CHANGELOG.md](https://github.com/tuanngp/RynorArch/blob/main/CHANGELOG.md)
+Full change history: [CHANGELOG.md](https://github.com/tuanngp/ZenithArch/blob/main/CHANGELOG.md)
 
 ## Contributing
 
@@ -171,8 +171,8 @@ Issues and pull requests are welcome.
 3. Add tests for behavior changes.
 4. Submit a pull request with changelog updates.
 
-Contribution guidelines: [CONTRIBUTING.md](https://github.com/tuanngp/RynorArch/blob/main/CONTRIBUTING.md)
+Contribution guidelines: [CONTRIBUTING.md](https://github.com/tuanngp/ZenithArch/blob/main/CONTRIBUTING.md)
 
 ## License
 
-MIT. See [LICENSE](https://github.com/tuanngp/RynorArch/blob/main/LICENSE).
+MIT. See [LICENSE](https://github.com/tuanngp/ZenithArch/blob/main/LICENSE).

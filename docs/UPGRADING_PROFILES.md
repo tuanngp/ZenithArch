@@ -52,5 +52,5 @@ Chỉ giữ explicit flags cho các khác biệt có chủ đích so với profi
 1. Chọn `Profile` gần nhất cho từng module.
 2. Gỡ các flag trùng với mặc định của profile.
 3. Chỉ giữ flag khác biệt có chủ đích.
-4. Rebuild và so sánh `RynorArch.GenerationReport.g.cs`.
+4. Rebuild và so sánh `ZenithArch.GenerationReport.g.cs`.
 5. Chạy integration tests trên một module thí điểm trước khi rollout rộng.

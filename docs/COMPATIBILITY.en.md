@@ -6,19 +6,19 @@
 ## Officially validated development environment
 
 - .NET SDK: `10.0.x`
-- RynorArch generator target: `netstandard2.0`
-- RynorArch CLI target runtimes: `net8.0`, `net9.0`, `net10.0`
+- Zenith Arch generator target: `netstandard2.0`
+- Zenith Arch CLI target runtimes: `net8.0`, `net9.0`, `net10.0`
 
 ## Consumer project expectations
 
-- Add `RynorArch.Abstractions` as a normal package reference.
-- Add `RynorArch.Generator` as an analyzer-only package reference.
+- Add `ZenithArch.Abstractions` as a normal package reference.
+- Add `ZenithArch.Generator` as an analyzer-only package reference.
 - Declare `[assembly: Architecture(...)]` explicitly; generation is blocked when this is missing.
 - Prefer `ArchitectureProfile.*QuickStart` to reduce first-run flag setup.
 - Expect a generated shared infrastructure layer for CRUD/EF interaction when using `Cqrs`, `Repository`, or `FullStack`.
 - If using CQRS, optionally set `DbContextType = typeof(...)` to bind handlers to a specific DbContext type.
 - Endpoint generation requires explicit experimental opt-in (`GenerateEndpoints = true` and `EnableExperimentalEndpoints = true`).
-- Call `AddRynorArchDependencies()` in startup to wire generated handlers/repositories/validators/cache behaviors.
+- Call `AddZenithArchDependencies()` in startup to wire generated handlers/repositories/validators/cache behaviors.
 
 ## Feature dependencies
 

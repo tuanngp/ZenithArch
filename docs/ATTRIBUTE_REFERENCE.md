@@ -49,7 +49,7 @@ Kiểu dữ liệu hỗ trợ:
 
 ## Validation attributes
 
-Đây là attribute của RynorArch (không phải `System.ComponentModel.DataAnnotations`):
+Đây là attribute của Zenith Arch (không phải `System.ComponentModel.DataAnnotations`):
 - `[Required]`
 - `[MinLength(n)]`
 - `[MaxLength(n)]`

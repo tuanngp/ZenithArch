@@ -50,7 +50,7 @@ Supported property types:
 
 ## Validation attributes
 
-These are RynorArch attributes (not `System.ComponentModel.DataAnnotations`):
+These are Zenith Arch attributes (not `System.ComponentModel.DataAnnotations`):
 - `[Required]`
 - `[MinLength(n)]`
 - `[MaxLength(n)]`

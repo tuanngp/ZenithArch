@@ -53,5 +53,5 @@ Use explicit flags only for intentional overrides from profile defaults.
 1. Set the closest `Profile` for each module.
 2. Remove flags that match the profile default behavior.
 3. Keep only flags that intentionally diverge.
-4. Rebuild and compare `RynorArch.GenerationReport.g.cs`.
+4. Rebuild and compare `ZenithArch.GenerationReport.g.cs`.
 5. Run integration tests for one pilot module before broad rollout.

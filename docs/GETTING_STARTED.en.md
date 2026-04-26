@@ -7,8 +7,8 @@ This guide is optimized for the shortest path to a working setup.
 ## 1. Install packages
 
 ```xml
-<PackageReference Include="RynorArch.Abstractions" Version="1.0.6" />
-<PackageReference Include="RynorArch.Generator" Version="1.0.6" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+<PackageReference Include="ZenithArch.Abstractions" Version="1.0.6" />
+<PackageReference Include="ZenithArch.Generator" Version="1.0.6" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 ```
 
 ## 2. Create architecture config
@@ -24,8 +24,8 @@ rynor init
 Create `AssemblyConfig.cs`:
 
 ```csharp
-using RynorArch.Abstractions.Attributes;
-using RynorArch.Abstractions.Enums;
+using ZenithArch.Abstractions.Attributes;
+using ZenithArch.Abstractions.Enums;
 
 [assembly: Architecture(
     Profile = ArchitectureProfile.CqrsQuickStart,
@@ -37,8 +37,8 @@ using RynorArch.Abstractions.Enums;
 ## 3. Add an entity
 
 ```csharp
-using RynorArch.Abstractions.Attributes;
-using RynorArch.Abstractions.Base;
+using ZenithArch.Abstractions.Attributes;
+using ZenithArch.Abstractions.Base;
 
 namespace MyApp.Domain;
 
@@ -56,29 +56,29 @@ public partial class Trip : EntityBase
 dotnet build
 ```
 
-Inspect generated output in `obj/` and `RynorArch.GenerationReport.g.cs`.
+Inspect generated output in `obj/` and `ZenithArch.GenerationReport.g.cs`.
 
 ## 5. Wire runtime
 
 In your app startup:
 
 ```csharp
-builder.Services.AddRynorArchDependencies();
+builder.Services.AddZenithArchDependencies();
 ```
 
 If `UseUnitOfWork = true` (Repository/FullStack), prefer:
 
 ```csharp
-builder.Services.AddRynorArchDependencies<AppDbContext>();
+builder.Services.AddZenithArchDependencies<AppDbContext>();
 ```
 
 The generated DI extension registers handlers/repositories (by pattern), validators, and cache behaviors (if enabled).
 
 ## Common first-run issues
 
-- `RYNOR005`: entity marked `[Entity]` must be `partial`.
-- `RYNOR006`: missing `AssemblyConfig.cs` or missing `[assembly: Architecture(...)]`.
-- `RYNOR007`: missing package dependency for an enabled feature flag.
+- `ZENITH005`: entity marked `[Entity]` must be `partial`.
+- `ZENITH006`: missing `AssemblyConfig.cs` or missing `[assembly: Architecture(...)]`.
+- `ZENITH007`: missing package dependency for an enabled feature flag.
 
 ## Getting started with AI agents
 

@@ -1,0 +1,338 @@
+using Microsoft.CodeAnalysis;
+using ZenithArch.Generator.Helpers;
+
+namespace ZenithArch.Generator.Emitters;
+
+internal static class CrudInfrastructureEmitter
+{
+    public static void Emit(SourceProductionContext context, bool emitUnitOfWorkAdapter)
+    {
+        var w = new SourceWriter(8192);
+        w.AppendFileHeader("Global.CrudInfrastructure");
+
+        w.AppendLine("using System;");
+        w.AppendLine("using System.Collections.Generic;");
+        w.AppendLine("using System.Linq;");
+        w.AppendLine("using System.Linq.Expressions;");
+        w.AppendLine("using System.Threading;");
+        w.AppendLine("using System.Threading.Tasks;");
+        w.AppendLine("using Microsoft.EntityFrameworkCore;");
+        w.AppendLine("using ZenithArch.Abstractions.Interfaces;");
+        w.AppendLine();
+        w.AppendLine("namespace ZenithArch.Generated.Infrastructure;");
+        w.AppendLine();
+
+        EmitCrudRepositoryInterface(w);
+        w.AppendLine();
+        EmitCrudRepositoryBase(w);
+        w.AppendLine();
+        if (emitUnitOfWorkAdapter)
+        {
+            EmitUnitOfWorkAdapter(w);
+            w.AppendLine();
+        }
+        EmitRuntimeHelpers(w);
+
+        context.AddSource("ZenithArch.CrudInfrastructure.g.cs", w.ToString());
+    }
+
+    private static void EmitCrudRepositoryInterface(SourceWriter w)
+    {
+        w.AppendLine("public interface ICrudRepository<TEntity> where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("Task<TEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);");
+        w.AppendLine("Task<IReadOnlyList<TEntity>> GetAllAsync(CancellationToken cancellationToken = default);");
+        w.AppendLine("Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken = default);");
+        w.AppendLine("Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);");
+        w.AppendLine("Task DeleteAsync(TEntity entity, CancellationToken cancellationToken = default);");
+        w.AppendLine("Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default);");
+        w.AppendLine("Task<IReadOnlyList<TEntity>> ListAsync(ISpecification<TEntity> specification, CancellationToken cancellationToken = default);");
+        w.AppendLine("Task<int> CountAsync(ISpecification<TEntity> specification, CancellationToken cancellationToken = default);");
+        w.CloseBrace();
+    }
+
+    private static void EmitCrudRepositoryBase(SourceWriter w)
+    {
+        w.AppendLine("public class CrudRepository<TEntity> : ICrudRepository<TEntity> where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("protected DbContext Db { get; }");
+        w.AppendLine();
+        w.AppendLine("public CrudRepository(DbContext db)");
+        w.OpenBrace();
+        w.AppendLine("Db = db;");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public Task<TEntity?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)");
+        w.OpenBrace();
+        w.AppendLine("return ZenithArchCrudRuntime.FindByIdAsync<TEntity>(Db, id, cancellationToken);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public Task<IReadOnlyList<TEntity>> GetAllAsync(CancellationToken cancellationToken = default)");
+        w.OpenBrace();
+        w.AppendLine("return ZenithArchCrudRuntime.GetAllAsync<TEntity>(Db, cancellationToken);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public Task<TEntity> AddAsync(TEntity entity, CancellationToken cancellationToken = default)");
+        w.OpenBrace();
+        w.AppendLine("return ZenithArchCrudRuntime.AddAndSaveAsync(Db, entity, cancellationToken);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)");
+        w.OpenBrace();
+        w.AppendLine("return ZenithArchCrudRuntime.SaveUpdatedEntityAsync(Db, entity, cancellationToken);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public Task DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)");
+        w.OpenBrace();
+        w.AppendLine("return ZenithArchCrudRuntime.DeleteAndSaveAsync(Db, entity, cancellationToken);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public Task<bool> ExistsAsync(Guid id, CancellationToken cancellationToken = default)");
+        w.OpenBrace();
+        w.AppendLine("return ZenithArchCrudRuntime.ExistsAsync<TEntity>(Db, id, cancellationToken);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public async Task<IReadOnlyList<TEntity>> ListAsync(ISpecification<TEntity> specification, CancellationToken cancellationToken = default)");
+        w.OpenBrace();
+        w.AppendLine("IQueryable<TEntity> queryable = ZenithArchCrudRuntime.CreateQuery<TEntity>(Db);");
+        w.AppendLine("queryable = ZenithArchCrudRuntime.ApplySpecificationForList(queryable, specification);");
+        w.AppendLine("return await queryable.ToListAsync(cancellationToken);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public async Task<int> CountAsync(ISpecification<TEntity> specification, CancellationToken cancellationToken = default)");
+        w.OpenBrace();
+        w.AppendLine("IQueryable<TEntity> queryable = ZenithArchCrudRuntime.CreateQuery<TEntity>(Db);");
+        w.AppendLine("queryable = ZenithArchCrudRuntime.ApplySpecificationForCount(queryable, specification);");
+        w.AppendLine("return await queryable.CountAsync(cancellationToken);");
+        w.CloseBrace();
+        w.CloseBrace();
+    }
+
+    private static void EmitRuntimeHelpers(SourceWriter w)
+    {
+        w.AppendLine("public static class ZenithArchCrudRuntime");
+        w.OpenBrace();
+        EmitEntityTraits(w);
+        w.AppendLine();
+        w.AppendLine("public static IQueryable<TEntity> CreateQuery<TEntity>(DbContext db, bool asNoTracking = true) where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("IQueryable<TEntity> query = db.Set<TEntity>();");
+        w.AppendLine("if (asNoTracking)");
+        w.OpenBrace();
+        w.AppendLine("query = query.AsNoTracking();");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("if (EntityTraits<TEntity>.SupportsSoftDelete)");
+        w.OpenBrace();
+        w.AppendLine("query = query.Where(EntityTraits<TEntity>.SoftDeletePredicate);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("return query;");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public static Task<TEntity?> FindByIdAsync<TEntity>(DbContext db, Guid id, CancellationToken cancellationToken = default) where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("return CreateQuery<TEntity>(db, asNoTracking: false).FirstOrDefaultAsync(BuildIdPredicate<TEntity>(id), cancellationToken);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public static async Task<IReadOnlyList<TEntity>> GetAllAsync<TEntity>(DbContext db, CancellationToken cancellationToken = default) where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("return await CreateQuery<TEntity>(db).ToListAsync(cancellationToken);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public static async Task<TEntity> AddAndSaveAsync<TEntity>(DbContext db, TEntity entity, CancellationToken cancellationToken = default) where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("await AddAsync(db, entity, cancellationToken);");
+        w.AppendLine("await db.SaveChangesAsync(cancellationToken);");
+        w.AppendLine("return entity;");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public static async Task<TEntity> AddAsync<TEntity>(DbContext db, TEntity entity, CancellationToken cancellationToken = default) where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("StampForCreate(entity);");
+        w.AppendLine("await db.Set<TEntity>().AddAsync(entity, cancellationToken);");
+        w.AppendLine("return entity;");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public static Task SaveUpdatedEntityAsync<TEntity>(DbContext db, TEntity entity, CancellationToken cancellationToken = default) where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("MarkUpdated(db, entity);");
+        w.AppendLine("return db.SaveChangesAsync(cancellationToken);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public static void MarkUpdated<TEntity>(DbContext db, TEntity entity) where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("StampForUpdate(entity);");
+        w.AppendLine("db.Set<TEntity>().Update(entity);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public static Task DeleteAndSaveAsync<TEntity>(DbContext db, TEntity entity, CancellationToken cancellationToken = default) where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("Delete(db, entity);");
+        w.AppendLine("return db.SaveChangesAsync(cancellationToken);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public static void Delete<TEntity>(DbContext db, TEntity entity) where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("if (entity is ISoftDelete softDelete)");
+        w.OpenBrace();
+        w.AppendLine("softDelete.IsDeleted = true;");
+        w.AppendLine("StampForUpdate(entity);");
+        w.AppendLine("db.Set<TEntity>().Update(entity);");
+        w.CloseBrace();
+        w.AppendLine("else");
+        w.OpenBrace();
+        w.AppendLine("db.Set<TEntity>().Remove(entity);");
+        w.CloseBrace();
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public static Task<bool> ExistsAsync<TEntity>(DbContext db, Guid id, CancellationToken cancellationToken = default) where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("return CreateQuery<TEntity>(db).AnyAsync(BuildIdPredicate<TEntity>(id), cancellationToken);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public static IQueryable<TEntity> ApplySpecificationForList<TEntity>(IQueryable<TEntity> queryable, ISpecification<TEntity> specification) where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("queryable = ApplySpecificationCriteria(queryable, specification);");
+        w.AppendLine("queryable = ApplySpecificationIncludes(queryable, specification);");
+        w.AppendLine("queryable = ApplySpecificationPaging(queryable, specification);");
+        w.AppendLine("return queryable;");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public static IQueryable<TEntity> ApplySpecificationForCount<TEntity>(IQueryable<TEntity> queryable, ISpecification<TEntity> specification) where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("return ApplySpecificationCriteria(queryable, specification);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("private static IQueryable<TEntity> ApplySpecificationCriteria<TEntity>(IQueryable<TEntity> queryable, ISpecification<TEntity> specification) where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("if (specification.Criteria is not null)");
+        w.OpenBrace();
+        w.AppendLine("queryable = queryable.Where(specification.Criteria);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("return queryable;");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("private static IQueryable<TEntity> ApplySpecificationIncludes<TEntity>(IQueryable<TEntity> queryable, ISpecification<TEntity> specification) where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("for (int i = 0; i < specification.Includes.Count; i++)");
+        w.OpenBrace();
+        w.AppendLine("queryable = queryable.Include(specification.Includes[i]);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("return queryable;");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("private static IQueryable<TEntity> ApplySpecificationPaging<TEntity>(IQueryable<TEntity> queryable, ISpecification<TEntity> specification) where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("if (specification.Skip.HasValue)");
+        w.OpenBrace();
+        w.AppendLine("queryable = queryable.Skip(specification.Skip.Value);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("if (specification.Take.HasValue)");
+        w.OpenBrace();
+        w.AppendLine("queryable = queryable.Take(specification.Take.Value);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("return queryable;");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public static async Task<IReadOnlyList<TEntity>> ListAsync<TEntity>(IQueryable<TEntity> queryable, int skip, int take, CancellationToken cancellationToken = default) where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("if (skip > 0)");
+        w.OpenBrace();
+        w.AppendLine("queryable = queryable.Skip(skip);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("if (take > 0)");
+        w.OpenBrace();
+        w.AppendLine("queryable = queryable.Take(take);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("// `take == 0` intentionally means no upper bound to preserve existing query behavior.");
+        w.AppendLine("return await queryable.ToListAsync(cancellationToken);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("private static void StampForCreate<TEntity>(TEntity entity) where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("if (entity is IAuditable auditable)");
+        w.OpenBrace();
+        w.AppendLine("auditable.CreatedAt = DateTime.UtcNow;");
+        w.CloseBrace();
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("private static void StampForUpdate<TEntity>(TEntity entity) where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("if (entity is IAuditable auditable)");
+        w.OpenBrace();
+        w.AppendLine("auditable.LastModifiedAt = DateTime.UtcNow;");
+        w.CloseBrace();
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("private static Expression<Func<TEntity, bool>> BuildIdPredicate<TEntity>(Guid id) where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("var parameter = Expression.Parameter(typeof(TEntity), \"entity\");");
+        w.AppendLine("var left = Expression.Call(");
+        w.IncreaseIndent();
+        w.AppendLine("typeof(EF),");
+        w.AppendLine("nameof(EF.Property),");
+        w.AppendLine("new[] { typeof(Guid) },");
+        w.AppendLine("parameter,");
+        w.AppendLine("Expression.Constant(\"Id\"));");
+        w.DecreaseIndent();
+        w.AppendLine("var right = Expression.Constant(id);");
+        w.AppendLine("var body = Expression.Equal(left, right);");
+        w.AppendLine("return Expression.Lambda<Func<TEntity, bool>>(body, parameter);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("private static Expression<Func<TEntity, bool>> BuildSoftDeletePredicate<TEntity>() where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("var parameter = Expression.Parameter(typeof(TEntity), \"entity\");");
+        w.AppendLine("var left = Expression.Call(");
+        w.IncreaseIndent();
+        w.AppendLine("typeof(EF),");
+        w.AppendLine("nameof(EF.Property),");
+        w.AppendLine("new[] { typeof(bool) },");
+        w.AppendLine("parameter,");
+        w.AppendLine("Expression.Constant(\"IsDeleted\"));");
+        w.DecreaseIndent();
+        w.AppendLine("var body = Expression.Equal(left, Expression.Constant(false));");
+        w.AppendLine("return Expression.Lambda<Func<TEntity, bool>>(body, parameter);");
+        w.CloseBrace();
+        w.CloseBrace();
+    }
+
+    private static void EmitUnitOfWorkAdapter(SourceWriter w)
+    {
+        w.AppendLine("public sealed class ZenithArchGeneratedUnitOfWork<TDbContext> : IUnitOfWork where TDbContext : DbContext");
+        w.OpenBrace();
+        w.AppendLine("private readonly TDbContext _db;");
+        w.AppendLine();
+        w.AppendLine("public ZenithArchGeneratedUnitOfWork(TDbContext db)");
+        w.OpenBrace();
+        w.AppendLine("_db = db;");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)");
+        w.OpenBrace();
+        w.AppendLine("return _db.SaveChangesAsync(cancellationToken);");
+        w.CloseBrace();
+        w.AppendLine();
+        w.AppendLine("public void Dispose()");
+        w.OpenBrace();
+        w.AppendLine("// DbContext disposal is owned by the DI scope.");
+        w.CloseBrace();
+        w.CloseBrace();
+    }
+
+    private static void EmitEntityTraits(SourceWriter w)
+    {
+        w.AppendLine("private static class EntityTraits<TEntity> where TEntity : class");
+        w.OpenBrace();
+        w.AppendLine("public static readonly bool SupportsSoftDelete = typeof(ISoftDelete).IsAssignableFrom(typeof(TEntity));");
+        w.AppendLine("public static readonly Expression<Func<TEntity, bool>> SoftDeletePredicate = BuildSoftDeletePredicate<TEntity>();");
+        w.CloseBrace();
+    }
+}

@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for contributing to RynorArch.
+Thanks for contributing to ZenithArch.
 
 ## Development setup
 
@@ -8,14 +8,14 @@ Thanks for contributing to RynorArch.
 2. Restore and build the solution:
 
 ```bash
-dotnet restore RynorArch.slnx
-dotnet build RynorArch.slnx
+dotnet restore ZenithArch.slnx
+dotnet build ZenithArch.slnx
 ```
 
 3. Run the generator regression tests before opening a pull request:
 
 ```bash
-dotnet test RynorArch.slnx
+dotnet test ZenithArch.slnx
 ```
 
 ## Pull request expectations

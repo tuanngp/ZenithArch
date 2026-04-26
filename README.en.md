@@ -1,12 +1,12 @@
-# RynorArch
+# Zenith Arch
 
-[Vietnamese](https://github.com/tuanngp/RynorArch/blob/main/README.vi.md) | [English](https://github.com/tuanngp/RynorArch/blob/main/README.md)
+[Vietnamese](https://github.com/tuanngp/ZenithArch/blob/main/README.vi.md) | [English](https://github.com/tuanngp/ZenithArch/blob/main/README.md)
 
 ## Overview
 
-RynorArch is a compile-time .NET architecture automation framework powered by Roslyn Incremental Source Generators. It removes repetitive boilerplate while enforcing consistent clean architecture boundaries.
+Zenith Arch is a compile-time .NET architecture automation framework powered by Roslyn Incremental Source Generators. It removes repetitive boilerplate while enforcing consistent clean architecture boundaries.
 
-## Why RynorArch
+## Why Zenith Arch
 
 - Compile-time generation with deterministic `.g.cs` output
 - No runtime reflection in the primary execution path
@@ -17,15 +17,15 @@ RynorArch is a compile-time .NET architecture automation framework powered by Ro
 ## Installation
 
 ```xml
-<PackageReference Include="RynorArch.Abstractions" Version="1.0.7" />
-<PackageReference Include="RynorArch.Generator" Version="1.0.7" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+<PackageReference Include="ZenithArch.Abstractions" Version="1.0.7" />
+<PackageReference Include="ZenithArch.Generator" Version="1.0.7" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
 ```
 
 Optional CLI setup:
 
 ```bash
-dotnet tool install --global RynorArch.Cli --version 1.0.7
-dotnet tool update --global RynorArch.Cli --version 1.0.7
+dotnet tool install --global ZenithArch.Cli --version 1.0.7
+dotnet tool update --global ZenithArch.Cli --version 1.0.7
 ```
 
 ## Feature Dependencies
@@ -46,7 +46,7 @@ dotnet tool update --global RynorArch.Cli --version 1.0.7
 2. Run `rynor init`.
 3. Run `rynor scaffold Trip MyApp.Domain`.
 4. Run `dotnet build`.
-5. Register generated runtime: `builder.Services.AddRynorArchDependencies();`.
+5. Register generated runtime: `builder.Services.AddZenithArchDependencies();`.
 
 ### Path B (manual generator-first)
 
@@ -59,8 +59,8 @@ dotnet tool update --global RynorArch.Cli --version 1.0.7
 ## Architecture Configuration
 
 ```csharp
-using RynorArch.Abstractions.Attributes;
-using RynorArch.Abstractions.Enums;
+using ZenithArch.Abstractions.Attributes;
+using ZenithArch.Abstractions.Enums;
 
 [assembly: Architecture(
     Profile = ArchitectureProfile.CqrsQuickStart,
@@ -110,7 +110,7 @@ using RynorArch.Abstractions.Enums;
 
 - Partial handlers/repositories/validators
 - Lifecycle hooks (`OnValidate`, `OnBeforeHandle`, `OnAfterHandle`, `OnBeforeQuery`)
-- Optional observer integration: `IRynorArchExecutionObserver`
+- Optional observer integration: `IZenithArchExecutionObserver`
 - Optional security context integration: `ISecurityContext`
 
 ### Runtime behaviors covered
@@ -137,17 +137,17 @@ using RynorArch.Abstractions.Enums;
 
 ## Documentation
 
-- [Getting Started](https://github.com/tuanngp/RynorArch/blob/main/docs/GETTING_STARTED.en.md)
-- [Feature Matrix](https://github.com/tuanngp/RynorArch/blob/main/docs/FEATURE_MATRIX.en.md)
-- [Integration Guide](https://github.com/tuanngp/RynorArch/blob/main/docs/INTEGRATION_GUIDE.en.md)
-- [AI Agent Playbook](https://github.com/tuanngp/RynorArch/blob/main/docs/AI_AGENT_PLAYBOOK.en.md)
-- [Attribute Reference](https://github.com/tuanngp/RynorArch/blob/main/docs/ATTRIBUTE_REFERENCE.en.md)
-- [Compatibility](https://github.com/tuanngp/RynorArch/blob/main/docs/COMPATIBILITY.en.md)
-- [Endpoint Hardening](https://github.com/tuanngp/RynorArch/blob/main/docs/ENDPOINT_HARDENING.en.md)
-- [Caching Operations](https://github.com/tuanngp/RynorArch/blob/main/docs/CACHING_OPERATIONS.en.md)
-- [Runtime Testing](https://github.com/tuanngp/RynorArch/blob/main/docs/RUNTIME_TESTING.en.md)
-- [Troubleshooting](https://github.com/tuanngp/RynorArch/blob/main/docs/TROUBLESHOOTING.en.md)
-- [Upgrading](https://github.com/tuanngp/RynorArch/blob/main/docs/UPGRADING.en.md)
-- [Upgrading Profiles](https://github.com/tuanngp/RynorArch/blob/main/docs/UPGRADING_PROFILES.en.md)
-- [Releasing](https://github.com/tuanngp/RynorArch/blob/main/docs/RELEASING.en.md)
-- [Changelog](https://github.com/tuanngp/RynorArch/blob/main/CHANGELOG.md)
+- [Getting Started](https://github.com/tuanngp/ZenithArch/blob/main/docs/GETTING_STARTED.en.md)
+- [Feature Matrix](https://github.com/tuanngp/ZenithArch/blob/main/docs/FEATURE_MATRIX.en.md)
+- [Integration Guide](https://github.com/tuanngp/ZenithArch/blob/main/docs/INTEGRATION_GUIDE.en.md)
+- [AI Agent Playbook](https://github.com/tuanngp/ZenithArch/blob/main/docs/AI_AGENT_PLAYBOOK.en.md)
+- [Attribute Reference](https://github.com/tuanngp/ZenithArch/blob/main/docs/ATTRIBUTE_REFERENCE.en.md)
+- [Compatibility](https://github.com/tuanngp/ZenithArch/blob/main/docs/COMPATIBILITY.en.md)
+- [Endpoint Hardening](https://github.com/tuanngp/ZenithArch/blob/main/docs/ENDPOINT_HARDENING.en.md)
+- [Caching Operations](https://github.com/tuanngp/ZenithArch/blob/main/docs/CACHING_OPERATIONS.en.md)
+- [Runtime Testing](https://github.com/tuanngp/ZenithArch/blob/main/docs/RUNTIME_TESTING.en.md)
+- [Troubleshooting](https://github.com/tuanngp/ZenithArch/blob/main/docs/TROUBLESHOOTING.en.md)
+- [Upgrading](https://github.com/tuanngp/ZenithArch/blob/main/docs/UPGRADING.en.md)
+- [Upgrading Profiles](https://github.com/tuanngp/ZenithArch/blob/main/docs/UPGRADING_PROFILES.en.md)
+- [Releasing](https://github.com/tuanngp/ZenithArch/blob/main/docs/RELEASING.en.md)
+- [Changelog](https://github.com/tuanngp/ZenithArch/blob/main/CHANGELOG.md)

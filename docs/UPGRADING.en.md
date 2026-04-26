@@ -6,7 +6,7 @@
 ## Upgrade workflow
 
 1. Update package versions in a branch.
-2. Run `dotnet test RynorArch.slnx`.
+2. Run `dotnet test ZenithArch.slnx`.
 3. Compare generated output for a representative sample project.
 4. Read `CHANGELOG.md` for behavior changes and diagnostics updates.
 5. Roll out to additional modules only after the first upgraded module is stable.
@@ -75,9 +75,9 @@ Most consumers should not need migration changes beyond rebuilding and validatin
 
 After upgrading, validate observability and diagnostics in addition to compile success:
 
-1. Confirm `RynorArch.GenerationReport.g.cs` is emitted and lists expected entities/artifacts.
+1. Confirm `ZenithArch.GenerationReport.g.cs` is emitted and lists expected entities/artifacts.
 2. Check generated headers for `rynor-artifact` metadata to ensure traceability is intact.
-3. Review `RYNOR007`-`RYNOR013` diagnostics and resolve all errors before rollout.
-4. If CQRS is enabled, validate `DbContextType` (if set) resolves to a real `DbContext` (`RYNOR008`).
-5. If endpoint generation is enabled, confirm explicit experimental opt-in is present (`RYNOR012`).
-6. If using repository `UseUnitOfWork`, switch startup wiring to `AddRynorArchDependencies<TDbContext>()` for low-touch registration of the generated `IUnitOfWork` adapter.
+3. Review `ZENITH007`-`ZENITH013` diagnostics and resolve all errors before rollout.
+4. If CQRS is enabled, validate `DbContextType` (if set) resolves to a real `DbContext` (`ZENITH008`).
+5. If endpoint generation is enabled, confirm explicit experimental opt-in is present (`ZENITH012`).
+6. If using repository `UseUnitOfWork`, switch startup wiring to `AddZenithArchDependencies<TDbContext>()` for low-touch registration of the generated `IUnitOfWork` adapter.

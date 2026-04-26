@@ -22,30 +22,30 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Restore
-        run: dotnet restore RynorArch.slnx
+        run: dotnet restore ZenithArch.slnx
 
       - name: Build
-        run: dotnet build RynorArch.slnx --configuration Release --no-restore
+        run: dotnet build ZenithArch.slnx --configuration Release --no-restore
 
       - name: Validate Abstractions target frameworks
         run: |
           for tfm in netstandard2.0 netstandard2.1 net6.0 net8.0 net9.0; do
-            echo "Building RynorArch.Abstractions for $tfm"
-            dotnet build src/RynorArch.Abstractions/RynorArch.Abstractions.csproj --configuration Release --no-restore --framework "$tfm"
+            echo "Building ZenithArch.Abstractions for $tfm"
+            dotnet build src/ZenithArch.Abstractions/ZenithArch.Abstractions.csproj --configuration Release --no-restore --framework "$tfm"
           done
 
       - name: Test
-        run: dotnet test RynorArch.slnx --configuration Release --no-build
+        run: dotnet test ZenithArch.slnx --configuration Release --no-build
 
       - name: Abstractions coverage gate (80% line)
         run: |
           echo "Enforcing Abstractions line coverage threshold: 80%"
-          dotnet test tests/RynorArch.Abstractions.Tests/RynorArch.Abstractions.Tests.csproj \
+          dotnet test tests/ZenithArch.Abstractions.Tests/ZenithArch.Abstractions.Tests.csproj \
             --configuration Release \
             /p:CollectCoverage=true \
             /p:CoverletOutput=./TestResults/Coverage/ \
             /p:CoverletOutputFormat=cobertura \
-            /p:Include="[RynorArch.Abstractions]*" \
+            /p:Include="[ZenithArch.Abstractions]*" \
             /p:Threshold=80 \
             /p:ThresholdType=line \
             /p:ThresholdStat=total
@@ -55,10 +55,10 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: abstractions-coverage
-          path: tests/RynorArch.Abstractions.Tests/TestResults/Coverage/**
+          path: tests/ZenithArch.Abstractions.Tests/TestResults/Coverage/**
 
       - name: Vulnerability audit
-        run: dotnet list RynorArch.slnx package --vulnerable --include-transitive
+        run: dotnet list ZenithArch.slnx package --vulnerable --include-transitive
 
   pack:
     runs-on: ubuntu-latest
@@ -74,7 +74,7 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Restore
-        run: dotnet restore RynorArch.slnx
+        run: dotnet restore ZenithArch.slnx
 
       - name: Build, test, and pack
         run: ./publish.ps1 -Increment None
@@ -86,7 +86,7 @@ jobs:
           cp artifacts/*.nupkg local-feed/
 
       - name: NuGet package integration tests
-        run: dotnet test tests/RynorArch.NuGetIntegration.Tests/RynorArch.NuGetIntegration.Tests.csproj --configuration Release
+        run: dotnet test tests/ZenithArch.NuGetIntegration.Tests/ZenithArch.NuGetIntegration.Tests.csproj --configuration Release
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v7
@@ -109,17 +109,17 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Restore
-        run: dotnet restore RynorArch.slnx
+        run: dotnet restore ZenithArch.slnx
 
       - name: Run generator performance benchmarks (dry)
-        run: dotnet run --project tests/RynorArch.Performance.Tests/RynorArch.Performance.Tests.csproj -c Release -- --filter *RunGenerator* --job Dry
+        run: dotnet run --project tests/ZenithArch.Performance.Tests/ZenithArch.Performance.Tests.csproj -c Release -- --filter *RunGenerator* --job Dry
 
       - name: Upload performance artifacts
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: generator-performance-benchmarks
-          path: tests/RynorArch.Performance.Tests/BenchmarkDotNet.Artifacts/results/**
+          path: tests/ZenithArch.Performance.Tests/BenchmarkDotNet.Artifacts/results/**
 
   publish:
     runs-on: ubuntu-latest

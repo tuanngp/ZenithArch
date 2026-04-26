@@ -5,20 +5,20 @@
 
 ## Common diagnostics
 
-### `RYNOR001` No entities found
+### `ZENITH001` No entities found
 
 No class with `[Entity]` was discovered in the current compilation.
 
 Check:
-- the project references `RynorArch.Abstractions`
+- the project references `ZenithArch.Abstractions`
 - the entity class is part of the current project
 - the entity is marked with `[Entity]`
 
-### `RYNOR002` AggregateRoot requires Entity
+### `ZENITH002` AggregateRoot requires Entity
 
 `[AggregateRoot]` only works on classes that also have `[Entity]`.
 
-### `RYNOR003` Architecture pattern conflict
+### `ZENITH003` Architecture pattern conflict
 
 The selected feature flags do not match the chosen architecture pattern.
 
@@ -26,30 +26,30 @@ Examples:
 - `UseUnitOfWork = true` with `Cqrs`
 - `EnableValidation = true` with `Repository`
 
-### `RYNOR004` Unsupported QueryFilter type
+### `ZENITH004` Unsupported QueryFilter type
 
 `[QueryFilter]` is intended for string, numeric, boolean, `DateTime`, `Guid`, enums, and nullable variants of those types.
 
 If you need complex filtering, remove `[QueryFilter]` and implement the logic manually in a partial handler or specification.
 
-### `RYNOR005` Entity must be partial
+### `ZENITH005` Entity must be partial
 
 Generated extensions and partial hooks require `partial` entities.
 
-### `RYNOR006` Missing architecture configuration
+### `ZENITH006` Missing architecture configuration
 
 Add an explicit assembly-level configuration such as:
 
 ```csharp
-using RynorArch.Abstractions.Attributes;
-using RynorArch.Abstractions.Enums;
+using ZenithArch.Abstractions.Attributes;
+using ZenithArch.Abstractions.Enums;
 
 [assembly: Architecture(Pattern = ArchitecturePattern.Cqrs)]
 ```
 
-RynorArch does not generate sources without explicit architecture configuration.
+Zenith Arch does not generate sources without explicit architecture configuration.
 
-### `RYNOR007` Missing required dependency
+### `ZENITH007` Missing required dependency
 
 One or more enabled features require packages/framework references that are not available to the compilation.
 The diagnostic now includes an exact `PackageReference` or `FrameworkReference` hint.
@@ -61,7 +61,7 @@ Common examples:
 - Endpoints enabled without `Microsoft.AspNetCore.App`
 - Caching decorators enabled without `Microsoft.Extensions.Caching.*`
 
-### `RYNOR008` Configured DbContext type is invalid
+### `ZENITH008` Configured DbContext type is invalid
 
 `DbContextType` was configured but the type cannot be resolved or does not derive from `Microsoft.EntityFrameworkCore.DbContext`.
 
@@ -69,13 +69,13 @@ Fix options:
 - set `DbContextType = typeof(YourDbContext)` to a valid type in the compilation
 - remove `DbContextType` to fall back to `Microsoft.EntityFrameworkCore.DbContext`
 
-### `RYNOR009` Generated endpoint behavior notice
+### `ZENITH009` Generated endpoint behavior notice
 
 Endpoint generation is active and compilation succeeded, but the generated endpoints are intentionally minimal.
 Harden them for enterprise APIs (authorization, richer error contracts, and resource-not-found semantics).
 Follow the hardening checklist in `docs/ENDPOINT_HARDENING.md`.
 
-### `RYNOR010` Generated cache behavior notice
+### `ZENITH010` Generated cache behavior notice
 
 Generated cache pipeline behaviors include per-entity invalidation contracts.
 Ensure invalidators are registered in DI (generated DI helper does this when enabled).
@@ -83,14 +83,14 @@ Operational rollout guidance is in `docs/CACHING_OPERATIONS.md`.
 
 ### Validation is enabled but invalid commands still pass
 
-If `EnableValidation = true`, generated DI should register `RynorArchValidationBehavior<,>`.
+If `EnableValidation = true`, generated DI should register `ZenithArchValidationBehavior<,>`.
 
 Check:
-- `AddRynorArchDependencies()` is called at startup, or equivalent manual registrations are present.
+- `AddZenithArchDependencies()` is called at startup, or equivalent manual registrations are present.
 - MediatR is configured for the same assembly containing generated handlers.
 - Generated validator files (`*.Validation.g.cs`) exist under `obj/`.
 
-If `GenerateDependencyInjection = false`, manually register `IPipelineBehavior<,>` to `RynorArchValidationBehavior<,>`.
+If `GenerateDependencyInjection = false`, manually register `IPipelineBehavior<,>` to `ZenithArchValidationBehavior<,>`.
 
 ### Generated endpoints return unexpected write status codes
 
@@ -98,14 +98,14 @@ Current generated behavior:
 - `POST` returns `201 Created` with `{ id = <guid> }` payload.
 - `PUT`/`DELETE` return `404` when the resource is missing and `204` when successful.
 
-If you still observe unconditional `204`, rebuild and verify the generated `RynorArchEndpointExtensions.g.cs` in `obj/`.
+If you still observe unconditional `204`, rebuild and verify the generated `ZenithArchEndpointExtensions.g.cs` in `obj/`.
 
-### `RYNOR011` Feature flag ignored by selected pattern
+### `ZENITH011` Feature flag ignored by selected pattern
 
 A feature flag was enabled, but the selected architecture pattern does not support generating that artifact.
 Align pattern and flags in `[assembly: Architecture(...)]` to silence this warning.
 
-### `RYNOR012` Endpoint generation requires experimental opt-in
+### `ZENITH012` Endpoint generation requires experimental opt-in
 
 `GenerateEndpoints` is enabled but `EnableExperimentalEndpoints` is not.
 
@@ -119,15 +119,15 @@ Fix by opting in explicitly:
 )]
 ```
 
-### `RYNOR013` CQRS save mode needs generated DI wiring
+### `ZENITH013` CQRS save mode needs generated DI wiring
 
 `CqrsSaveMode.PerRequestTransaction` is enabled while `GenerateDependencyInjection` is false.
 
 Fix options:
 - set `GenerateDependencyInjection = true`, or
-- manually register `IPipelineBehavior<,>` to `RynorArchSaveChangesBehavior<,>`
+- manually register `IPipelineBehavior<,>` to `ZenithArchSaveChangesBehavior<,>`
 
-### `RYNOR014` Consider starter profile migration
+### `ZENITH014` Consider starter profile migration
 
 Your module still uses a legacy explicit-flag style configuration.
 
@@ -137,15 +137,15 @@ Fix options:
 
 See `docs/UPGRADING_PROFILES.md` for migration mapping examples.
 
-### `RYNOR015` Validation needs generated DI wiring
+### `ZENITH015` Validation needs generated DI wiring
 
 `EnableValidation` is enabled while `GenerateDependencyInjection` is false.
 
 Fix options:
 - set `GenerateDependencyInjection = true`, or
-- manually register `IPipelineBehavior<,>` to `RynorArchValidationBehavior<,>`
+- manually register `IPipelineBehavior<,>` to `ZenithArchValidationBehavior<,>`
 
-### `RYNOR016` Endpoint hardening checklist recommended
+### `ZENITH016` Endpoint hardening checklist recommended
 
 `GenerateEndpoints` is enabled and endpoint generation succeeded.
 This informational diagnostic reminds you to apply production hardening before rollout.
@@ -158,7 +158,7 @@ Check `docs/ENDPOINT_HARDENING.md` and verify at minimum:
 
 ## Debugging generated output
 
-- Inspect `RynorArch.GenerationReport.g.cs` to see what artifacts were emitted.
+- Inspect `ZenithArch.GenerationReport.g.cs` to see what artifacts were emitted.
 - Check file headers for `rynor-artifact`, `rynor-entity`, and `rynor-assumptions` metadata.
 - Use diagnostics as the primary signal before debugging emitted code bodies.
 
@@ -172,7 +172,7 @@ Check `docs/ENDPOINT_HARDENING.md` and verify at minimum:
 - Clear `bin/` and `obj/` folders.
 - Restore packages again.
 - Compare generated output before and after the upgrade.
-- Re-run `dotnet test RynorArch.slnx`.
+- Re-run `dotnet test ZenithArch.slnx`.
 
 ## CLI doctor troubleshooting
 

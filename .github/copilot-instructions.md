@@ -1,7 +1,7 @@
 # Project Guidelines
 
 ## Scope
-RynorArch is a compile-time architecture automation framework powered by Roslyn incremental source generation. Prefer deterministic output, explicit diagnostics, and minimal hidden runtime behavior.
+ZenithArch is a compile-time architecture automation framework powered by Roslyn incremental source generation. Prefer deterministic output, explicit diagnostics, and minimal hidden runtime behavior.
 
 ## Code Style
 - Honor shared defaults in Directory.Build.props (LangVersion 13, nullable enabled, implicit usings enabled, warnings as errors).
@@ -10,13 +10,13 @@ RynorArch is a compile-time architecture automation framework powered by Roslyn 
 
 ## Architecture
 Primary component boundaries:
-- src/RynorArch.Abstractions: public attributes, interfaces, base contracts.
-- src/RynorArch.Generator: Roslyn incremental generator and emitters.
-- src/RynorArch.Cli: init/scaffold/doctor workflows and global tool packaging.
-- samples/RynorArch.Sample: canonical wiring for DI, DbContext, and endpoint mapping.
-- tests/RynorArch.Generator.Tests: generator output and diagnostics checks.
-- tests/RynorArch.Integration.Tests: runtime semantics (CRUD, soft delete, audit, caching, validation, transactions).
-- tests/RynorArch.E2E.Tests: CLI smoke and endpoint semantics.
+- src/ZenithArch.Abstractions: public attributes, interfaces, base contracts.
+- src/ZenithArch.Generator: Roslyn incremental generator and emitters.
+- src/ZenithArch.Cli: init/scaffold/doctor workflows and global tool packaging.
+- samples/ZenithArch.Sample: canonical wiring for DI, DbContext, and endpoint mapping.
+- tests/ZenithArch.Generator.Tests: generator output and diagnostics checks.
+- tests/ZenithArch.Integration.Tests: runtime semantics (CRUD, soft delete, audit, caching, validation, transactions).
+- tests/ZenithArch.E2E.Tests: CLI smoke and endpoint semantics.
 
 For generator changes:
 - Use attribute-indexed discovery (ForAttributeWithMetadataName), not broad compilation scans.
@@ -26,14 +26,14 @@ For generator changes:
 Use .NET SDK 10.0.x.
 
 Core commands:
-- dotnet restore RynorArch.slnx
-- dotnet build RynorArch.slnx --configuration Release --no-restore
-- dotnet test RynorArch.slnx --configuration Release --no-build
+- dotnet restore ZenithArch.slnx
+- dotnet build ZenithArch.slnx --configuration Release --no-restore
+- dotnet test ZenithArch.slnx --configuration Release --no-build
 
 Targeted tests:
-- dotnet test tests/RynorArch.Generator.Tests/RynorArch.Generator.Tests.csproj
-- dotnet test tests/RynorArch.Integration.Tests/RynorArch.Integration.Tests.csproj
-- dotnet test tests/RynorArch.E2E.Tests/RynorArch.E2E.Tests.csproj --configuration Release
+- dotnet test tests/ZenithArch.Generator.Tests/ZenithArch.Generator.Tests.csproj
+- dotnet test tests/ZenithArch.Integration.Tests/ZenithArch.Integration.Tests.csproj
+- dotnet test tests/ZenithArch.E2E.Tests/ZenithArch.E2E.Tests.csproj --configuration Release
 
 NuGet packaging:
 - pwsh ./publish.ps1 -Increment None
@@ -41,14 +41,14 @@ NuGet packaging:
 - pwsh ./publish.ps1 -Increment Minor -Push
 
 Workflow gate for architecture or generator changes:
-1. dotnet build RynorArch.slnx --configuration Release
-2. dotnet run --project src/RynorArch.Cli/RynorArch.Cli.csproj -- doctor "<project-path>"
+1. dotnet build ZenithArch.slnx --configuration Release
+2. dotnet run --project src/ZenithArch.Cli/ZenithArch.Cli.csproj -- doctor "<project-path>"
 3. Continue only when doctor reports READY or READY WITH WARNINGS.
 
 ## NuGet Package Conventions
 - Versioning is centralized in Directory.Build.props via VersionPrefix; do not hardcode per-project package versions.
 - Prefer publish.ps1 for bump/build/test/pack/push so version updates and artifacts stay consistent.
-- Packaged projects are src/RynorArch.Abstractions, src/RynorArch.Generator, and src/RynorArch.Cli.
+- Packaged projects are src/ZenithArch.Abstractions, src/ZenithArch.Generator, and src/ZenithArch.Cli.
 - Keep package metadata coherent with release intent (README, release notes, tags, repository URLs).
 
 ## Project Conventions
@@ -73,38 +73,38 @@ Use these as source-of-truth references instead of duplicating long guidance:
 # Project Guidelines
 
 ## Scope
-RynorArch is a compile-time architecture automation framework powered by Roslyn incremental source generation. Prefer deterministic output, explicit diagnostics, and minimal hidden runtime behavior.
+ZenithArch is a compile-time architecture automation framework powered by Roslyn incremental source generation. Prefer deterministic output, explicit diagnostics, and minimal hidden runtime behavior.
 
 ## Build and Test
 Use .NET SDK 10.0.x.
 
 Core commands:
-- dotnet restore RynorArch.slnx
-- dotnet build RynorArch.slnx --configuration Release --no-restore
-- dotnet test RynorArch.slnx --configuration Release --no-build
+- dotnet restore ZenithArch.slnx
+- dotnet build ZenithArch.slnx --configuration Release --no-restore
+- dotnet test ZenithArch.slnx --configuration Release --no-build
 
 Targeted test commands:
-- dotnet test tests/RynorArch.Generator.Tests/RynorArch.Generator.Tests.csproj
-- dotnet test tests/RynorArch.Integration.Tests/RynorArch.Integration.Tests.csproj
-- dotnet test tests/RynorArch.E2E.Tests/RynorArch.E2E.Tests.csproj --configuration Release
+- dotnet test tests/ZenithArch.Generator.Tests/ZenithArch.Generator.Tests.csproj
+- dotnet test tests/ZenithArch.Integration.Tests/ZenithArch.Integration.Tests.csproj
+- dotnet test tests/ZenithArch.E2E.Tests/ZenithArch.E2E.Tests.csproj --configuration Release
 
 Packaging:
 - pwsh ./publish.ps1 -Increment None
 
 When implementing workflow changes, use this gate:
 1. dotnet build
-2. dotnet run --project src/RynorArch.Cli/RynorArch.Cli.csproj -- doctor "<project-path>"
+2. dotnet run --project src/ZenithArch.Cli/ZenithArch.Cli.csproj -- doctor "<project-path>"
 3. Continue only when doctor reports READY or READY WITH WARNINGS.
 
 ## Architecture
 Primary component boundaries:
-- src/RynorArch.Abstractions: public attributes, interfaces, base contracts.
-- src/RynorArch.Generator: Roslyn incremental generator and emitters.
-- src/RynorArch.Cli: init/scaffold/doctor workflows.
-- samples/RynorArch.Sample: canonical wiring for DI, DbContext, and endpoint mapping.
-- tests/RynorArch.Generator.Tests: generator output and diagnostics checks.
-- tests/RynorArch.Integration.Tests: runtime semantics (CRUD, soft delete, audit, caching, validation, transactions).
-- tests/RynorArch.E2E.Tests: CLI smoke tests.
+- src/ZenithArch.Abstractions: public attributes, interfaces, base contracts.
+- src/ZenithArch.Generator: Roslyn incremental generator and emitters.
+- src/ZenithArch.Cli: init/scaffold/doctor workflows.
+- samples/ZenithArch.Sample: canonical wiring for DI, DbContext, and endpoint mapping.
+- tests/ZenithArch.Generator.Tests: generator output and diagnostics checks.
+- tests/ZenithArch.Integration.Tests: runtime semantics (CRUD, soft delete, audit, caching, validation, transactions).
+- tests/ZenithArch.E2E.Tests: CLI smoke tests.
 
 For generator changes, preserve incremental design:
 - Use attribute-indexed discovery (ForAttributeWithMetadataName), not broad compilation scans.

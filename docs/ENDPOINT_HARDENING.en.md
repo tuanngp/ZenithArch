@@ -51,5 +51,5 @@ var app = builder.Build();
 app.UseExceptionHandler();
 app.MapGroup("/api")
    .RequireAuthorization()
-   .MapRynorArchEndpoints();
+   .MapZenithArchEndpoints();
 ```

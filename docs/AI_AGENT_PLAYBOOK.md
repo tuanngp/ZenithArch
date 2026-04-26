@@ -2,7 +2,7 @@
 
 [Tiếng Việt](AI_AGENT_PLAYBOOK.md) | [English](AI_AGENT_PLAYBOOK.en.md)
 
-Tài liệu này định nghĩa workflow mang tính quyết định cho AI agents khi làm việc với dự án RynorArch.
+Tài liệu này định nghĩa workflow mang tính quyết định cho AI agents khi làm việc với dự án ZenithArch.
 
 ## Hợp đồng workflow
 
@@ -18,7 +18,7 @@ Mọi tác vụ agent cần tuân theo cấu trúc sau:
 ### Yêu cầu đầu vào
 
 - Thư mục dự án có `.csproj`.
-- Có `RynorArch.Abstractions` và `RynorArch.Generator` qua package hoặc project reference.
+- Có `ZenithArch.Abstractions` và `ZenithArch.Generator` qua package hoặc project reference.
 
 ### Cách thực hiện
 
@@ -50,7 +50,7 @@ Mọi tác vụ agent cần tuân theo cấu trúc sau:
 
 - `Domain/<EntityName>.cs`
 - Tùy chọn CQRS extension partials ở `Cqrs/<EntityName>/`
-- `RynorArch.GenerationReport.g.cs` dưới `obj/`
+- `ZenithArch.GenerationReport.g.cs` dưới `obj/`
 
 ### Tiêu chí thành công
 
@@ -65,9 +65,9 @@ Mọi tác vụ agent cần tuân theo cấu trúc sau:
 
 ### Cách thực hiện
 
-1. Gọi `builder.Services.AddRynorArchDependencies();`.
-2. Nếu bật UnitOfWork, dùng `builder.Services.AddRynorArchDependencies<AppDbContext>();`.
-3. Nếu bật endpoint generation, gọi `app.MapRynorArchEndpoints();`.
+1. Gọi `builder.Services.AddZenithArchDependencies();`.
+2. Nếu bật UnitOfWork, dùng `builder.Services.AddZenithArchDependencies<AppDbContext>();`.
+3. Nếu bật endpoint generation, gọi `app.MapZenithArchEndpoints();`.
 
 ### Tiêu chí thành công
 
@@ -99,7 +99,7 @@ Mọi tác vụ agent cần tuân theo cấu trúc sau:
 ```bash
 dotnet build
 rynor doctor
-dotnet test RynorArch.slnx -v minimal
+dotnet test ZenithArch.slnx -v minimal
 ```
 
 ## Tài liệu liên quan

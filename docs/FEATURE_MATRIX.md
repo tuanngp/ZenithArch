@@ -7,7 +7,7 @@
 | UseSpecification | Có | Có | Có | Sinh specification từ thuộc tính có `[QueryFilter]` |
 | UseUnitOfWork | Không | Có | Có | Bị bỏ qua trong CQRS thuần |
 | EnableValidation | Có | Không | Có | Sinh FluentValidation validator cho command |
-| GenerateDependencyInjection | Có | Có | Có | Sinh `AddRynorArchDependencies()` |
+| GenerateDependencyInjection | Có | Có | Có | Sinh `AddZenithArchDependencies()` |
 | GenerateEndpoints | Có | Không | Có | Cần `EnableExperimentalEndpoints = true` |
 | GenerateDtos | Có | Có | Có | DTO records và mapping extensions |
 | GenerateEfConfigurations | Có | Có | Có | EF configuration partials |
@@ -35,4 +35,4 @@ Mặc định profile chỉ là điểm bắt đầu. Flag tường minh trong `
 | Đồng bộ phụ thuộc | `rynor doctor` (`DR007`-`DR013`) | Đủ package/framework theo feature đang bật |
 | Hình dạng entity | `rynor doctor` (`DR014`) | Tất cả class có `[Entity]` đều là `partial` |
 | Dấu mốc generation | `rynor doctor` (`DR015`) | Có report sinh mã dưới `obj/` sau khi build |
-| Ngữ nghĩa runtime | `dotnet test tests/RynorArch.Integration.Tests` | CRUD, soft-delete, audit, validation, transaction và cache pass |
+| Ngữ nghĩa runtime | `dotnet test tests/ZenithArch.Integration.Tests` | CRUD, soft-delete, audit, validation, transaction và cache pass |
