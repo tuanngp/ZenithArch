@@ -6,6 +6,7 @@
     <Project Path="src/ZenithArch.Abstractions/ZenithArch.Abstractions.csproj" />
     <Project Path="src/ZenithArch.Cli/ZenithArch.Cli.csproj" />
     <Project Path="src/ZenithArch.Generator/ZenithArch.Generator.csproj" />
+    <Project Path="src/ZenithArch.McpServer/ZenithArch.McpServer.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ZenithArch.Abstractions.Tests/ZenithArch.Abstractions.Tests.csproj" />
