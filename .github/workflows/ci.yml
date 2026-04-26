@@ -33,7 +33,7 @@ jobs:
 
       - name: Validate Abstractions target frameworks
         run: |
-          for tfm in netstandard2.0 netstandard2.1 net6.0 net8.0 net9.0; do
+          for tfm in netstandard2.0 netstandard2.1 net8.0 net9.0; do
             echo "Building ZenithArch.Abstractions for $tfm"
             dotnet build src/ZenithArch.Abstractions/ZenithArch.Abstractions.csproj --configuration Release --no-restore --framework "$tfm"
           done
@@ -43,7 +43,7 @@ jobs:
 
       - name: Abstractions tests across runtime TFMs
         run: |
-          for tfm in net6.0 net8.0 net9.0 net10.0; do
+          for tfm in net8.0 net9.0 net10.0; do
             echo "Running ZenithArch.Abstractions.Tests for $tfm"
             dotnet test tests/ZenithArch.Abstractions.Tests/ZenithArch.Abstractions.Tests.csproj --configuration Release --framework "$tfm" --no-build
           done

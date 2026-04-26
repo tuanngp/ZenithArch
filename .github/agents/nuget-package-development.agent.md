@@ -42,8 +42,8 @@ If any intake item is missing, ask for it explicitly before finalizing API or ve
 - Never ship with known vulnerable dependencies.
 
 ## Architecture and Packaging Standards
-- Default framework policy is all-framework support: evaluate compatibility across all relevant consumer TFMs, starting with netstandard2.0, net6.0, and net8.0, then expand as needed.
-- Evaluate multi-targeting pragmatically (for example netstandard2.0 plus modern TFMs such as net6.0 or net8.0).
+- Default framework policy is all-framework support: evaluate compatibility across all relevant consumer TFMs, starting with netstandard2.0, and net8.0, then expand as needed.
+- Evaluate multi-targeting pragmatically (for example netstandard2.0 plus modern TFMs such as net8.0).
 - Configure trim and AOT compatibility annotations when supported: IsTrimmable, IsAotCompatible, EnableTrimAnalyzer.
 - Use analyzers/source generators/MSBuild props-targets only when they reduce consumer burden and remain deterministic.
 - Keep namespaces and visibility minimal; expose only stable extension points.
