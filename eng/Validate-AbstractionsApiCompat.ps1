@@ -40,7 +40,13 @@ Write-Host "Current version: $currentVersion" -ForegroundColor Cyan
 
 $packageIdLower = $PackageId.ToLowerInvariant()
 $indexUrl = "https://api.nuget.org/v3-flatcontainer/$packageIdLower/index.json"
-$indexPayload = Invoke-RestMethod -Uri $indexUrl -Method Get
+try {
+    $indexPayload = Invoke-RestMethod -Uri $indexUrl -Method Get
+}
+catch {
+    Write-Host "No package index found on NuGet for $PackageId. Likely first publish. Skipping ApiCompat baseline validation." -ForegroundColor Yellow
+    exit 0
+}
 
 $availableVersions = @($indexPayload.versions)
 if ($availableVersions.Count -eq 0) {
