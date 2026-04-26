@@ -42,7 +42,7 @@ Branch protection policy for `main`:
 - Run `dotnet restore ZenithArch.slnx`.
 - Run `dotnet build ZenithArch.slnx -c Release`.
 - Run `dotnet test ZenithArch.slnx -c Release`.
-- Run framework-specific compile checks for `ZenithArch.Abstractions` (`netstandard2.0`, `netstandard2.1`, `net6.0`, `net8.0`, `net9.0`).
+- Run framework-specific compile checks for `ZenithArch.Abstractions` (`netstandard2.0`, `netstandard2.1`, `net8.0`, `net9.0`).
 - Confirm Abstractions API compatibility baseline validation passes (`eng/Validate-AbstractionsApiCompat.ps1`).
 - Confirm Abstractions coverage artifact is generated and line coverage is at least 80%.
 - Run generator compile-time benchmark smoke (`dotnet run --project tests/ZenithArch.Performance.Tests/ZenithArch.Performance.Tests.csproj -c Release -- --filter *RunGenerator* --job Dry`).

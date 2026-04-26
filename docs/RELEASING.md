@@ -27,7 +27,7 @@ Mặc định script sẽ chạy thêm ApiCompat baseline cho `ZenithArch.Abstra
 - Chạy `dotnet restore ZenithArch.slnx`.
 - Chạy `dotnet build ZenithArch.slnx -c Release`.
 - Chạy `dotnet test ZenithArch.slnx -c Release`.
-- Chạy compile check theo từng framework của `ZenithArch.Abstractions` (`netstandard2.0`, `netstandard2.1`, `net6.0`, `net8.0`, `net9.0`).
+- Chạy compile check theo từng framework của `ZenithArch.Abstractions` (`netstandard2.0`, `netstandard2.1`, `net8.0`, `net9.0`).
 - Xác nhận ApiCompat baseline pass bằng `eng/Validate-AbstractionsApiCompat.ps1`.
 - Xác nhận artifact coverage của Abstractions được tạo và line coverage đạt tối thiểu 80%.
 - Chạy benchmark compile-time cho generator (`dotnet run --project tests/ZenithArch.Performance.Tests/ZenithArch.Performance.Tests.csproj -c Release -- --filter *RunGenerator* --job Dry`).
