@@ -30,9 +30,9 @@ Mặc định profile chỉ là điểm bắt đầu. Flag tường minh trong `
 
 | Cổng | Công cụ | Điều kiện pass |
 | --- | --- | --- |
-| Khám phá cấu hình | `rynor doctor` (`DR002`, `DR004`) | Tìm thấy `.csproj` và có architecture config |
-| An toàn kiến trúc | `rynor doctor` (`DR005`, `DR006`) | Pattern/profile hợp lệ và endpoint opt-in đúng |
-| Đồng bộ phụ thuộc | `rynor doctor` (`DR007`-`DR013`) | Đủ package/framework theo feature đang bật |
-| Hình dạng entity | `rynor doctor` (`DR014`) | Tất cả class có `[Entity]` đều là `partial` |
-| Dấu mốc generation | `rynor doctor` (`DR015`) | Có report sinh mã dưới `obj/` sau khi build |
+| Khám phá cấu hình | `zenith doctor` (`DR002`, `DR004`) | Tìm thấy `.csproj` và có architecture config |
+| An toàn kiến trúc | `zenith doctor` (`DR005`, `DR006`) | Pattern/profile hợp lệ và endpoint opt-in đúng |
+| Đồng bộ phụ thuộc | `zenith doctor` (`DR007`-`DR013`) | Đủ package/framework theo feature đang bật |
+| Hình dạng entity | `zenith doctor` (`DR014`) | Tất cả class có `[Entity]` đều là `partial` |
+| Dấu mốc generation | `zenith doctor` (`DR015`) | Có report sinh mã dưới `obj/` sau khi build |
 | Ngữ nghĩa runtime | `dotnet test tests/ZenithArch.Integration.Tests` | CRUD, soft-delete, audit, validation, transaction và cache pass |

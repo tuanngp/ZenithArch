@@ -22,7 +22,7 @@ Mọi tác vụ agent cần tuân theo cấu trúc sau:
 
 ### Cách thực hiện
 
-1. Chạy `rynor init`.
+1. Chạy `zenith init`.
 2. Chọn architecture profile.
 3. Xác nhận tồn tại `AssemblyConfig.cs`.
 
@@ -33,7 +33,7 @@ Mọi tác vụ agent cần tuân theo cấu trúc sau:
 
 ### Tiêu chí thành công
 
-- `rynor doctor` không còn FAIL ở `DR002`, `DR004`, `DR007`, `DR008`.
+- `zenith doctor` không còn FAIL ở `DR002`, `DR004`, `DR007`, `DR008`.
 
 ## Tác vụ 2: Scaffold entity đầu tiên
 
@@ -43,7 +43,7 @@ Mọi tác vụ agent cần tuân theo cấu trúc sau:
 
 ### Cách thực hiện
 
-1. Chạy `rynor scaffold <EntityName> <Namespace>`.
+1. Chạy `zenith scaffold <EntityName> <Namespace>`.
 2. Build một lần bằng `dotnet build`.
 
 ### Đầu ra kỳ vọng
@@ -54,7 +54,7 @@ Mọi tác vụ agent cần tuân theo cấu trúc sau:
 
 ### Tiêu chí thành công
 
-- `rynor doctor` PASS ở `DR014` và `DR015`.
+- `zenith doctor` PASS ở `DR014` và `DR015`.
 - Build hoàn tất không có generator errors.
 
 ## Tác vụ 3: Tích hợp runtime wiring
@@ -78,7 +78,7 @@ Mọi tác vụ agent cần tuân theo cấu trúc sau:
 
 ### Cách thực hiện
 
-1. Chạy `rynor doctor` tại project root.
+1. Chạy `zenith doctor` tại project root.
 2. Đọc dòng tổng kết.
 
 ### Quy tắc quyết định
@@ -89,7 +89,7 @@ Mọi tác vụ agent cần tuân theo cấu trúc sau:
 
 ## Bản đồ lỗi thường gặp
 
-- Thiếu architecture config: sửa bằng `rynor init`.
+- Thiếu architecture config: sửa bằng `zenith init`.
 - Bật endpoint nhưng thiếu opt-in: đặt `EnableExperimentalEndpoints = true` hoặc tắt endpoint generation.
 - Entity không phải partial: đánh dấu các class có `[Entity]` là `partial`.
 - Thiếu generation report: chạy `dotnet build` một lần.
@@ -98,7 +98,7 @@ Mọi tác vụ agent cần tuân theo cấu trúc sau:
 
 ```bash
 dotnet build
-rynor doctor
+zenith doctor
 dotnet test ZenithArch.slnx -v minimal
 ```
 

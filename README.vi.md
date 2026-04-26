@@ -32,13 +32,13 @@ dotnet tool update --global ZenithArch.Cli --version 1.0.7
 ### 2) Sinh cấu hình nhanh bằng CLI
 
 ```bash
-rynor init
+zenith init
 ```
 
 ### 3) Scaffold entity đầu tiên
 
 ```bash
-rynor scaffold Trip MyApp.Domain
+zenith scaffold Trip MyApp.Domain
 ```
 
 ### 4) Build để generator chạy
@@ -119,11 +119,11 @@ Khi đã có DbContext cụ thể, bạn có thể bổ sung `DbContextType = ty
 
 ### CLI và readiness gate
 
-- `rynor init`
-- `rynor scaffold <EntityName> [Namespace]`
-- `rynor doctor [ProjectPath]`
+- `zenith init`
+- `zenith scaffold <EntityName> [Namespace]`
+- `zenith doctor [ProjectPath]`
 
-`rynor doctor` trả về `NOT READY`, `READY WITH WARNINGS`, hoặc `READY` để bạn quyết định có thể đi tiếp hay không.
+`zenith doctor` trả về `NOT READY`, `READY WITH WARNINGS`, hoặc `READY` để bạn quyết định có thể đi tiếp hay không.
 
 ## Phụ thuộc theo tính năng
 
@@ -138,7 +138,7 @@ Khi đã có DbContext cụ thể, bạn có thể bổ sung `DbContextType = ty
 ## Checklist trước khi commit
 
 1. Chạy `dotnet build` và bảo đảm không có lỗi generator.
-2. Chạy `rynor doctor` và xử lý toàn bộ FAIL checks.
+2. Chạy `zenith doctor` và xử lý toàn bộ FAIL checks.
 3. Nếu có endpoint/caching/transaction mode, chạy integration tests phù hợp.
 4. Kiểm tra `ZenithArch.GenerationReport.g.cs` có đúng entities và artifacts kỳ vọng.
 

@@ -176,7 +176,7 @@ Check `docs/ENDPOINT_HARDENING.md` and verify at minimum:
 
 ## CLI doctor troubleshooting
 
-Use `rynor doctor` as a readiness gate for automated workflows.
+Use `zenith doctor` as a readiness gate for automated workflows.
 
 - `DR002` Project file fail: run command in a project folder containing a `.csproj`.
 - `DR004` Architecture config fail: add `AssemblyConfig.cs` with `[assembly: Architecture(...)]`.

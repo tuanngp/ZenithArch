@@ -112,7 +112,7 @@ When an agent is implementing changes, use this minimal gate:
 
 1. Apply configuration and code changes.
 2. Run `dotnet build`.
-3. Run `rynor doctor`.
+3. Run `zenith doctor`.
 4. Only continue if summary is `READY` or `READY WITH WARNINGS`.
 
 For runtime behavior verification, run the scenarios in `docs/RUNTIME_TESTING.md`.

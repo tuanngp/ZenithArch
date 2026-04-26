@@ -30,9 +30,9 @@ Profile defaults are only a starting point. Explicit flags in `Architecture(...)
 
 | Gate | Tool | Pass condition |
 | --- | --- | --- |
-| Config discovery | `rynor doctor` (`DR002`, `DR004`) | `.csproj` found and architecture config declared |
-| Architecture safety | `rynor doctor` (`DR005`, `DR006`) | profile/pattern coherent and endpoint opt-in valid |
-| Dependency alignment | `rynor doctor` (`DR007`-`DR013`) | required dependencies are present for active features |
-| Entity shape | `rynor doctor` (`DR014`) | all `[Entity]` declarations are `partial` |
-| Generation marker | `rynor doctor` (`DR015`) | generation report exists under `obj/` after build |
+| Config discovery | `zenith doctor` (`DR002`, `DR004`) | `.csproj` found and architecture config declared |
+| Architecture safety | `zenith doctor` (`DR005`, `DR006`) | profile/pattern coherent and endpoint opt-in valid |
+| Dependency alignment | `zenith doctor` (`DR007`-`DR013`) | required dependencies are present for active features |
+| Entity shape | `zenith doctor` (`DR014`) | all `[Entity]` declarations are `partial` |
+| Generation marker | `zenith doctor` (`DR015`) | generation report exists under `obj/` after build |
 | Runtime semantics | `dotnet test tests/ZenithArch.Integration.Tests` | CRUD, soft-delete, audit, validation, transaction, and cache behaviors pass |

@@ -8,7 +8,7 @@
     <Description>Global tool for scaffolding domain entities and extension points for ZenithArch projects.</Description>
     <!-- Configure this as a Global Tool -->
     <PackAsTool>true</PackAsTool>
-    <ToolCommandName>rynor</ToolCommandName>
+    <ToolCommandName>zenith</ToolCommandName>
     <PackageId>ZenithArch.Cli</PackageId>
   </PropertyGroup>
 

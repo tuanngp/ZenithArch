@@ -131,7 +131,7 @@ Các event type được sinh dưới namespace `{EntityNamespace}.DomainEvents`
 ## Checklist xác minh sau tích hợp
 
 1. Chạy `dotnet build` và bảo đảm không lỗi generator.
-2. Chạy `rynor doctor` và xử lý toàn bộ FAIL checks.
+2. Chạy `zenith doctor` và xử lý toàn bộ FAIL checks.
 3. Nếu bật endpoint, gọi thử POST/PUT/DELETE và xác nhận mã trạng thái đúng.
 4. Nếu bật caching, chạy một kịch bản read-after-write để xác nhận invalidation.
 
@@ -141,7 +141,7 @@ Khi agent triển khai thay đổi, dùng gate tối thiểu sau:
 
 1. Áp dụng cấu hình và code changes.
 2. Chạy `dotnet build`.
-3. Chạy `rynor doctor`.
+3. Chạy `zenith doctor`.
 4. Chỉ tiếp tục nếu kết quả là `READY` hoặc `READY WITH WARNINGS`.
 
 Để xác minh runtime behavior, chạy các kịch bản trong `docs/RUNTIME_TESTING.md`.

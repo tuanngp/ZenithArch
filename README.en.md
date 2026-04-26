@@ -43,8 +43,8 @@ dotnet tool update --global ZenithArch.Cli --version 1.0.7
 ### Path A (CLI-first)
 
 1. Add package references.
-2. Run `rynor init`.
-3. Run `rynor scaffold Trip MyApp.Domain`.
+2. Run `zenith init`.
+3. Run `zenith scaffold Trip MyApp.Domain`.
 4. Run `dotnet build`.
 5. Register generated runtime: `builder.Services.AddZenithArchDependencies();`.
 
@@ -125,9 +125,9 @@ using ZenithArch.Abstractions.Enums;
 
 ### CLI support
 
-- `rynor init`
-- `rynor scaffold <EntityName> [Namespace]`
-- `rynor doctor [ProjectPath]`
+- `zenith init`
+- `zenith scaffold <EntityName> [Namespace]`
+- `zenith doctor [ProjectPath]`
 
 ## Compatibility
 

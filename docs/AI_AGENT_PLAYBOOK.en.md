@@ -23,7 +23,7 @@ Use this contract for every agent task:
 
 ### Execution path
 
-1. Run `rynor init`.
+1. Run `zenith init`.
 2. Choose an architecture profile.
 3. Confirm `AssemblyConfig.cs` exists.
 
@@ -34,7 +34,7 @@ Use this contract for every agent task:
 
 ### Success criteria
 
-- `rynor doctor` shows no FAIL for `DR002`, `DR004`, `DR007`, `DR008`.
+- `zenith doctor` shows no FAIL for `DR002`, `DR004`, `DR007`, `DR008`.
 
 ## Task 2: Scaffold First Entity
 
@@ -44,7 +44,7 @@ Use this contract for every agent task:
 
 ### Execution path
 
-1. Run `rynor scaffold <EntityName> <Namespace>`.
+1. Run `zenith scaffold <EntityName> <Namespace>`.
 2. Build once with `dotnet build`.
 
 ### Expected output
@@ -55,7 +55,7 @@ Use this contract for every agent task:
 
 ### Success criteria
 
-- `rynor doctor` has PASS for `DR014` and `DR015`.
+- `zenith doctor` has PASS for `DR014` and `DR015`.
 - Build completes without generator errors.
 
 ## Task 3: Integrate Runtime Wiring
@@ -79,7 +79,7 @@ Use this contract for every agent task:
 
 ### Execution path
 
-1. Run `rynor doctor` from project root.
+1. Run `zenith doctor` from project root.
 2. Review summary line.
 
 ### Decision rule
@@ -90,7 +90,7 @@ Use this contract for every agent task:
 
 ## Common Failure Map
 
-- Missing architecture config: fix via `rynor init`.
+- Missing architecture config: fix via `zenith init`.
 - Endpoints without opt-in: set `EnableExperimentalEndpoints = true` or disable endpoint generation.
 - Non-partial entity: mark `[Entity]` classes as `partial`.
 - Missing generated report: run `dotnet build` once.
@@ -99,7 +99,7 @@ Use this contract for every agent task:
 
 ```bash
 dotnet build
-rynor doctor
+zenith doctor
 dotnet test ZenithArch.slnx -v minimal
 ```
 

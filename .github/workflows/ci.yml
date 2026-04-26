@@ -19,7 +19,11 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: |
+            6.0.x
+            8.0.x
+            9.0.x
+            10.0.x
 
       - name: Restore
         run: dotnet restore ZenithArch.slnx
@@ -37,11 +41,19 @@ jobs:
       - name: Test
         run: dotnet test ZenithArch.slnx --configuration Release --no-build
 
+      - name: Abstractions tests across runtime TFMs
+        run: |
+          for tfm in net6.0 net8.0 net9.0 net10.0; do
+            echo "Running ZenithArch.Abstractions.Tests for $tfm"
+            dotnet test tests/ZenithArch.Abstractions.Tests/ZenithArch.Abstractions.Tests.csproj --configuration Release --framework "$tfm" --no-build
+          done
+
       - name: Abstractions coverage gate (80% line)
         run: |
           echo "Enforcing Abstractions line coverage threshold: 80%"
           dotnet test tests/ZenithArch.Abstractions.Tests/ZenithArch.Abstractions.Tests.csproj \
             --configuration Release \
+            --framework net9.0 \
             /p:CollectCoverage=true \
             /p:CoverletOutput=./TestResults/Coverage/ \
             /p:CoverletOutputFormat=cobertura \

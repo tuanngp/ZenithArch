@@ -5,9 +5,9 @@
 ## Quy trình xử lý nhanh (60 giây)
 
 1. Chạy `dotnet build` để lấy lỗi compile/generator mới nhất.
-2. Chạy `rynor doctor` để xác định lỗi cấu hình/phụ thuộc.
+2. Chạy `zenith doctor` để xác định lỗi cấu hình/phụ thuộc.
 3. Ưu tiên sửa FAIL checks trước WARN checks.
-4. Chạy lại `dotnet build` và `rynor doctor` để xác nhận đã sạch lỗi.
+4. Chạy lại `dotnet build` và `zenith doctor` để xác nhận đã sạch lỗi.
 
 ## Bảng tra nhanh theo triệu chứng
 
@@ -192,7 +192,7 @@ Tối thiểu cần kiểm tra:
 
 ## Troubleshooting với CLI doctor
 
-Dùng `rynor doctor` như một readiness gate cho workflow tự động.
+Dùng `zenith doctor` như một readiness gate cho workflow tự động.
 
 - `DR002`: chạy lệnh trong thư mục chứa `.csproj`.
 - `DR004`: thêm `AssemblyConfig.cs` với `[assembly: Architecture(...)]`.

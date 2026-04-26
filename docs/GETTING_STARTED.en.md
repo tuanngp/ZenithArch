@@ -16,7 +16,7 @@ This guide is optimized for the shortest path to a working setup.
 ### Option A: CLI (fastest)
 
 ```bash
-rynor init
+zenith init
 ```
 
 ### Option B: Manual
@@ -84,9 +84,9 @@ The generated DI extension registers handlers/repositories (by pattern), validat
 
 Use this sequence when an AI agent is driving setup:
 
-1. Run `rynor init`.
-2. Run `rynor scaffold Trip MyApp.Domain`.
+1. Run `zenith init`.
+2. Run `zenith scaffold Trip MyApp.Domain`.
 3. Run `dotnet build`.
-4. Run `rynor doctor` and resolve all FAIL checks.
+4. Run `zenith doctor` and resolve all FAIL checks.
 
 See `docs/AI_AGENT_PLAYBOOK.md` for task contracts and verification rules.
